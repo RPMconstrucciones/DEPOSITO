@@ -812,6 +812,13 @@
             border-color: var(--accent);
         }
 
+        .field input::placeholder,
+        .field textarea::placeholder,
+        input::placeholder,
+        textarea::placeholder {
+            text-transform: none !important;
+        }
+
         .seg {
             display: flex;
             gap: 6px;
@@ -866,7 +873,8 @@
             display: none;
         }
 
-        #editProductOverlay .modal {
+        #editProductOverlay .modal,
+        #newProductOverlay .modal {
             padding: 0;
             max-height: 90vh;
             display: flex;
@@ -875,38 +883,45 @@
             position: relative;
         }
 
-        #editProductOverlay .modal-body {
+        #editProductOverlay .modal-body,
+        #newProductOverlay .modal-body {
             overflow-y: auto;
             padding: 20px 20px 10px 20px;
             scrollbar-width: thin;
             scrollbar-color: var(--line) transparent;
         }
 
-        #editProductOverlay .modal-body::-webkit-scrollbar {
+        #editProductOverlay .modal-body::-webkit-scrollbar,
+        #newProductOverlay .modal-body::-webkit-scrollbar {
             width: 5px;
         }
 
-        #editProductOverlay .modal-body::-webkit-scrollbar-track {
+        #editProductOverlay .modal-body::-webkit-scrollbar-track,
+        #newProductOverlay .modal-body::-webkit-scrollbar-track {
             background: transparent;
         }
 
-        #editProductOverlay .modal-body::-webkit-scrollbar-thumb {
+        #editProductOverlay .modal-body::-webkit-scrollbar-thumb,
+        #newProductOverlay .modal-body::-webkit-scrollbar-thumb {
             background: var(--line);
             border-radius: 6px;
         }
 
-        #editProductOverlay .modal-body::-webkit-scrollbar-thumb:hover {
+        #editProductOverlay .modal-body::-webkit-scrollbar-thumb:hover,
+        #newProductOverlay .modal-body::-webkit-scrollbar-thumb:hover {
             background: var(--txt-faint);
         }
 
-        #editProductOverlay .modal-actions {
+        #editProductOverlay .modal-actions,
+        #newProductOverlay .modal-actions {
             margin-top: 0;
             padding: 14px 20px;
             border-top: 1px solid var(--line);
             flex-shrink: 0;
         }
 
-        #editProdCloseX {
+        #editProdCloseX,
+        #newProdCloseX {
             position: absolute;
             top: 12px;
             right: 14px;
@@ -927,7 +942,8 @@
             transition: all 0.15s ease;
         }
 
-        #editProdCloseX:hover {
+        #editProdCloseX:hover,
+        #newProdCloseX:hover {
             color: var(--txt);
             background: var(--hover-bg);
             border-color: var(--accent);
@@ -1200,6 +1216,7 @@
                         id="statusText">Conectando…</span></div>
             </div>
             <div class="header-actions">
+                <button class="btn primary small" id="btnNewProduct">➕ Nuevo Producto</button>
                 <button class="btn ghost small" id="btnRefresh">↻ Actualizar</button>
                 <button class="btn small" id="btnExport">📊 Exportar a Excel</button>
             </div>
@@ -1296,6 +1313,7 @@
                                     <th data-sort="cantidad">Cant. <span class="arrow"></span></th>
                                     <th data-sort="responsable">Responsable <span class="arrow"></span></th>
                                     <th data-sort="obra">Obra / destino <span class="arrow"></span></th>
+                                    <th data-sort="factura">N.º Factura <span class="arrow"></span></th>
                                 </tr>
                             </thead>
                         </table>
@@ -1396,9 +1414,9 @@
                             <option value="2">2</option>
                             <option value="3">3</option>
                             <option value="4">4</option>
-                            <option value="5">5</option>
                             <option value="5A">5A</option>
                             <option value="5B">5B</option>
+                            <option value="5C">5C</option>
                             <option value="6">6</option>
                         </select>
                     </div>
@@ -1444,6 +1462,193 @@
             <div class="modal-actions">
                 <button class="btn ghost" id="editProdCancel">Cancelar</button>
                 <button class="btn primary" id="editProdConfirm">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Product Modal -->
+    <div class="overlay" id="newProductOverlay">
+        <div class="modal" style="max-width: 440px; width: 100%;">
+            <button type="button" id="newProdCloseX" title="Cerrar ventana">✕</button>
+            <div class="modal-body">
+                <h3 style="padding-right: 32px;">Registrar Nuevo Producto</h3>
+                <div class="sub">Ingresá los datos del nuevo producto para darlo de alta en el sistema.</div>
+                
+                <!-- ===== TIPO DE INGRESO / ALTA ===== -->
+                <div class="field" style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;">
+                    <div style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                        <span>📦</span> Tipo de ingreso / alta <span style="color:var(--bad-fg);">*</span>
+                    </div>
+                    <select id="newProdTipoAlta" onchange="npTipoAltaChanged()" style="width:100%;">
+                        <option value="DEPOSITO">Ingreso inicial / Alta - Depósito</option>
+                        <option value="RETIRO">Ingreso inicial / Alta - Retiro</option>
+                    </select>
+
+                    <!-- Lugar de retiro (solo visible en modo RETIRO) -->
+                    <div id="newProdRetiroWrap" style="display:none; margin-top:10px;">
+                        <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">Lugar de retiro / proveedor <span style="color:var(--bad-fg);">*</span></label>
+                        <input type="text" id="newProdLugarRetiro" placeholder="Ej: Corralón El Amigo, Corralón Omega…" style="text-transform:uppercase; margin-top:4px;">
+                    </div>
+
+                    <!-- N.º de factura (opcional, siempre visible) -->
+                    <div style="margin-top:10px;">
+                        <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">N.º de factura <span style="font-weight:400; color:var(--txt-faint);">(opcional)</span></label>
+                        <input type="text" id="newProdFactura" placeholder="Ej: FC-0001-00012345" style="margin-top:4px; text-transform:uppercase;">
+                    </div>
+                </div>
+
+                <!-- ===== DEPÓSITO / ZONA (oculto en modo RETIRO) ===== -->
+                <div id="newProdZonaWrap" class="field">
+                    <label>Depósito / Zona <span style="color:var(--bad-fg);">*</span></label>
+                    <select id="newProdZona" onchange="toggleCustomZonaInput(this)" style="width:100%;">
+                        <option value="">Cargando zonas...</option>
+                    </select>
+                    <input type="text" id="newProdZonaCustom" placeholder="Nombre del nuevo depósito o zona..." style="display:none; margin-top:6px; text-transform:uppercase;">
+                </div>
+
+                <div class="field">
+                    <label>Descripción del Producto <span style="color:var(--bad-fg);">*</span></label>
+                    <textarea id="newProdDesc" placeholder="Descripción detallada del producto…" rows="2" oninput="autoResizeTextarea(this)" style="text-transform:uppercase;"></textarea>
+                </div>
+
+                <div class="field" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div>
+                        <label>Marca <span style="color:var(--bad-fg);">*</span></label>
+                        <select id="newProdMarcaSel" onchange="toggleCustomMarcaInput(this)" style="width:100%;">
+                            <option value="">— Seleccionar Marca —</option>
+                            <option value="GENÉRICA">Genérica</option>
+                            <option value="NO ESPECIFICADA">No especificada</option>
+                            <option value="__OTRA__">➕ Otra marca (escribir)...</option>
+                        </select>
+                        <input type="text" id="newProdMarcaCustom" placeholder="Escribir marca..." oninput="this.value=this.value.toUpperCase()" style="display:none; margin-top:4px; text-transform:uppercase;">
+                    </div>
+                    <div>
+                        <label>Familia</label>
+                        <select id="newProdFamiliaSel" onchange="toggleCustomFamiliaInput(this)" style="width:100%;">
+                            <option value="">Seleccionar o escribir...</option>
+                        </select>
+                        <input type="text" id="newProdFamiliaCustom" placeholder="Escribir familia..." oninput="this.value=this.value.toUpperCase()" style="display:none; margin-top:4px; text-transform:uppercase;">
+                    </div>
+                </div>
+
+                <div class="field" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                    <div>
+                        <label>Unidad</label>
+                        <select id="newProdUnidad" style="width:100%;">
+                            <option value="un">un (unidad)</option>
+                            <option value="m">m (metros)</option>
+                            <option value="rollo">rollo</option>
+                            <option value="kg">kg</option>
+                            <option value="l">l (litros)</option>
+                            <option value="caja">caja</option>
+                            <option value="par">par</option>
+                            <option value="paquete">paquete</option>
+                            <option value="set">set</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Stock Inicial <span style="color:var(--bad-fg);">*</span></label>
+                        <input type="number" id="newProdStockInicial" min="0" step="1" placeholder="0">
+                    </div>
+                    <div>
+                        <label>Stock Mínimo</label>
+                        <input type="number" id="newProdStockMin" min="0" step="1" value="0" placeholder="0"
+                            onfocus="if(this.value==='0') this.value='';"
+                            onblur="if(this.value.trim()==='') this.value='0';">
+                    </div>
+                </div>
+
+                <!-- ===== UBICACIÓN FÍSICA (oculto en modo RETIRO) ===== -->
+                <div id="newProdUbicacionWrap" class="field"
+                    style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0;">
+                    <div
+                        style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                        <span>📍</span> Ubicación física
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 0.9fr; gap: 8px; align-items: end;">
+                        <div style="display: flex; flex-direction: column;">
+                            <label
+                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Depósito</label>
+                            <select id="newProdUbiDep" onchange="toggleCustomUbiDepInput(this); actualizarVisibilidadAclaracionUbi();"
+                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box; cursor: pointer;">
+                                <option value="">—</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5A">5A</option>
+                                <option value="5B">5B</option>
+                                <option value="5C">5C</option>
+                                <option value="6">6</option>
+                                <option value="__OTRO__">➕ Otro...</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <label
+                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Estante</label>
+                            <input type="number" id="newProdUbiEst" min="0" step="1" placeholder="Ej: 2" oninput="actualizarVisibilidadAclaracionUbi()"
+                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <label
+                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Columna</label>
+                            <input type="number" id="newProdUbiCol" min="0" step="1" placeholder="Ej: 5" oninput="actualizarVisibilidadAclaracionUbi()"
+                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <label
+                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Fila</label>
+                            <input type="text" id="newProdUbiFila" maxlength="1" placeholder="Ej: B" oninput="actualizarVisibilidadAclaracionUbi()"
+                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 800; font-size: 13px; text-transform: uppercase; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
+                        </div>
+                    </div>
+                    <input type="text" id="newProdUbiDepCustom" placeholder="Nombre/Nº del depósito personalizado..." style="display:none; margin-top:8px; text-transform:uppercase;">
+                    
+                    <!-- Aclaración de ubicación obligatoria si no hay estante/columna/fila -->
+                    <div id="newProdUbiAclaracionWrap" style="margin-top:10px; padding:10px 12px; background:rgba(217, 119, 6, 0.08); border:1px solid rgba(217, 119, 6, 0.35); border-radius:8px;">
+                        <div style="font-size:11px; font-weight:700; color:#d97706; display:flex; align-items:center; gap:5px; margin-bottom:4px;">
+                            <span>⚠️</span> Aclaración de ubicación <span style="color:var(--bad-fg);">*</span>
+                        </div>
+                        <div style="font-size:11px; color:var(--txt-dim); margin-bottom:6px; line-height:1.35;">
+                            Al no indicar Estante, Columna y Fila exactos, aclará dónde se ubica físicamente:
+                        </div>
+                        <input type="text" id="newProdUbiObs" placeholder="Ej: en pallet pasillo central / en piso / al lado de caja..." style="width:100%; text-transform:uppercase;">
+                    </div>
+                </div>
+
+                <div class="field"
+                    style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0;">
+                    <div
+                        style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                        <span>📷</span> Fotos del producto <span style="font-weight:400; color: var(--txt-faint); text-transform:none; letter-spacing:0;">(máx. 2)</span>
+                    </div>
+                    <div id="newProdFotosPreview" style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;"></div>
+                    <input type="file" accept="image/*" id="newProdFotoInput" style="display:none" onchange="manejarSeleccionFotoNewProd(this)">
+                    <button type="button" class="btn small" id="newProdFotoBtn" onclick="document.getElementById('newProdFotoInput').click()">+ Agregar foto</button>
+                    <div id="newProdFotoMsg" style="display:none; font-size:11px; color: var(--txt-faint); margin-top: 6px;">Ya tenés las 2 fotos máximas cargadas. Eliminá una (✕) para poder agregar otra.</div>
+                </div>
+
+                <div class="field" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div>
+                        <label>Responsable</label>
+                        <input type="text" id="newProdResponsable" placeholder="Nombre de quien registra" style="text-transform:uppercase;">
+                    </div>
+                    <div>
+                        <label>Observaciones del ítem</label>
+                        <input type="text" id="newProdObs" placeholder="Observaciones de la pieza/ficha…" style="text-transform:uppercase;">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Observaciones generales del envío (opcional - Movimientos)</label>
+                    <input type="text" id="newProdObsGeneral" placeholder="Transporte, motivo o aclaración del envío…" style="text-transform:uppercase;">
+                </div>
+
+                <div class="modal-err" id="newProdErr"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn ghost" id="newProdCancel">Cancelar</button>
+                <button class="btn primary" id="newProdConfirm">Registrar Producto</button>
             </div>
         </div>
     </div>
@@ -2039,7 +2244,14 @@
             p.ubicacion_estante = nuevaUbiEst;
             p.ubicacion_columna = nuevaUbiCol;
             p.ubicacion_fila = nuevaUbiFila;
-            p.ult_obs = nuevaObs;
+            // La observación se reemplaza con el valor actual del campo, sin
+            // concatenar con lo que ya estaba guardado — así coincide con lo
+            // que realmente se guarda en el backend vía "actualizar-observacion"
+            // (que también sobreescribe, no concatena).
+            if (nuevaObs) {
+                p.ult_obs = nuevaObs;
+            }
+            // Si el campo queda vacío, no se toca p.ult_obs (no se borra por accidente).el historial) 
             p.estado = p.stock_actual <= p.stock_minimo ? 'REPONER' : 'OK';
 
             closeEditProductModal();
@@ -2197,6 +2409,483 @@
                 showToast('Fallo de conexión al eliminar la foto', true);
             }
         }
+
+        // ============================================================
+        // REGISTRAR NUEVO PRODUCTO
+        // ============================================================
+        let newProductCurrentImages = [];
+
+        function toggleCustomZonaInput(sel) {
+            const customInput = document.getElementById('newProdZonaCustom');
+            if (!customInput) return;
+            if (sel.value === '__OTRA__') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        }
+
+        function toggleCustomMarcaInput(sel) {
+            const customInput = document.getElementById('newProdMarcaCustom');
+            if (!customInput) return;
+            if (sel.value === '__OTRA__') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        }
+
+        function toggleCustomFamiliaInput(sel) {
+            const customInput = document.getElementById('newProdFamiliaCustom');
+            if (!customInput) return;
+            if (sel.value === '__OTRA__') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        }
+
+        function toggleCustomUbiDepInput(sel) {
+            const customInput = document.getElementById('newProdUbiDepCustom');
+            if (!customInput) return;
+            if (sel.value === '__OTRO__') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        }
+
+        function actualizarVisibilidadAclaracionUbi() {
+            const est = (document.getElementById('newProdUbiEst')?.value || '').trim();
+            const col = (document.getElementById('newProdUbiCol')?.value || '').trim();
+            const fila = (document.getElementById('newProdUbiFila')?.value || '').trim();
+            const wrap = document.getElementById('newProdUbiAclaracionWrap');
+            if (!wrap) return;
+
+            const tieneEstanteriaCompleta = est !== '' && col !== '' && fila !== '';
+            wrap.style.display = tieneEstanteriaCompleta ? 'none' : 'block';
+            if (tieneEstanteriaCompleta) {
+                const inpObs = document.getElementById('newProdUbiObs');
+                if (inpObs) inpObs.value = '';
+            }
+        }
+
+        // Reacciona al cambio de Tipo de Alta (Depósito / Retiro)
+        function npTipoAltaChanged() {
+            const tipo = document.getElementById('newProdTipoAlta')?.value;
+            const esRetiro = tipo === 'RETIRO';
+
+            // Lugar de retiro: solo visible en modo RETIRO
+            const retiroWrap = document.getElementById('newProdRetiroWrap');
+            if (retiroWrap) {
+                retiroWrap.style.display = esRetiro ? 'block' : 'none';
+                if (!esRetiro) {
+                    const inp = document.getElementById('newProdLugarRetiro');
+                    if (inp) inp.value = '';
+                }
+            }
+
+            // Zona / Depósito: oculto en modo RETIRO
+            const zonaWrap = document.getElementById('newProdZonaWrap');
+            if (zonaWrap) {
+                zonaWrap.style.display = esRetiro ? 'none' : 'block';
+                if (esRetiro) {
+                    const selZ = document.getElementById('newProdZona');
+                    if (selZ) selZ.value = '';
+                    const inpZ = document.getElementById('newProdZonaCustom');
+                    if (inpZ) { inpZ.value = ''; inpZ.style.display = 'none'; }
+                }
+            }
+
+            // Ubicación física (estante/col/fila/dep): oculto en modo RETIRO
+            const ubicWrap = document.getElementById('newProdUbicacionWrap');
+            if (ubicWrap) ubicWrap.style.display = esRetiro ? 'none' : 'block';
+        }
+
+
+
+        function openNewProductModal() {
+            state.modalOpen = true;
+            newProductCurrentImages = [];
+
+            // Limpiar campos
+            document.getElementById('newProdDesc').value = '';
+            document.getElementById('newProdStockInicial').value = '';
+            document.getElementById('newProdStockMin').value = '0';
+            document.getElementById('newProdUbiDep').value = '';
+            document.getElementById('newProdUbiDepCustom').value = '';
+            document.getElementById('newProdUbiDepCustom').style.display = 'none';
+            document.getElementById('newProdUbiEst').value = '';
+            document.getElementById('newProdUbiCol').value = '';
+            document.getElementById('newProdUbiFila').value = '';
+            document.getElementById('newProdUbiObs').value = '';
+            document.getElementById('newProdResponsable').value = '';
+            document.getElementById('newProdObs').value = '';
+            document.getElementById('newProdObsGeneral').value = '';
+            document.getElementById('newProdErr').style.display = 'none';
+            document.getElementById('newProdUnidad').value = 'un';
+
+            // Poblar marcas existentes + opciones fijas
+            const selMarca = document.getElementById('newProdMarcaSel');
+            const marcasRegistradas = Array.from(new Set(state.stock.map(p => (p.marca || '').trim()).filter(m => m && m !== '—' && m !== '-' && m !== 'GENÉRICA' && m !== 'NO ESPECIFICADA'))).sort();
+            let optsMarca = '<option value="">-- Seleccionar Marca --</option>';
+            optsMarca += '<option value="GENÉRICA">Genérica</option>';
+            optsMarca += '<option value="NO ESPECIFICADA">No especificada</option>';
+            if (marcasRegistradas.length > 0) {
+                marcasRegistradas.forEach(m => {
+                    optsMarca += `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`;
+                });
+            }
+            optsMarca += '<option value="__OTRA__">➕ Otra marca (escribir)...</option>';
+            selMarca.innerHTML = optsMarca;
+            selMarca.value = '';
+            toggleCustomMarcaInput(selMarca);
+            document.getElementById('newProdMarcaCustom').value = '';
+
+            // Nuevos campos
+            document.getElementById('newProdTipoAlta').value = 'DEPOSITO';
+            document.getElementById('newProdLugarRetiro').value = '';
+            document.getElementById('newProdFactura').value = '';
+            npTipoAltaChanged();          // ajustar visibilidad según tipo default
+            actualizarVisibilidadAclaracionUbi();
+
+            // Poblar zonas creadas
+            const zonasExistentes = Array.from(new Set(state.stock.map(p => p.zona).filter(Boolean))).sort();
+            const selZona = document.getElementById('newProdZona');
+            let optsZona = '<option value="">-- Seleccionar Depósito / Zona --</option>';
+            zonasExistentes.forEach(z => {
+                optsZona += `<option value="${escapeAttr(z)}">${escapeHtml(z)}</option>`;
+            });
+            optsZona += '<option value="__OTRA__">➕ Otra zona (crear nueva)...</option>';
+            selZona.innerHTML = optsZona;
+
+            // Pre-seleccionar la zona activa en la vista si existe
+            if (state.zona && zonasExistentes.includes(state.zona)) {
+                selZona.value = state.zona;
+            } else if (zonasExistentes.length === 1) {
+                selZona.value = zonasExistentes[0];
+            } else {
+                selZona.value = '';
+            }
+            toggleCustomZonaInput(selZona);
+            document.getElementById('newProdZonaCustom').value = '';
+
+            // Poblar familias existentes
+            const familiasExistentes = Array.from(new Set(state.stock.map(p => p.familia).filter(Boolean))).sort();
+            const selFam = document.getElementById('newProdFamiliaSel');
+            let optsFam = '<option value="">-- Seleccionar Familia --</option>';
+            familiasExistentes.forEach(f => {
+                optsFam += `<option value="${escapeAttr(f)}">${escapeHtml(f)}</option>`;
+            });
+            optsFam += '<option value="__OTRA__">➕ Otra familia...</option>';
+            selFam.innerHTML = optsFam;
+            selFam.value = '';
+            toggleCustomFamiliaInput(selFam);
+            document.getElementById('newProdFamiliaCustom').value = '';
+
+            renderNewProdFotos();
+            document.getElementById('newProductOverlay').classList.add('show');
+            autoResizeTextarea(document.getElementById('newProdDesc'));
+        }
+
+        function closeNewProductModal() {
+            state.modalOpen = false;
+            newProductCurrentImages = [];
+            document.getElementById('newProductOverlay').classList.remove('show');
+        }
+
+        function renderNewProdFotos() {
+            const cont = document.getElementById('newProdFotosPreview');
+            const btn = document.getElementById('newProdFotoBtn');
+            const msg = document.getElementById('newProdFotoMsg');
+            if (!cont) return;
+            cont.innerHTML = newProductCurrentImages.map((img, i) => `
+                <div style="position:relative;width:64px;height:64px;">
+                    <img src="${escapeAttr(img.dataUrl)}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line-soft);cursor:zoom-in;" onclick="openLightbox('${escapeAttr(img.dataUrl)}')">
+                    <button type="button" onclick="eliminarFotoNewProd(${i})" title="Eliminar esta foto"
+                        style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--bad-fg);color:#fff;border:2px solid var(--bg-elev);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>
+                </div>
+            `).join('') || `<span style="font-size:12px;color:var(--txt-faint);font-style:italic;">Sin fotos cargadas</span>`;
+            const lleno = newProductCurrentImages.length >= 2;
+            if (btn) btn.style.display = lleno ? 'none' : 'inline-flex';
+            if (msg) msg.style.display = lleno ? 'block' : 'none';
+        }
+
+        function manejarSeleccionFotoNewProd(input) {
+            const archivo = input.files[0];
+            input.value = '';
+            if (!archivo) return;
+
+            if (newProductCurrentImages.length >= 2) {
+                showToast('Ya tenés 2 fotos — eliminá una primero (✕)', true);
+                return;
+            }
+            comprimirImagenEditProd(archivo, base64 => {
+                newProductCurrentImages.push({
+                    dataUrl: 'data:image/jpeg;base64,' + base64,
+                    base64: base64
+                });
+                renderNewProdFotos();
+            });
+        }
+
+        function eliminarFotoNewProd(indice) {
+            newProductCurrentImages.splice(indice, 1);
+            renderNewProdFotos();
+        }
+
+// ============================================================
+// REEMPLAZAR la función confirmNewProduct() completa por esta versión.
+// Motivo: dejar de armar un texto "obsFinal" con datos duplicados y
+// mandar cada dato en su propio campo, tal como lo espera el
+// Codigo.gs corregido (que arma el Obs. ítem limpio del lado del
+// servidor y guarda la factura en su propia columna).
+// ============================================================
+async function confirmNewProduct() {
+    const errBox = document.getElementById('newProdErr');
+    errBox.style.display = 'none';
+
+    // ── Tipo de alta ────────────────────────────────────────────
+    const tipoAlta = document.getElementById('newProdTipoAlta').value; // 'DEPOSITO' | 'RETIRO'
+    const esRetiro = tipoAlta === 'RETIRO';
+
+    // ── Lugar de retiro (solo en modo RETIRO) ──────────────────
+    const lugarRetiro = esRetiro
+        ? document.getElementById('newProdLugarRetiro').value.trim().toUpperCase()
+        : '';
+
+    // ── Factura (opcional en ambos modos) — viaja SOLA, sin prefijo ──
+    const factura = document.getElementById('newProdFactura').value.trim().toUpperCase();
+
+    // ── Zona (solo requerida en modo DEPÓSITO) ─────────────────
+    const selZona = document.getElementById('newProdZona').value;
+    const customZona = document.getElementById('newProdZonaCustom').value.trim().toUpperCase();
+    const zona = esRetiro ? '' : (selZona === '__OTRA__' ? customZona : selZona).trim().toUpperCase();
+
+    const desc = document.getElementById('newProdDesc').value.trim().toUpperCase();
+
+    // ── Marca ──────────────────────────────────────────────────
+    const selMarca = document.getElementById('newProdMarcaSel').value;
+    const customMarca = document.getElementById('newProdMarcaCustom').value.trim().toUpperCase();
+    const marca = (selMarca === '__OTRA__' ? customMarca : selMarca).trim().toUpperCase();
+
+    const selFam = document.getElementById('newProdFamiliaSel').value;
+    const customFam = document.getElementById('newProdFamiliaCustom').value.trim().toUpperCase();
+    const familia = (selFam === '__OTRA__' ? customFam : selFam).trim().toUpperCase() || 'VARIOS';
+
+    const unidad = document.getElementById('newProdUnidad').value;
+    const stockInicialVal = document.getElementById('newProdStockInicial').value.trim();
+    const stockMin = Number(document.getElementById('newProdStockMin').value) || 0;
+
+    // ── Ubicación física (solo relevante en modo DEPÓSITO) ─────
+    const selUbiDep = document.getElementById('newProdUbiDep').value;
+    const customUbiDep = document.getElementById('newProdUbiDepCustom').value.trim().toUpperCase();
+    const ubiDep = esRetiro ? '' : (selUbiDep === '__OTRO__' ? customUbiDep : selUbiDep).trim().toUpperCase();
+    const ubiEst = esRetiro ? '' : document.getElementById('newProdUbiEst').value.trim();
+    const ubiCol = esRetiro ? '' : document.getElementById('newProdUbiCol').value.trim();
+    const ubiFila = esRetiro ? '' : document.getElementById('newProdUbiFila').value.trim().toUpperCase();
+
+    const responsable = document.getElementById('newProdResponsable').value.trim().toUpperCase();
+    const obs = document.getElementById('newProdObs').value.trim().toUpperCase();
+    const obsGeneralEnvio = document.getElementById('newProdObsGeneral').value.trim().toUpperCase();
+
+    // ── Validaciones ───────────────────────────────────────────
+    if (!desc) {
+        errBox.textContent = 'La descripción del producto es obligatoria.';
+        errBox.style.display = 'block';
+        return;
+    }
+    if (!marca) {
+        errBox.textContent = selMarca === '__OTRA__'
+            ? 'Ingresá el nombre de la marca.'
+            : 'Seleccioná o ingresá una Marca obligatoria.';
+        errBox.style.display = 'block';
+        return;
+    }
+    if (stockInicialVal === '' || isNaN(Number(stockInicialVal)) || Number(stockInicialVal) < 0) {
+        errBox.textContent = 'El Stock Inicial es obligatorio (ingresá 0 o un valor mayor).';
+        errBox.style.display = 'block';
+        return;
+    }
+    const stockInicial = Number(stockInicialVal);
+
+    if (esRetiro && !lugarRetiro) {
+        errBox.textContent = 'Indicá el lugar de retiro / proveedor.';
+        errBox.style.display = 'block';
+        return;
+    }
+    if (!esRetiro && !zona) {
+        errBox.textContent = 'Seleccioná o ingresá una Zona / Depósito.';
+        errBox.style.display = 'block';
+        return;
+    }
+
+    // ── Aclaración de ubicación (solo en modo DEPÓSITO) ───────
+    // Viaja SOLA como "ubicacion_aclaracion" — el backend decide si va
+    // al Obs. ítem (solo si además falta estante/columna/fila).
+    let aclaracionUbi = '';
+    if (!esRetiro) {
+        const tieneEstanteriaCompleta = ubiEst !== '' && ubiCol !== '' && ubiFila !== '';
+        if (!tieneEstanteriaCompleta) {
+            aclaracionUbi = document.getElementById('newProdUbiObs').value.trim().toUpperCase();
+            if (!aclaracionUbi) {
+                errBox.textContent = 'Al no indicar Estante, Columna y Fila exactos, debés ingresar la Aclaración de Ubicación física obligatoria.';
+                errBox.style.display = 'block';
+                return;
+            }
+        }
+    }
+
+    // ── Etiqueta de Obra, SOLO para reflejar en pantalla al instante ──
+    // (el backend recalcula esto mismo a partir de tipo_alta; no se manda)
+    const obraMovimiento = esRetiro
+        ? 'Ingreso inicial / Alta - Retiro'
+        : 'Ingreso inicial / Alta - Depósito';
+
+    // ── Obs. ítem local, SOLO para reflejar en pantalla al instante ──
+    // (el backend arma la versión real que se guarda en la planilla)
+    let obsItemLocalParts = [];
+    if (esRetiro && lugarRetiro) obsItemLocalParts.push('Retiro: ' + lugarRetiro);
+    if (!esRetiro && aclaracionUbi) obsItemLocalParts.push(aclaracionUbi);
+    if (obs) obsItemLocalParts.push(obs);
+    const obsItemLocal = obsItemLocalParts.join(' | ');
+
+    const btnConfirm = document.getElementById('newProdConfirm');
+    btnConfirm.disabled = true;
+    btnConfirm.textContent = 'Registrando…';
+
+    try {
+        // Copia de las fotos ANTES de que closeNewProductModal() las borre
+        const fotosParaEnviar = newProductCurrentImages.slice();
+
+        // Generar ID local para reflejar al instante
+        const maxNum = state.stock.reduce((max, p) => {
+            const m = String(p.id || '').match(/PROD-(\d+)/i);
+            return m ? Math.max(max, parseInt(m[1], 10)) : max;
+        }, 0);
+        const localId = 'PROD-' + String(maxNum + 1).padStart(3, '0');
+
+        const fotosDrive = fotosParaEnviar.map(x => x.dataUrl).join('||');
+        const nuevoProducto = {
+            id: localId,
+            zona: zona,
+            familia: familia,
+            marca: marca,
+            descripcion: desc,
+            unidad: unidad,
+            entradas: stockInicial > 0 ? stockInicial : 0,
+            salidas: 0,
+            devoluciones: 0,
+            stock_actual: stockInicial,
+            stock_minimo: stockMin,
+            estado: stockInicial <= stockMin ? 'REPONER' : 'OK',
+            ult_mov: stockInicial > 0 ? 'ENTRADA' : 'ALTA',
+            ult_fecha: new Date().toLocaleDateString('es-AR'),
+            ult_hora: horaAhora(),
+            ubicacion_deposito: ubiDep,
+            ubicacion_estante: ubiEst,
+            ubicacion_columna: ubiCol,
+            ubicacion_fila: ubiFila,
+            imagen: fotosDrive,
+            ult_obs: obsItemLocal
+        };
+
+        // Agregar localmente
+        state.stock.unshift(nuevoProducto);
+
+        if (stockInicial > 0) {
+            state.mov.unshift({
+                fecha: new Date().toLocaleDateString('es-AR') + ' ' + horaAhora(),
+                tipo: 'ENTRADA',
+                zona: zona,
+                descripcion: desc,
+                cantidad: stockInicial,
+                responsable: responsable || 'ALTA DE PRODUCTO',
+                obra: obraMovimiento
+            });
+        }
+
+        closeNewProductModal();
+        buildZoneChips();
+        populateFamiliaFilter();
+        renderAll();
+        showSuccessModal(`¡Producto "${desc}" registrado con éxito! (ID: ${localId})`);
+
+        // Sincronizar en Apps Script si no es demo
+        if (!isDemo) {
+            const payload = {
+                accion: 'crear-producto',
+                zona: zona,
+                familia: familia,
+                marca: marca,
+                descripcion: desc,
+                unidad: unidad,
+                stock_inicial: stockInicial,
+                stock_minimo: stockMin,
+                deposito: ubiDep,
+                estante: ubiEst,
+                columna: ubiCol,
+                fila: ubiFila,
+                responsable: responsable,
+                observaciones: obs,                 // ← observación libre, SIN concatenar nada más
+                obs_general: obsGeneralEnvio,
+                tipo_alta: tipoAlta,                // 'DEPOSITO' | 'RETIRO' — el backend arma "Obra" con esto
+                lugar_retiro: lugarRetiro,
+                ubicacion_aclaracion: aclaracionUbi, // ← nuevo nombre de campo, va suelto
+                factura: factura,                    // ← va a su propia columna, sin prefijo
+                fotos_base64: fotosParaEnviar.map(x => x.base64)
+            };
+            const res = await apiPost(payload);
+            if (res && res.ok && res.id) {
+                nuevoProducto.id = res.id;
+                // Reemplazamos el preview local (base64) por el link real de Drive
+                if (res.imagen) {
+                    nuevoProducto.imagen = res.imagen;
+                } else if (fotosParaEnviar.length > 0) {
+                    // Fallback: si el backend no procesó las fotos en crear-producto,
+                    // las subimos mediante actualizar-imagen para garantizar que queden en Drive
+                    let subidas = [];
+                    for (let i = 0; i < fotosParaEnviar.length; i++) {
+                        try {
+                            const resFoto = await apiPost({
+                                accion: 'actualizar-imagen',
+                                id: res.id,
+                                foto_base64: fotosParaEnviar[i].base64,
+                                modo: i === 0 ? 'reemplazar' : 'agregar'
+                            });
+                            if (resFoto && resFoto.ok && resFoto.imagen) {
+                                subidas = resFoto.imagen.split('||').map(s => s.trim()).filter(Boolean);
+                            }
+                        } catch (errFoto) {
+                            console.error("Error subiendo foto de nuevo producto:", errFoto);
+                        }
+                    }
+                    if (subidas.length > 0) {
+                        nuevoProducto.imagen = subidas.join('||');
+                    }
+                }
+                renderStock();
+                if (res.error_fotos) {
+                    showToast(`Producto guardado (ID ${res.id}), pero la foto no se pudo subir: ${res.error_fotos}`, true);
+                } else {
+                    showToast(`Guardado en la nube con ID ${res.id} ✓`);
+                }
+            } else if (res && !res.ok) {
+                showToast('Error al guardar en la nube: ' + (res.error || ''), true);
+            }
+        }
+    } catch (e) {
+        console.error("Error al registrar producto:", e);
+        showToast('Error al registrar el producto', true);
+    } finally {
+        btnConfirm.disabled = false;
+        btnConfirm.textContent = 'Registrar Producto';
+    }
+}
 
         // ============================================================
         // BATCH ACTIONS (CARRITO / SELECCIONADOS)
@@ -2441,7 +3130,7 @@
             const body = document.getElementById('movBody');
 
             if (list.length === 0) {
-                body.innerHTML = `<tr class="empty-row"><td colspan="6">No hay movimientos que coincidan con el filtro.</td></tr>`;
+                body.innerHTML = `<tr class="empty-row"><td colspan="7">No hay movimientos que coincidan con el filtro.</td></tr>`;
             } else {
                 body.innerHTML = list.map(m => {
                     const tipoClass = m.tipo === 'ENTRADA' ? 'entrada' : (m.tipo === 'SALIDA' ? 'salida' : 'devolucion');
@@ -2453,6 +3142,7 @@
         <td>${m.cantidad ?? ''}</td>
         <td class="marca-cell">${escapeHtml(m.responsable || '—')}</td>
         <td class="marca-cell">${escapeHtml(m.obra || '—')}</td>
+        <td class="id-tag">${escapeHtml(m.factura || '—')}</td>
       </tr>`;
                 }).join('');
             }
@@ -2769,6 +3459,22 @@
         document.getElementById('editProdUbiEst').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
         document.getElementById('editProdUbiCol').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
         document.getElementById('editProdUbiFila').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase(); });
+
+        document.getElementById('btnNewProduct').addEventListener('click', openNewProductModal);
+        document.getElementById('newProdCancel').addEventListener('click', closeNewProductModal);
+        document.getElementById('newProdCloseX').addEventListener('click', closeNewProductModal);
+        document.getElementById('newProdConfirm').addEventListener('click', confirmNewProduct);
+        document.getElementById('newProdUbiEst').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
+        document.getElementById('newProdUbiCol').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
+        document.getElementById('newProdUbiFila').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase(); });
+
+        document.querySelectorAll('#newProductOverlay input[type="text"], #newProductOverlay textarea').forEach(el => {
+            el.addEventListener('input', () => {
+                const s = el.selectionStart, e = el.selectionEnd;
+                el.value = el.value.toUpperCase();
+                if (s !== null && e !== null) el.setSelectionRange(s, e);
+            });
+        });
 
         document.getElementById('btnBatchAdjust').addEventListener('click', openBatchAdjustModal);
         document.getElementById('btnCopySelected').addEventListener('click', copySelectedProducts);
