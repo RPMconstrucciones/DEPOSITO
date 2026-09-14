@@ -603,7 +603,7 @@ button, .sc-icon-btn, .btn-mov { outline: none; }
           <div class="f-section-title">Ubicación</div>
           <div class="ubic-bloque-help">Se completa sola en devolución; en entrada la cargás manualmente.</div>
           <div class="ubic-grid">
-            <div><label>Depósito</label><select id="nuevo_deposito"><option value="">— Seleccioná —</option><option value="4">4</option></select></div>
+            <div><label>Depósito</label><select id="nuevo_deposito"><option value="">— Seleccioná —</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option></select></div>
             <div><label>Estante</label><select id="nuevo_estante"><option value="">— Seleccioná —</option></select></div>
             <div><label>Columna</label><select id="nuevo_columna"><option value="">— Seleccioná —</option></select></div>
             <div><label>Fila</label><select id="nuevo_fila"><option value="">— Seleccioná —</option></select></div>
@@ -652,7 +652,7 @@ const CONFIG = {
   storageKey: "rpm_borrador_deposito_cables",
   pollingIntervalMs: 25000,
   ubicacion: {
-    depositos: ['4'],
+    depositos: ['1','2','3','4'],
     estantes:  ['1','2','3','4','5','6','7','8'],
     columnas:  Array.from({length:20}, (_,i)=>String(i+1)),
     filas:     ['A','B','C','D','E','F'],
@@ -2058,8 +2058,7 @@ function validateBlock(fam, block) {
     ['deposito','estante','columna','fila'].forEach(campo => {
       const el = block.querySelector(`[data-fam="${fam}"][data-campo="${campo}"]`);
       if (!el) return;
-      const val = el.value ? el.value.trim() : '';
-      if (!val) { el.classList.add('err'); errs.push(`Ubicación → ${campo}`); } else { el.classList.remove('err'); }
+      el.classList.remove('err');
     });
   }
   return errs;
@@ -2334,11 +2333,7 @@ async function submitForm() {
   if (nuevoDesc && esMovimientoConUbicacion(tipo)) {
     ['deposito','estante','columna','fila'].forEach(campo => {
       const el = document.getElementById(`nuevo_${campo}`);
-      if (el && !String(el.value || '').trim()) {
-        hasError = true; el.classList.add('err');
-        const li = document.createElement('li'); li.textContent = `Cable no listado → Ubicación → ${campo}`; errList.appendChild(li);
-        famErrors.add('Cable no listado');
-      }
+      if (el) el.classList.remove('err');
     });
   }
 
