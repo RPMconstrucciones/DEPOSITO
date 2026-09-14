@@ -1573,6 +1573,18 @@ const MARCAS_CABLE = ['Prysmian','Cimet','Marlew','Argenplas','IMSA','Fonseca','
 // y no escribe la unidad, se le agrega " mm²" automáticamente al enviar.
 const FAMILIAS_SECCION_MM2 = ['unipolar','ttr','desnudo','subterraneo'];
 
+const SECCION_SUB = {
+  "1 conductor (Unipolar)": ["1,5","2,5","4","6","10","16","25","35","50","70","95","120","150","185","240","300"],
+  "1 conductor (Media Tensión 13,2 kV)": ["50","70","95","120","150","185","240","300"],
+  "2 conductores": ["1,5","2,5","4","6","10","16","25","35"],
+  "3 conductores": ["1,5","2,5","4","6","10","16","25","35"],
+  "3 conductores (Media Tensión 13,2 kV)": ["95/35","95/50","120/50","120/70","185/50","185/95"],
+  "4 conductores": ["1,5","2,5","4","6","10","16","25","35"],
+  "Trifásico con neutro reducido": ["25/16","35/16","50/25","70/35","95/50","120/70","150/70","185/95","240/120"],
+  "Comando / Multipar": ["5x1,5","7x1,5","10x1,5","12x1,5"]
+};
+window.SECCION_SUB = SECCION_SUB;
+
 function uOpts(fam) { return (UNITS[fam]||['m']).map(u=>`<option value="${u}">${u}</option>`).join(''); }
 function opts(arr)  { return arr.map(v=>`<option value="${v}">${v}</option>`).join(''); }
 function optsMM2(arr){ return arr.map(v=>`<option value="${v} mm²">${v} mm²</option>`).join(''); }
@@ -1904,24 +1916,13 @@ function addItem(fam) {
       <input type="text" name="ttr_observaciones_${n}" placeholder="Ej: nueva / 50% / N° bobina...">`;
   }
   else if (fam === 'subterraneo') {
-    const SECCION_SUB = {
-      "1 conductor (Unipolar)": ["1,5","2,5","4","6","10","16","25","35","50","70","95","120","150","185","240","300"],
-      "1 conductor (Media Tensión 13,2 kV)": ["50","70","95","120","150","185","240","300"],
-      "2 conductores": ["1,5","2,5","4","6","10","16","25","35"],
-      "3 conductores": ["1,5","2,5","4","6","10","16","25","35"],
-      "3 conductores (Media Tensión 13,2 kV)": ["95/35","95/50","120/50","120/70","185/50","185/95"],
-      "4 conductores": ["1,5","2,5","4","6","10","16","25","35"],
-      "Trifásico con neutro reducido": ["25/16","35/16","50/25","70/35","95/50","120/70","150/70","185/95","240/120"],
-      "Comando / Multipar": ["5x1,5","7x1,5","10x1,5","12x1,5"]
-    };
-    window.SECCION_SUB = SECCION_SUB;
     campos = `
       ${lbl('subterraneo','material','Material')}
       <select name="subterraneo_material_${n}" data-fam="subterraneo" data-campo="material"><option value="">— Seleccioná material —</option>${opts(['Cobre','Aluminio'])}</select>
       ${lbl('subterraneo','configuracion','Configuración (N° de conductores)')}
-      <select name="subterraneo_configuracion_${n}" data-fam="subterraneo" data-campo="configuracion" onchange="actualizarSubterraneoCable(${n})"><option value="">— Seleccioná —</option>${opts(Object.keys(SECCION_SUB))}</select>
+      <select name="subterraneo_configuracion_${n}" data-fam="subterraneo" data-campo="configuracion" onchange="actualizarSubterraneoCable(${n})" oninput="actualizarSubterraneoCable(${n})"><option value="">— Seleccioná —</option>${opts(Object.keys(SECCION_SUB))}</select>
       ${lbl('subterraneo','seccion','Sección mm²')}
-      <select name="subterraneo_seccion_${n}" data-fam="subterraneo" data-campo="seccion"><option value="">— Elegí configuración primero —</option></select>
+      <select name="subterraneo_seccion_${n}" data-fam="subterraneo" data-campo="seccion" onfocus="if(this.options.length<=1)actualizarSubterraneoCable(${n})"><option value="">— Elegí configuración primero —</option></select>
       ${marcaField('subterraneo', n)}
       ${presentacionField('subterraneo', n)}
       ${lbl('subterraneo','cantidad','Cantidad (metros)')}${qtyRow}
@@ -2002,10 +2003,19 @@ function addItem(fam) {
 function actualizarSubterraneoCable(n) {
   const configSel  = document.querySelector(`[name='subterraneo_configuracion_${n}']`);
   const seccionSel = document.querySelector(`[name='subterraneo_seccion_${n}']`);
+  if (!configSel || !seccionSel) return;
+  const configVal = configSel.value;
+  if (!configVal) {
+    seccionSel.innerHTML = '<option value="">— Elegí configuración primero —</option>';
+    return;
+  }
   const seccionActual = seccionSel.value;
-  const secciones = (window.SECCION_SUB && window.SECCION_SUB[configSel.value]) || [];
-  seccionSel.innerHTML = '<option value="">— Seleccioná —</option>' + optsMM2ConOtro(secciones);
-  if (secciones.includes(seccionActual)) seccionSel.value = seccionActual;
+  const secciones = (SECCION_SUB && SECCION_SUB[configVal]) || [];
+  seccionSel.innerHTML = '<option value="">— Seleccioná sección —</option>' + optsMM2ConOtro(secciones);
+  if (seccionActual) {
+    const matchOpt = Array.from(seccionSel.options).find(o => o.value === seccionActual || o.value === (seccionActual + ' mm²'));
+    if (matchOpt) seccionSel.value = matchOpt.value;
+  }
   const bloque = seccionSel.closest('.item-block');
   if (bloque) agregarCamposOtro(bloque, 'subterraneo');
 }
@@ -2179,12 +2189,24 @@ function restaurarBorrador() {
       const cont = document.getElementById('items_' + fam);
       const bloque = cont ? cont.lastElementChild : null;
       if (!bloque) return;
+      const n = bloque.id.split('_').pop();
       Object.entries(item).forEach(([name, value]) => {
         const campo = bloque.querySelector(`[name="${name}"]`);
         if (!campo) return;
         campo.value = value;
-        if (name.includes('_presentacion_') && !name.includes('_otro')) togglePresentacionCable(campo, `${fam}_${bloque.id.split('_').pop()}`);
+        if (name.includes('_presentacion_') && !name.includes('_otro')) togglePresentacionCable(campo, `${fam}_${n}`);
       });
+      if (fam === 'subterraneo') {
+        actualizarSubterraneoCable(n);
+        const seccionVal = item[`subterraneo_seccion_${n}`];
+        if (seccionVal) {
+          const seccionSel = bloque.querySelector(`[name="subterraneo_seccion_${n}"]`);
+          if (seccionSel) {
+            const match = Array.from(seccionSel.options).find(o => o.value === seccionVal || o.value === (seccionVal + ' mm²'));
+            if (match) seccionSel.value = match.value;
+          }
+        }
+      }
       bloque.querySelectorAll('select[data-campo]').forEach(sel => {
         if (sel.value === 'Otro') {
           const otro = sel.nextElementSibling;
