@@ -584,13 +584,13 @@ button, .sc-icon-btn, .btn-mov { outline: none; }
           <option value="200">200</option>
           <option value="300">300</option>
           <option value="500">500</option>
-          <option value="Bobina (peso variable)">Bobina (peso variable)</option>
+          <option value="Bobina">Bobina</option>
           <option value="OTRO">Otro (especificar metros)…</option>
         </select>
         <div id="pesobob_nuevo" style="display:none">
-          <label>Peso de bobina (kg) <span class="req">*</span></label>
+          <label>Peso de bobina (kg) <span class="opc">(opcional)</span></label>
           <input type="number" id="nuevo_peso_bobina" data-campo="peso_bobina" min="0" step="0.1" placeholder="Ej: 25">
-          <div class="nota-warn show">⚖️ Viene en bobina (no en rollo de largo fijo) — indicá el peso, es obligatorio.</div>
+          <div class="nota-warn show">⚖️ Viene en bobina (no en rollo de largo fijo) — el peso es opcional.</div>
         </div>
         <div id="otropres_nuevo" style="display:none">
           <label>Metros por rollo <span class="req">*</span></label>
@@ -1801,19 +1801,19 @@ function showOther(sel, otherId) {
   if (sel.value !== 'OTRO') el.value = '';
 }
 
-// ── Presentación por rollo: incluye "Bobina (peso variable)" y "Otro" ──
+// ── Presentación por rollo: incluye "Bobina" y "Otro" ──
 function presentacionField(fam, n) {
   return `${lbl(fam,'presentacion','Presentación por rollo (m)')}
     <select name="${fam}_presentacion_${n}" data-fam="${fam}" data-campo="presentacion" onchange="togglePresentacionCable(this,'${fam}_${n}')">
       <option value="">— Seleccioná presentación —</option>
       ${opts(['100','150','200','300','500'])}
-      <option value="Bobina (peso variable)">Bobina (peso variable)</option>
+      <option value="Bobina">Bobina</option>
       <option value="OTRO">Otro (especificar metros)…</option>
     </select>
     <div id="pesobob_${fam}_${n}" style="display:none">
-      <label>Peso de bobina (kg) <span class="req">*</span></label>
+      <label>Peso de bobina (kg) <span class="opc">(opcional)</span></label>
       <input type="number" name="${fam}_peso_${n}" data-fam="${fam}" data-campo="peso_bobina" min="0" step="0.1" placeholder="Ej: 25">
-      <div class="nota-warn show">⚖️ Viene en bobina (no en rollo de largo fijo) — indicá el peso, es obligatorio.</div>
+      <div class="nota-warn show">⚖️ Viene en bobina (no en rollo de largo fijo) — el peso es opcional.</div>
     </div>
     <div id="otropres_${fam}_${n}" style="display:none">
       <label>Metros por rollo <span class="req">*</span></label>
@@ -1823,7 +1823,7 @@ function presentacionField(fam, n) {
 function togglePresentacionCable(sel, key) {
   const divPeso = document.getElementById(`pesobob_${key}`);
   const divOtro = document.getElementById(`otropres_${key}`);
-  const esBobina = sel.value === 'Bobina (peso variable)';
+  const esBobina = sel.value === 'Bobina' || sel.value === 'Bobina (peso variable)';
   const esOtro   = sel.value === 'OTRO';
   if (divPeso) {
     divPeso.style.display = esBobina ? 'block' : 'none';
@@ -2028,14 +2028,10 @@ function validateBlock(fam, block) {
     else { el.classList.remove('err'); if (errEl) errEl.classList.remove('show'); }
   });
 
-  // Presentación en Bobina: peso obligatorio
+  // Presentación en Bobina: peso opcional
   const pesoEl = block.querySelector('[data-campo="peso_bobina"]');
   if (pesoEl) {
-    const pesoDiv = pesoEl.closest('div[id^="pesobob_"]');
-    if (pesoDiv && pesoDiv.style.display === 'block') {
-      const v = pesoEl.value ? pesoEl.value.trim() : '';
-      if (!v) { pesoEl.classList.add('err'); errs.push('Peso de bobina (kg)'); } else { pesoEl.classList.remove('err'); }
-    }
+    pesoEl.classList.remove('err');
   }
   // Presentación "Otro": metros obligatorios
   const otroPresEl = block.querySelector('[data-campo="presentacion_otro"]');
@@ -2326,14 +2322,8 @@ async function submitForm() {
 
   // Presentación de "Cable no listado": si eligió Bobina o Otro, validar el complemento
   let pnPresentacion = document.getElementById('nuevo_presentacion').value;
-  if (nuevoDesc && pnPresentacion === 'Bobina (peso variable)') {
-    const peso = document.getElementById('nuevo_peso_bobina').value.trim();
-    if (!peso) {
-      hasError = true;
-      document.getElementById('nuevo_peso_bobina').classList.add('err');
-      const li = document.createElement('li'); li.textContent = 'Cable no listado → Peso de bobina (kg)'; errList.appendChild(li);
-      famErrors.add('Cable no listado');
-    }
+  if (nuevoDesc && (pnPresentacion === 'Bobina' || pnPresentacion === 'Bobina (peso variable)')) {
+    document.getElementById('nuevo_peso_bobina')?.classList.remove('err');
   } else if (nuevoDesc && pnPresentacion === 'OTRO') {
     const metros = document.getElementById('nuevo_presentacion_otro').value.trim();
     if (!metros) {
@@ -2366,15 +2356,16 @@ async function submitForm() {
 
   if (nuevoDesc) {
     payload.producto_nuevo = {
-      descripcion: nuevoDesc,
-      cantidad:    document.getElementById('nuevo_cantidad').value,
-      unidad:      document.getElementById('nuevo_unidad').value,
+      descripcion:  nuevoDesc,
+      cantidad:     document.getElementById('nuevo_cantidad').value,
+      unidad:       document.getElementById('nuevo_unidad').value,
       presentacion: pnPresentacion,
-      observacion: document.getElementById('nuevo_observacion').value.trim(),
-      deposito:    document.getElementById('nuevo_deposito').value,
-      estante:     document.getElementById('nuevo_estante').value,
-      columna:     document.getElementById('nuevo_columna').value,
-      fila:        document.getElementById('nuevo_fila').value,
+      peso_bobina:  document.getElementById('nuevo_peso_bobina')?.value || '',
+      observacion:  document.getElementById('nuevo_observacion').value.trim(),
+      deposito:     document.getElementById('nuevo_deposito').value,
+      estante:      document.getElementById('nuevo_estante').value,
+      columna:      document.getElementById('nuevo_columna').value,
+      fila:         document.getElementById('nuevo_fila').value,
     };
   }
 
