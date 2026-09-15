@@ -159,6 +159,7 @@
             display: flex;
             gap: 8px;
             align-items: flex-start;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -177,6 +178,7 @@
             gap: 6px;
             transition: .15s border-color, .15s background;
             white-space: nowrap;
+            text-decoration: none;
         }
 
         .btn:hover {
@@ -1216,6 +1218,7 @@
                         id="statusText">Conectando…</span></div>
             </div>
             <div class="header-actions">
+                <a href="buscador-stock.html" class="btn small" id="btnBuscadorStock" title="Ir al Buscador General de Stock">🔍 Buscador Stock</a>
                 <button class="btn primary small" id="btnNewProduct">➕ Nuevo Producto</button>
                 <button class="btn ghost small" id="btnRefresh">↻ Actualizar</button>
                 <button class="btn small" id="btnExport">📊 Exportar a Excel</button>
