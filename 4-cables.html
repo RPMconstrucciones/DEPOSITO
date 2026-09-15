@@ -2354,7 +2354,12 @@
             <label>Peso de bobina (kg) <span class="opc">(opcional)</span></label>
             <input type="number" id="nuevo_peso_bobina" data-campo="peso_bobina" min="0" step="0.1"
               placeholder="Ej: 25">
-            <div class="nota-warn show">⚖️ Viene en bobina (no en rollo de largo fijo) — el peso es opcional.</div>
+            <label>N° de bobina <span class="opc">(opcional)</span></label>
+            <input type="text" id="nuevo_nro_bobina" data-campo="nro_bobina" placeholder="Ej: 312">
+            <label>Código de bobina <span class="opc">(opcional)</span></label>
+            <input type="text" id="nuevo_codigo_bobina" data-campo="codigo_bobina" placeholder="Ej: PRY-2024-0312">
+            <div class="nota-warn show">⚖️ Viene en bobina (no en rollo de largo fijo) — el peso, el N° y el código de
+              bobina son opcionales.</div>
           </div>
           <div id="otropres_nuevo" style="display:none">
             <label>Metros por rollo <span class="req">*</span></label>
@@ -3508,7 +3513,7 @@
       bloque.querySelectorAll('[data-fam][data-campo]').forEach(el => {
         if (el.dataset.fam !== fam) return;
         const campo = el.dataset.campo;
-        if (['cantidad', 'unidad', 'deposito', 'estante', 'columna', 'fila', 'peso_bobina', 'presentacion_otro', 'observaciones'].includes(campo)) return;
+        if (['cantidad', 'unidad', 'deposito', 'estante', 'columna', 'fila', 'peso_bobina', 'nro_bobina', 'codigo_bobina', 'presentacion_otro', 'observaciones'].includes(campo)) return;
         if (el.value && el.value !== 'OTRO' && el.value !== 'Otro') partes.push(el.value.trim());
       });
       return partes.join('|');
@@ -3602,7 +3607,11 @@
     <div id="pesobob_${fam}_${n}" style="display:none">
       <label>Peso de bobina (kg) <span class="opc">(opcional)</span></label>
       <input type="number" name="${fam}_peso_${n}" data-fam="${fam}" data-campo="peso_bobina" min="0" step="0.1" placeholder="Ej: 25">
-      <div class="nota-warn show">⚖️ Viene en bobina (no en rollo de largo fijo) — el peso es opcional.</div>
+      <label>N° de bobina <span class="opc">(opcional)</span></label>
+      <input type="text" name="${fam}_nrobob_${n}" data-fam="${fam}" data-campo="nro_bobina" placeholder="Ej: 312">
+      <label>Código de bobina <span class="opc">(opcional)</span></label>
+      <input type="text" name="${fam}_codbob_${n}" data-fam="${fam}" data-campo="codigo_bobina" placeholder="Ej: PRY-2024-0312">
+      <div class="nota-warn show">⚖️ Viene en bobina (no en rollo de largo fijo) — el peso, el N° y el código de bobina son opcionales.</div>
     </div>
     <div id="otropres_${fam}_${n}" style="display:none">
       <label>Metros por rollo <span class="req">*</span></label>
@@ -3616,7 +3625,9 @@
       const esOtro = sel.value === 'OTRO';
       if (divPeso) {
         divPeso.style.display = esBobina ? 'block' : 'none';
-        if (!esBobina) { const inp = divPeso.querySelector('[data-campo="peso_bobina"]'); if (inp) { inp.value = ''; inp.classList.remove('err'); } }
+        if (!esBobina) {
+          divPeso.querySelectorAll('[data-campo="peso_bobina"], [data-campo="nro_bobina"], [data-campo="codigo_bobina"]').forEach(inp => { inp.value = ''; inp.classList.remove('err'); });
+        }
       }
       if (divOtro) {
         divOtro.style.display = esOtro ? 'block' : 'none';
@@ -3770,7 +3781,7 @@
         bloque.querySelectorAll('input[type="text"]').forEach(inp => forzarMayusculas(inp));
         bloque.querySelectorAll('[data-fam][data-campo]').forEach(el => {
           if (el.dataset.fam !== fam) return;
-          if (['cantidad', 'unidad', 'deposito', 'estante', 'columna', 'fila', 'peso_bobina', 'presentacion_otro'].includes(el.dataset.campo)) return;
+          if (['cantidad', 'unidad', 'deposito', 'estante', 'columna', 'fila', 'peso_bobina', 'nro_bobina', 'codigo_bobina', 'presentacion_otro'].includes(el.dataset.campo)) return;
           el.addEventListener('change', () => buscarUbicacionSiCorresponde(fam, n));
         });
         actualizarVisibilidadUbicacionItem(fam, n, document.getElementById('tipo_movimiento').value);
@@ -3815,10 +3826,18 @@
         else { el.classList.remove('err'); if (errEl) errEl.classList.remove('show'); }
       });
 
-      // Presentación en Bobina: peso opcional
+      // Presentación en Bobina: peso y N° de bobina opcionales
       const pesoEl = block.querySelector('[data-campo="peso_bobina"]');
       if (pesoEl) {
         pesoEl.classList.remove('err');
+      }
+      const nroBobEl = block.querySelector('[data-campo="nro_bobina"]');
+      if (nroBobEl) {
+        nroBobEl.classList.remove('err');
+      }
+      const codBobEl = block.querySelector('[data-campo="codigo_bobina"]');
+      if (codBobEl) {
+        codBobEl.classList.remove('err');
       }
       // Presentación "Otro": metros obligatorios
       const otroPresEl = block.querySelector('[data-campo="presentacion_otro"]');
@@ -3903,6 +3922,8 @@
         nuevo_unidad: document.getElementById('nuevo_unidad').value,
         nuevo_presentacion: document.getElementById('nuevo_presentacion').value,
         nuevo_peso_bobina: document.getElementById('nuevo_peso_bobina').value,
+        nuevo_nro_bobina: document.getElementById('nuevo_nro_bobina').value,
+        nuevo_codigo_bobina: document.getElementById('nuevo_codigo_bobina').value,
         nuevo_presentacion_otro: document.getElementById('nuevo_presentacion_otro').value,
         nuevo_observacion: document.getElementById('nuevo_observacion').value,
         nuevo_deposito: document.getElementById('nuevo_deposito').value,
@@ -3949,6 +3970,8 @@
       document.getElementById('nuevo_unidad').value = estado.nuevo_unidad || 'm';
       document.getElementById('nuevo_presentacion').value = estado.nuevo_presentacion || '';
       document.getElementById('nuevo_peso_bobina').value = estado.nuevo_peso_bobina || '';
+      document.getElementById('nuevo_nro_bobina').value = estado.nuevo_nro_bobina || '';
+      document.getElementById('nuevo_codigo_bobina').value = estado.nuevo_codigo_bobina || '';
       document.getElementById('nuevo_presentacion_otro').value = estado.nuevo_presentacion_otro || '';
       togglePresentacionCable(document.getElementById('nuevo_presentacion'), 'nuevo');
       document.getElementById('nuevo_observacion').value = estado.nuevo_observacion || '';
@@ -4011,6 +4034,8 @@
       document.getElementById('nuevo_unidad').value = 'm';
       document.getElementById('nuevo_presentacion').value = '';
       document.getElementById('nuevo_peso_bobina').value = '';
+      document.getElementById('nuevo_nro_bobina').value = '';
+      document.getElementById('nuevo_codigo_bobina').value = '';
       document.getElementById('nuevo_presentacion_otro').value = '';
       document.getElementById('pesobob_nuevo').style.display = 'none';
       document.getElementById('otropres_nuevo').style.display = 'none';
@@ -4118,6 +4143,8 @@
       let pnPresentacion = document.getElementById('nuevo_presentacion').value;
       if (nuevoDesc && (pnPresentacion === 'Bobina' || pnPresentacion === 'Bobina (peso variable)')) {
         document.getElementById('nuevo_peso_bobina')?.classList.remove('err');
+        document.getElementById('nuevo_nro_bobina')?.classList.remove('err');
+        document.getElementById('nuevo_codigo_bobina')?.classList.remove('err');
       } else if (nuevoDesc && pnPresentacion === 'OTRO') {
         const metros = document.getElementById('nuevo_presentacion_otro').value.trim();
         if (!metros) {
@@ -4155,6 +4182,8 @@
           unidad: document.getElementById('nuevo_unidad').value,
           presentacion: pnPresentacion,
           peso_bobina: document.getElementById('nuevo_peso_bobina')?.value || '',
+          nro_bobina: document.getElementById('nuevo_nro_bobina')?.value.trim() || '',
+          codigo_bobina: document.getElementById('nuevo_codigo_bobina')?.value.trim() || '',
           observacion: document.getElementById('nuevo_observacion').value.trim(),
           deposito: document.getElementById('nuevo_deposito').value,
           estante: document.getElementById('nuevo_estante').value,
@@ -4202,6 +4231,8 @@
       forzarMayusculas(document.getElementById('obra_otro'));
       forzarMayusculas(document.getElementById('nuevo_descripcion'));
       forzarMayusculas(document.getElementById('nuevo_observacion'));
+      forzarMayusculas(document.getElementById('nuevo_nro_bobina'));
+      forzarMayusculas(document.getElementById('nuevo_codigo_bobina'));
       forzarMayusculas(document.getElementById('observaciones'));
 
       const estSel = document.getElementById('nuevo_estante');
