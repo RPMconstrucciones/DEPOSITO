@@ -3875,13 +3875,16 @@
     }
 
     let draftTimer = null;
+    let borradorBloqueado = false;
 
     function actualizarEstadoBorrador(texto) {
+
       const el = document.getElementById('borrador_estado');
       if (el) el.textContent = texto;
     }
 
     function guardarBorrador() {
+      if (borradorBloqueado) return;
       const estado = {
         tipo_movimiento: document.getElementById('tipo_movimiento').value,
         responsable: document.getElementById('responsable').value,
@@ -4006,6 +4009,8 @@
     }
 
     function resetForm(limpiarBorrador = true) {
+      clearTimeout(draftTimer);
+      borradorBloqueado = false;
       if (limpiarBorrador) { try { localStorage.removeItem(CONFIG.storageKey); } catch (e) { } }
       document.getElementById('tipo_movimiento').value = '';
       document.getElementById('responsable').value = '';
@@ -4200,6 +4205,9 @@
       const btn = document.getElementById('btn-submit');
       btn.disabled = true; btn.textContent = 'Enviando...';
 
+      clearTimeout(draftTimer);
+      borradorBloqueado = true;
+
       try {
         await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
@@ -4214,6 +4222,7 @@
         btn.style.display = 'none';
         stockLoaded = false;
       } catch {
+        borradorBloqueado = false;
         alert('Error al enviar. Verificá tu conexión.');
         btn.disabled = false; btn.textContent = 'Registrar movimiento';
       }
@@ -4273,10 +4282,11 @@
         });
       }
 
-      document.addEventListener('input', function (e) {
+      const pantallaForm = document.getElementById('screen-form');
+      pantallaForm.addEventListener('input', function (e) {
         if (e.target.matches('input, select, textarea')) programarGuardado();
       });
-      document.addEventListener('change', function (e) {
+      pantallaForm.addEventListener('change', function (e) {
         if (e.target.matches('input, select, textarea')) programarGuardado();
       });
       restaurarBorrador();

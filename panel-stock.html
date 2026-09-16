@@ -876,7 +876,8 @@
         }
 
         #editProductOverlay .modal,
-        #newProductOverlay .modal {
+        #newProductOverlay .modal,
+        #adjustBatchOverlay .modal {
             padding: 0;
             max-height: 90vh;
             display: flex;
@@ -886,7 +887,8 @@
         }
 
         #editProductOverlay .modal-body,
-        #newProductOverlay .modal-body {
+        #newProductOverlay .modal-body,
+        #adjustBatchOverlay .modal-body {
             overflow-y: auto;
             padding: 20px 20px 10px 20px;
             scrollbar-width: thin;
@@ -894,28 +896,33 @@
         }
 
         #editProductOverlay .modal-body::-webkit-scrollbar,
-        #newProductOverlay .modal-body::-webkit-scrollbar {
+        #newProductOverlay .modal-body::-webkit-scrollbar,
+        #adjustBatchOverlay .modal-body::-webkit-scrollbar {
             width: 5px;
         }
 
         #editProductOverlay .modal-body::-webkit-scrollbar-track,
-        #newProductOverlay .modal-body::-webkit-scrollbar-track {
+        #newProductOverlay .modal-body::-webkit-scrollbar-track,
+        #adjustBatchOverlay .modal-body::-webkit-scrollbar-track {
             background: transparent;
         }
 
         #editProductOverlay .modal-body::-webkit-scrollbar-thumb,
-        #newProductOverlay .modal-body::-webkit-scrollbar-thumb {
+        #newProductOverlay .modal-body::-webkit-scrollbar-thumb,
+        #adjustBatchOverlay .modal-body::-webkit-scrollbar-thumb {
             background: var(--line);
             border-radius: 6px;
         }
 
         #editProductOverlay .modal-body::-webkit-scrollbar-thumb:hover,
-        #newProductOverlay .modal-body::-webkit-scrollbar-thumb:hover {
+        #newProductOverlay .modal-body::-webkit-scrollbar-thumb:hover,
+        #adjustBatchOverlay .modal-body::-webkit-scrollbar-thumb:hover {
             background: var(--txt-faint);
         }
 
         #editProductOverlay .modal-actions,
-        #newProductOverlay .modal-actions {
+        #newProductOverlay .modal-actions,
+        #adjustBatchOverlay .modal-actions {
             margin-top: 0;
             padding: 14px 20px;
             border-top: 1px solid var(--line);
@@ -1067,7 +1074,7 @@
             font-size: 13px;
             padding: 10px 18px;
             border-radius: 12px;
-            z-index: 65;
+            z-index: 40;
             display: flex;
             align-items: center;
             gap: 16px;
@@ -1410,7 +1417,7 @@
                     <div style="display: flex; flex-direction: column;">
                         <label
                             style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Depósito</label>
-                        <select id="editProdUbiDep"
+                        <select id="editProdUbiDep" onchange="toggleCustomEditUbiDepInput(this)"
                             style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box; cursor: pointer;">
                             <option value="">—</option>
                             <option value="1">1</option>
@@ -1421,6 +1428,7 @@
                             <option value="5B">5B</option>
                             <option value="5C">5C</option>
                             <option value="6">6</option>
+                            <option value="__OTRO__">➕ Otro...</option>
                         </select>
                     </div>
                     <div style="display: flex; flex-direction: column;">
@@ -1442,6 +1450,7 @@
                             style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 800; font-size: 13px; text-transform: uppercase; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
                     </div>
                 </div>
+                <input type="text" id="editProdUbiDepCustom" placeholder="Nombre/Nº del depósito personalizado..." style="display:none; margin-top:8px; text-transform:uppercase;">
             </div>
 
             <div class="field"
@@ -1527,7 +1536,7 @@
                     </div>
                     <div>
                         <label>Familia <span style="color:var(--bad-fg);">*</span></label>
-                        <select id="newProdFamiliaSel" onchange="toggleCustomFamiliaInput(this)" style="width:100%;"></select>
+                        <select id="newProdFamiliaSel" onchange="toggleCustomFamiliaInput(this)" style="width:100%;">
                             <option value="">Seleccionar o escribir...</option>
                         </select>
                         <input type="text" id="newProdFamiliaCustom" placeholder="Escribir familia..." oninput="this.value=this.value.toUpperCase()" style="display:none; margin-top:4px; text-transform:uppercase;">
@@ -1659,48 +1668,50 @@
     <!-- Batch Adjust Modal -->
     <div class="overlay" id="adjustBatchOverlay">
         <div class="modal" style="max-width: 500px; width: 90%;">
-            <h3>⚡ Movimiento en Lote</h3>
-            <div class="sub" style="margin-bottom: 12px;">Ingresá la cantidad a mover para cada producto:</div>
+            <div class="modal-body">
+                <h3>⚡ Movimiento en Lote</h3>
+                <div class="sub" style="margin-bottom: 12px;">Ingresá la cantidad a mover para cada producto:</div>
 
-            <div class="field">
-                <label>Movimiento</label>
-                <div class="seg" id="batchTipoSeg">
-                    <button type="button" data-tipo="ENTRADA">+ Entrada</button>
-                    <button type="button" data-tipo="SALIDA" class="active">− Salida</button>
-                    <button type="button" data-tipo="DEVOLUCIÓN">↩ Devol.</button>
+                <div class="field">
+                    <label>Movimiento</label>
+                    <div class="seg" id="batchTipoSeg">
+                        <button type="button" data-tipo="ENTRADA">+ Entrada</button>
+                        <button type="button" data-tipo="SALIDA" class="active">− Salida</button>
+                        <button type="button" data-tipo="DEVOLUCIÓN">↩ Devol.</button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <label>Productos y Cantidades</label>
-                <div class="batch-items-list" id="batchItemsList"
-                    style="max-height: 200px; overflow-y: auto; background: var(--bg-elev); border: 1.5px solid var(--line); border-radius: 9px; padding: 6px 10px;">
-                    <!-- Se llena dinámicamente -->
+                <div class="field">
+                    <label>Productos y Cantidades</label>
+                    <div class="batch-items-list" id="batchItemsList"
+                        style="max-height: 200px; overflow-y: auto; background: var(--bg-elev); border: 1.5px solid var(--line); border-radius: 9px; padding: 6px 10px;">
+                        <!-- Se llena dinámicamente -->
+                    </div>
                 </div>
-            </div>
 
-            <div class="field">
-                <button type="button" class="btn primary" id="adjustBatchAddMore"
-                    style="width: 100%; display: block; font-size: 13px; font-weight: 700; background: #2563eb; color: #fff; padding: 10px; border-radius: 8px; border: none; cursor: pointer; text-align: center; margin-top: 10px;">➕
-                    Agregar más productos al lote</button>
-            </div>
+                <div class="field">
+                    <button type="button" class="btn primary" id="adjustBatchAddMore"
+                        style="width: 100%; display: block; font-size: 13px; font-weight: 700; background: #2563eb; color: #fff; padding: 10px; border-radius: 8px; border: none; cursor: pointer; text-align: center; margin-top: 10px;">➕
+                        Agregar más productos al lote</button>
+                </div>
 
-            <div class="field">
-                <label>Responsable</label>
-                <input type="text" id="adjustBatchResponsable" placeholder="Nombre de quien retira/entrega">
-            </div>
+                <div class="field">
+                    <label>Responsable</label>
+                    <input type="text" id="adjustBatchResponsable" placeholder="Nombre de quien retira/entrega">
+                </div>
 
-            <div class="field">
-                <label>Obra / destino (opcional)</label>
-                <input type="text" id="adjustBatchObra" placeholder="Obra, Mantenimiento, etc.">
-            </div>
+                <div class="field">
+                    <label>Obra / destino (opcional)</label>
+                    <input type="text" id="adjustBatchObra" placeholder="Obra, Mantenimiento, etc.">
+                </div>
 
-            <div class="field">
-                <label>Observaciones generales del envío (opcional)</label>
-                <input type="text" id="adjustBatchObsGeneral" placeholder="Transporte, motivo o aclaración del envío…" style="text-transform:uppercase;">
-            </div>
+                <div class="field">
+                    <label>Observaciones generales del envío (opcional)</label>
+                    <input type="text" id="adjustBatchObsGeneral" placeholder="Transporte, motivo o aclaración del envío…" style="text-transform:uppercase;">
+                </div>
 
-            <div class="modal-err" id="adjustBatchErr"></div>
+                <div class="modal-err" id="adjustBatchErr"></div>
+            </div>
 
             <div class="modal-actions">
                 <button class="btn ghost" id="adjustBatchCancel">Cancelar</button>
@@ -2196,8 +2207,19 @@
             document.getElementById('editProdMarca').value = p.marca || '';
             document.getElementById('editProdFamilia').value = p.familia || '';
             document.getElementById('editProdMin').value = p.stock_minimo || 0;
-            document.getElementById('editProdUbiDep').value = p.ubicacion_deposito || '';
-            document.getElementById('editProdUbiEst').value = (p.ubicacion_estante !== undefined && p.ubicacion_estante !== null) ? p.ubicacion_estante : '';
+            const depOriginal = (p.ubicacion_deposito || '').trim();
+            const selEditDep = document.getElementById('editProdUbiDep');
+            const opcionesFijas = ['', '1', '2', '3', '4', '5A', '5B', '5C', '6'];
+            const editUbiDepCustom = document.getElementById('editProdUbiDepCustom');
+            if (opcionesFijas.includes(depOriginal.toUpperCase())) {
+                selEditDep.value = depOriginal;
+                editUbiDepCustom.style.display = 'none';
+                editUbiDepCustom.value = '';
+            } else {
+                selEditDep.value = '__OTRO__';
+                editUbiDepCustom.style.display = 'block';
+                editUbiDepCustom.value = depOriginal;
+            }            document.getElementById('editProdUbiEst').value = (p.ubicacion_estante !== undefined && p.ubicacion_estante !== null) ? p.ubicacion_estante : '';
             document.getElementById('editProdUbiCol').value = (p.ubicacion_columna !== undefined && p.ubicacion_columna !== null) ? p.ubicacion_columna : '';
             document.getElementById('editProdUbiFila').value = (p.ubicacion_fila || '').toUpperCase();
             document.getElementById('editProdObs').value = p.ult_obs || '';
@@ -2223,7 +2245,10 @@
             const nuevaMarca = document.getElementById('editProdMarca').value.trim();
             const nuevaFamilia = document.getElementById('editProdFamilia').value.trim();
             const nuevoMin = Number(document.getElementById('editProdMin').value) || 0;
-            const nuevaUbiDep = document.getElementById('editProdUbiDep').value.trim();
+            const selEditDepVal = document.getElementById('editProdUbiDep').value;
+            const nuevaUbiDep = selEditDepVal === '__OTRO__'
+                ? document.getElementById('editProdUbiDepCustom').value.trim().toUpperCase()
+                : selEditDepVal.trim();
             const nuevaUbiEst = document.getElementById('editProdUbiEst').value.trim();
             const nuevaUbiCol = document.getElementById('editProdUbiCol').value.trim();
             let nuevaUbiFila = document.getElementById('editProdUbiFila').value.trim().toUpperCase();
@@ -2462,6 +2487,16 @@
             }
         }
 
+        function toggleCustomEditUbiDepInput(sel) {
+            const customInput = document.getElementById('editProdUbiDepCustom');
+            if (!customInput) return;
+            if (sel.value === '__OTRO__') {
+                customInput.style.display = 'block';
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+            }
+        }
         function actualizarVisibilidadAclaracionUbi() {
             const est = (document.getElementById('newProdUbiEst')?.value || '').trim();
             const col = (document.getElementById('newProdUbiCol')?.value || '').trim();
@@ -2994,6 +3029,38 @@ async function confirmNewProduct() {
             }
         }
 
+        function buildBatchItemRowHtml(p) {
+            const preVal = state.batchDraftQtys[p.id] !== undefined ? state.batchDraftQtys[p.id] : 1;
+            return `
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line-soft);">
+                    <div style="flex: 1; min-width: 0; padding-right: 12px; text-align: left;">
+                        <div style="font-weight: 600; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHtml(p.descripcion)}</div>
+                        <div style="font-size: 11px; color: var(--txt-dim);"><span style="color:var(--accent);font-weight:600;">${escapeHtml(p.zona || '')}</span> · ID: ${escapeHtml(p.id)} | Stock: ${p.stock_actual} ${escapeHtml(p.unidad || 'un')}</div>
+                    </div>
+                    <div style="flex-shrink: 0; display: flex; align-items: center; gap: 6px;">
+                        <input type="number" class="batch-cant-input" data-id="${escapeAttr(p.id)}" min="0" step="1" value="${preVal}" style="width: 70px; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 6px; font-size: 13px; text-align: right; background: var(--bg-card); color: var(--txt); margin: 0;">
+                        <span style="font-size: 12px; color: var(--txt-dim); width: 22px;">${escapeHtml(p.unidad || 'un')}</span>
+                        <button type="button" onclick="quitarProductoDelLote('${escapeAttr(p.id)}')" title="Quitar del lote"
+                            style="width: 22px; height: 22px; border-radius: 50%; background: var(--bad-bg); color: var(--bad-fg); border: none; font-size: 12px; cursor: pointer; display:flex; align-items:center; justify-content:center; padding:0; flex-shrink:0;">✕</button>
+                    </div>
+                </div>`;
+        }
+
+        function quitarProductoDelLote(id) {
+            saveBatchDraftQtys();
+            state.selectedIds.delete(id);
+            delete state.batchDraftQtys[id];
+            renderStock(); // sincroniza checkboxes y la barra flotante con la tabla principal
+
+            const list = state.stock.filter(p => state.selectedIds.has(p.id));
+            if (list.length === 0) {
+                closeBatchAdjustModal();
+                showToast('Lote vacío — se cerró el movimiento en lote');
+                return;
+            }
+            document.getElementById('batchItemsList').innerHTML = list.map(buildBatchItemRowHtml).join('');
+        }
+
         function openBatchAdjustModal() {
             const list = state.stock.filter(p => state.selectedIds.has(p.id));
             if (list.length === 0) return;
@@ -3006,21 +3073,7 @@ async function confirmNewProduct() {
 
             // Rellenar lista de ítems con inputs individuales pre-cargados
             const container = document.getElementById('batchItemsList');
-            container.innerHTML = list.map(p => {
-                const preVal = state.batchDraftQtys[p.id] !== undefined ? state.batchDraftQtys[p.id] : 1;
-                return `
-                <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line-soft);">
-                    <div style="flex: 1; min-width: 0; padding-right: 12px; text-align: left;">
-                        <div style="font-weight: 600; font-size: 13px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${escapeHtml(p.descripcion)}</div>
-                        <div style="font-size: 11px; color: var(--txt-dim);"><span style="color:var(--accent);font-weight:600;">${escapeHtml(p.zona || '')}</span> · ID: ${escapeHtml(p.id)} | Stock: ${p.stock_actual} ${escapeHtml(p.unidad || 'un')}</div>
-                    </div>
-                    <div style="flex-shrink: 0; display: flex; align-items: center; gap: 4px;">
-                        <input type="number" class="batch-cant-input" data-id="${escapeAttr(p.id)}" min="0" step="1" value="${preVal}" style="width: 70px; padding: 6px 8px; border: 1.5px solid var(--line); border-radius: 6px; font-size: 13px; text-align: right; background: var(--bg-card); color: var(--txt); margin: 0;">
-                        <span style="font-size: 12px; color: var(--txt-dim); width: 22px;">${escapeHtml(p.unidad || 'un')}</span>
-                    </div>
-                </div>
-            `;
-            }).join('');
+            container.innerHTML = list.map(buildBatchItemRowHtml).join('');
 
             selectBatchTipo('SALIDA');
             document.getElementById('adjustBatchOverlay').classList.add('show');
