@@ -2244,7 +2244,6 @@
         <div class="f-section-title">Productos a registrar</div>
         <p style="font-size:12px;color:#9ca3af;margin-bottom:14px;">Tocá la familia para desplegar. Podés cargar varias
           en un mismo envío. La ubicación se pide en ENTRADA y DEVOLUCIÓN; en SALIDA no hace falta.</p>
-        <div id="borrador_estado" class="borrador-estado">Borrador guardado automáticamente en este navegador.</div>
 
         <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_lamparas')">
           💡 Lámpara / Foco <span class="acordeon-arrow">▾</span>
@@ -4282,14 +4281,7 @@
         });
       }
 
-      const pantallaForm = document.getElementById('screen-form');
-      pantallaForm.addEventListener('input', function (e) {
-        if (e.target.matches('input, select, textarea')) programarGuardado();
-      });
-      pantallaForm.addEventListener('change', function (e) {
-        if (e.target.matches('input, select, textarea')) programarGuardado();
-      });
-      restaurarBorrador();
+      try { localStorage.removeItem(CONFIG.storageKey); } catch (e) { }
       revisarDeepLinkProducto();
     });
 
