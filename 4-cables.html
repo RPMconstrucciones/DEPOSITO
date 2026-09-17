@@ -3356,14 +3356,10 @@
     const FAMILIAS_SECCION_MM2 = ['unipolar', 'ttr', 'desnudo', 'subterraneo'];
 
     const SECCION_SUB = {
-      "1 conductor (Unipolar)": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "50", "70", "95", "120", "150", "185", "240", "300"],
-      "1 conductor (Media Tensión 13,2 kV)": ["50", "70", "95", "120", "150", "185", "240", "300"],
+      "1 conductor": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "50", "70", "95", "120", "150", "185", "240", "300"],
       "2 conductores": ["1,5", "2,5", "4", "6", "10", "16", "25", "35"],
       "3 conductores": ["1,5", "2,5", "4", "6", "10", "16", "25", "35"],
-      "3 conductores (Media Tensión 13,2 kV)": ["95/35", "95/50", "120/50", "120/70", "185/50", "185/95"],
-      "4 conductores": ["1,5", "2,5", "4", "6", "10", "16", "25", "35"],
-      "Trifásico con neutro reducido": ["25/16", "35/16", "50/25", "70/35", "95/50", "120/70", "150/70", "185/95", "240/120"],
-      "Comando / Multipar": ["5x1,5", "7x1,5", "10x1,5", "12x1,5"]
+      "4 conductores": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "3x25/16", "3x35/16", "3x50/25", "3x70/35", "3x95/50", "3x120/70"]
     };
     window.SECCION_SUB = SECCION_SUB;
 
@@ -3448,6 +3444,32 @@
         const tieneOtro = Array.from(select.options).some(o => o.value === 'Otro');
         if (!tieneOtro || select.dataset.otroListo) return;
         select.dataset.otroListo = '1';
+
+        const esSeccionMM2 = campo === 'seccion' && FAMILIAS_SECCION_MM2.includes(fam);
+
+        if (esSeccionMM2) {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'campo-otro-item';
+          wrapper.style.cssText = 'display:none; align-items:center; gap:8px; margin-top:-10px; margin-bottom:14px;';
+          const placeholderInicial = fam === 'subterraneo' ? 'Ej: 4  ó  3x25/16' : 'Ej: 4  ó  10';
+          wrapper.innerHTML = `
+            <input type="text" inputmode="decimal" placeholder="${placeholderInicial}" style="flex:1; margin-bottom:0;">
+            <span style="font-size:13px; font-weight:700; color:#555; white-space:nowrap;">mm²</span>`;
+          const otroInput = wrapper.querySelector('input');
+          otroInput.dataset.fam = fam;
+          otroInput.dataset.campo = campo + '_otro';
+          otroInput.addEventListener('input', () => {
+            otroInput.value = otroInput.value.replace(/[^0-9xX/,.]/g, '');
+          });
+          select.insertAdjacentElement('afterend', wrapper);
+
+          select.addEventListener('change', () => {
+            const esOtro = select.value === 'Otro';
+            wrapper.style.display = esOtro ? 'flex' : 'none';
+            if (!esOtro) { otroInput.value = ''; otroInput.classList.remove('err'); }
+          });
+          return;
+        }
 
         const otroInput = document.createElement('input');
         otroInput.type = 'text';
@@ -3806,8 +3828,20 @@
       }
       const bloque = seccionSel.closest('.item-block');
       if (bloque) agregarCamposOtro(bloque, 'subterraneo');
+      actualizarEjemploSeccionOtro(seccionSel, configVal);
     }
 
+    function actualizarEjemploSeccionOtro(seccionSel, configVal) {
+      const wrapper = seccionSel.nextElementSibling;
+      if (!wrapper || !wrapper.classList.contains('campo-otro-item')) return;
+      const input = wrapper.querySelector('input');
+      if (!input) return;
+      if (configVal === '2 conductores') input.placeholder = 'Ej: 4  ó  25/16';
+      else if (configVal === '3 conductores') input.placeholder = 'Ej: 4  ó  2x35/16';
+      else if (configVal === '4 conductores') input.placeholder = 'Ej: 4  ó  3x25/16';
+      else input.placeholder = 'Ej: 4  ó  10';
+    }
+    
     function removeItem(id) { const el = document.getElementById(id); if (el) el.remove(); }
 
     function validateBlock(fam, block) {
