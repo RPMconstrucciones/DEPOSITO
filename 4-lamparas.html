@@ -2331,10 +2331,16 @@
           <label>Fotos de referencia <span class="opc">(opcional, máx. 2)</span></label>
           <div id="nuevo_foto_preview" class="foto-preview-gestion"
             style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
-          <input type="file" accept="image/*" id="nuevo_foto_input" style="display:none"
+          <input type="file" accept="image/*" capture="environment" id="nuevo_foto_input_camara" style="display:none"
             onchange="manejarSeleccionFotoNuevo(this)">
-          <button type="button" class="btn-add" id="nuevo_foto_btn" style="margin-bottom:14px;"
-            onclick="document.getElementById('nuevo_foto_input').click()">+ Agregar foto</button>
+          <input type="file" accept="image/*" id="nuevo_foto_input_galeria" style="display:none"
+            onchange="manejarSeleccionFotoNuevo(this)">
+          <div id="nuevo_foto_btns" style="display:flex;gap:8px;margin-bottom:14px;">
+            <button type="button" class="btn-add" style="flex:1;"
+              onclick="document.getElementById('nuevo_foto_input_camara').click()">📷 Tomar foto</button>
+            <button type="button" class="btn-add" style="flex:1;"
+              onclick="document.getElementById('nuevo_foto_input_galeria').click()">🖼️ Galería</button>
+          </div>
 
           <div id="ubicacion_bloque_nuevo" class="ubic-bloque">
             <div class="f-section-title">Ubicación</div>
@@ -3331,7 +3337,7 @@
 
     function renderFotosNuevo() {
       const preview = document.getElementById('nuevo_foto_preview');
-      const btn = document.getElementById('nuevo_foto_btn');
+      const btns = document.getElementById('nuevo_foto_btns');
       if (!preview) return;
       preview.innerHTML = fotosNuevoPendientes.map((b64, i) =>
         '<div class="foto-slot">' +
@@ -3339,7 +3345,7 @@
         '<button type="button" class="foto-slot-del" onclick="eliminarFotoNuevo(' + i + ')" title="Eliminar">🗑️</button>' +
         '</div>'
       ).join('');
-      if (btn) btn.style.display = fotosNuevoPendientes.length >= 2 ? 'none' : 'block';
+      if (btns) btns.style.display = fotosNuevoPendientes.length >= 2 ? 'none' : 'flex';
     }
 
     // ── 3.6.2 FORMA / DIMENSIONES ──
@@ -3450,8 +3456,12 @@
         '<div class="foto-bloque">' +
         '<label>Fotos de referencia <span class="opc">(opcional, máx. 2)</span></label>' +
         '<div id="' + fam + '_foto_preview_' + n + '" class="foto-preview-gestion" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>' +
-        '<input type="file" accept="image/*" id="' + fam + '_foto_input_' + n + '" style="display:none" onchange="manejarSeleccionFotoItem(this, \'' + fam + '\', ' + n + ')">' +
-        '<button type="button" class="btn-add" id="' + fam + '_foto_btn_' + n + '" onclick="document.getElementById(\'' + fam + '_foto_input_' + n + '\').click()">+ Agregar foto</button>' +
+        '<input type="file" accept="image/*" capture="environment" id="' + fam + '_foto_input_camara_' + n + '" style="display:none" onchange="manejarSeleccionFotoItem(this, \'' + fam + '\', ' + n + ')">' +
+        '<input type="file" accept="image/*" id="' + fam + '_foto_input_galeria_' + n + '" style="display:none" onchange="manejarSeleccionFotoItem(this, \'' + fam + '\', ' + n + ')">' +
+        '<div id="' + fam + '_foto_btns_' + n + '" style="display:flex;gap:8px;">' +
+        '<button type="button" class="btn-add" style="flex:1;" onclick="document.getElementById(\'' + fam + '_foto_input_camara_' + n + '\').click()">📷 Tomar foto</button>' +
+        '<button type="button" class="btn-add" style="flex:1;" onclick="document.getElementById(\'' + fam + '_foto_input_galeria_' + n + '\').click()">🖼️ Galería</button>' +
+        '</div>' +
         '</div>';
     }
 
@@ -3482,7 +3492,7 @@
       const key = fam + '_' + n;
       const fotos = fotosPendientes[key] || [];
       const preview = document.getElementById(fam + '_foto_preview_' + n);
-      const btn = document.getElementById(fam + '_foto_btn_' + n);
+      const btns = document.getElementById(fam + '_foto_btns_' + n);
       if (!preview) return;
       preview.innerHTML = fotos.map((b64, i) =>
         '<div class="foto-slot">' +
@@ -3490,7 +3500,7 @@
         '<button type="button" class="foto-slot-del" onclick="eliminarFotoItem(\'' + fam + '\',' + n + ',' + i + ')" title="Eliminar">🗑️</button>' +
         '</div>'
       ).join('');
-      if (btn) btn.style.display = fotos.length >= 2 ? 'none' : 'block';
+      if (btns) btns.style.display = fotos.length >= 2 ? 'none' : 'flex';
     }
 
     function bloqueUbicacionItem(fam, n) {

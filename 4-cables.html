@@ -3451,6 +3451,7 @@
           const wrapper = document.createElement('div');
           wrapper.className = 'campo-otro-item';
           wrapper.style.cssText = 'display:none; align-items:center; gap:8px; margin-top:-10px; margin-bottom:14px;';
+          wrapper.dataset.display = 'flex';
           const placeholderInicial = fam === 'subterraneo' ? 'Ej: 4  ó  3x25/16' : 'Ej: 4  ó  10';
           wrapper.innerHTML = `
             <input type="text" inputmode="decimal" placeholder="${placeholderInicial}" style="flex:1; margin-bottom:0;">
@@ -4043,7 +4044,7 @@
           bloque.querySelectorAll('select[data-campo]').forEach(sel => {
             if (sel.value === 'Otro') {
               const otro = sel.nextElementSibling;
-              if (otro && otro.classList.contains('campo-otro-item')) otro.style.display = 'block';
+              if (otro && otro.classList.contains('campo-otro-item')) otro.style.display = otro.dataset.display || 'block';
             }
           });
           const colorInput = bloque.querySelector('[data-campo="color"]');
