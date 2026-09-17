@@ -2296,6 +2296,13 @@
             subterráneo</button>
         </div>
 
+        <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_alta_potencia')" style="margin-top:8px">🟣
+          Cable de Alta Potencia Morado <span class="acordeon-arrow">▾</span></button>
+        <div id="bloque_alta_potencia" class="acordeon-body">
+          <div id="items_alta_potencia"></div><button class="btn-add" onclick="addItem('alta_potencia')">+ Agregar cable
+            de alta potencia morado</button>
+        </div>
+
         <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_preen')" style="margin-top:8px">🟣 Cable
           Preensamblado de Aluminio (Aéreo) <span class="acordeon-arrow">▾</span></button>
         <div id="bloque_preen" class="acordeon-body">
@@ -3321,13 +3328,14 @@
     // 3.6 MÓDULO: FORMULARIO (familias de Cables)
     // ============================================================
 
-    const counters = { unipolar: 0, ttr: 0, subterraneo: 0, preen: 0, conc: 0, desnudo: 0, especial: 0 };
+    const counters = { unipolar: 0, ttr: 0, subterraneo: 0, alta_potencia: 0, preen: 0, conc: 0, desnudo: 0, especial: 0 };
     const FAMILIES = Object.keys(counters);
 
     const REQUIRED = {
       unipolar: [['seccion', 'Sección mm²'], ['version', 'Versión'], ['color', 'Color de aislación'], ['presentacion', 'Presentación por rollo'], ['cantidad', 'Cantidad']],
       ttr: [['conductores', 'N° de conductores'], ['seccion', 'Sección por conductor'], ['presentacion', 'Presentación por rollo'], ['cantidad', 'Cantidad']],
       subterraneo: [['material', 'Material'], ['configuracion', 'Configuración'], ['seccion', 'Sección'], ['presentacion', 'Presentación por rollo'], ['cantidad', 'Cantidad']],
+      alta_potencia: [['material', 'Material'], ['configuracion', 'Configuración'], ['seccion', 'Sección'], ['presentacion', 'Presentación por rollo'], ['cantidad', 'Cantidad']],
       preen: [['config', 'Configuración'], ['seccion', 'Sección'], ['presentacion', 'Presentación por rollo'], ['cantidad', 'Cantidad']],
       conc: [['material', 'Material'], ['config', 'Configuración'], ['presentacion', 'Presentación por rollo'], ['cantidad', 'Cantidad']],
       desnudo: [['material', 'Material'], ['seccion', 'Sección'], ['presentacion', 'Presentación por rollo'], ['cantidad', 'Cantidad']],
@@ -3335,7 +3343,7 @@
     };
 
     const UNITS = {
-      unipolar: ['m', 'bobina'], ttr: ['m', 'bobina'], subterraneo: ['m', 'bobina'],
+      unipolar: ['m', 'bobina'], ttr: ['m', 'bobina'], subterraneo: ['m', 'bobina'], alta_potencia: ['m', 'bobina'],
       preen: ['m', 'bobina'], conc: ['m', 'bobina'], desnudo: ['m', 'bobina'],
       especial: ['m', 'un', 'rollo'],
     };
@@ -3344,6 +3352,7 @@
       unipolar: '🔵 Cable Unipolar',
       ttr: '🟤 Cable TTR',
       subterraneo: '🟡 Cable Subterráneo',
+      alta_potencia: '🟣 Cable de Alta Potencia Morado',
       preen: '🟣 Cable Preensamblado',
       conc: '🟠 Cable Concéntrico',
       desnudo: '⚫ Cable Desnudo',
@@ -3353,7 +3362,7 @@
     const MARCAS_CABLE = ['Prysmian', 'Cimet', 'Marlew', 'Argenplas', 'IMSA', 'Fonseca', 'Kalop', 'EME', 'MH', 'Otro', 'No especificado'];
     // Familias cuyo campo "Sección" es siempre en mm² — si el usuario elige "Otro"
     // y no escribe la unidad, se le agrega " mm²" automáticamente al enviar.
-    const FAMILIAS_SECCION_MM2 = ['unipolar', 'ttr', 'desnudo', 'subterraneo'];
+    const FAMILIAS_SECCION_MM2 = ['unipolar', 'ttr', 'desnudo', 'subterraneo', 'alta_potencia'];
 
     const SECCION_SUB = {
       "1 conductor": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "50", "70", "95", "120", "150", "185", "240", "300"],
@@ -3362,6 +3371,14 @@
       "4 conductores": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "3x25/16", "3x35/16", "3x50/25", "3x70/35", "3x95/50", "3x120/70"]
     };
     window.SECCION_SUB = SECCION_SUB;
+
+    const SECCION_ALTA_POTENCIA = {
+      "1 conductor": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "50", "70", "95", "120", "150", "185", "240", "300", "400", "500", "630"],
+      "2 conductores": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "50", "70"],
+      "3 conductores": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "50", "70", "95", "120", "150", "185", "240"],
+      "4 conductores": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "50", "70", "95", "120", "150", "185", "240", "3x25/16", "3x35/16", "3x50/25", "3x70/35", "3x95/50", "3x120/70"]
+    };
+    window.SECCION_ALTA_POTENCIA = SECCION_ALTA_POTENCIA;
 
     function uOpts(fam) { return (UNITS[fam] || ['m']).map(u => `<option value="${u}">${u}</option>`).join(''); }
     function opts(arr) { return arr.map(v => `<option value="${v}">${v}</option>`).join(''); }
@@ -3452,7 +3469,7 @@
           wrapper.className = 'campo-otro-item';
           wrapper.style.cssText = 'display:none; align-items:center; gap:8px; margin-top:-10px; margin-bottom:14px;';
           wrapper.dataset.display = 'flex';
-          const placeholderInicial = fam === 'subterraneo' ? 'Ej: 4  ó  3x25/16' : 'Ej: 4  ó  10';
+          const placeholderInicial = (fam === 'subterraneo' || fam === 'alta_potencia') ? 'Ej: 4  ó  3x25/16' : 'Ej: 4  ó  10';
           wrapper.innerHTML = `
             <input type="text" inputmode="decimal" placeholder="${placeholderInicial}" style="flex:1; margin-bottom:0;">
             <span style="font-size:13px; font-weight:700; color:#555; white-space:nowrap;">mm²</span>`;
@@ -3740,6 +3757,20 @@
       <label>Observación <span class="opc">(opcional)</span></label>
       <input type="text" name="subterraneo_observaciones_${n}" placeholder="N° bobina, estado...">`;
       }
+      else if (fam === 'alta_potencia') {
+        campos = `
+      ${lbl('alta_potencia', 'material', 'Material')}
+      <select name="alta_potencia_material_${n}" data-fam="alta_potencia" data-campo="material"><option value="">— Seleccioná material —</option>${opts(['Cobre', 'Aluminio'])}</select>
+      ${lbl('alta_potencia', 'configuracion', 'Configuración (N° de conductores)')}
+      <select name="alta_potencia_configuracion_${n}" data-fam="alta_potencia" data-campo="configuracion" onchange="actualizarAltaPotenciaCable(${n})" oninput="actualizarAltaPotenciaCable(${n})"><option value="">— Seleccioná —</option>${opts(Object.keys(SECCION_ALTA_POTENCIA))}</select>
+      ${lbl('alta_potencia', 'seccion', 'Sección mm²')}
+      <select name="alta_potencia_seccion_${n}" data-fam="alta_potencia" data-campo="seccion" onfocus="if(this.options.length<=1)actualizarAltaPotenciaCable(${n})"><option value="">— Elegí configuración primero —</option></select>
+      ${marcaField('alta_potencia', n)}
+      ${presentacionField('alta_potencia', n)}
+      ${lbl('alta_potencia', 'cantidad', 'Cantidad (metros)')}${qtyRow}
+      <label>Observación <span class="opc">(opcional)</span></label>
+      <input type="text" name="alta_potencia_observaciones_${n}" placeholder="N° bobina, estado...">`;
+      }
       else if (fam === 'preen') {
         campos = `
       <div class="nota-info">📡 Uso en líneas aéreas. Cada bobina tiene número único de identificación.</div>
@@ -3832,6 +3863,27 @@
       actualizarEjemploSeccionOtro(seccionSel, configVal);
     }
 
+    function actualizarAltaPotenciaCable(n) {
+      const configSel = document.querySelector(`[name='alta_potencia_configuracion_${n}']`);
+      const seccionSel = document.querySelector(`[name='alta_potencia_seccion_${n}']`);
+      if (!configSel || !seccionSel) return;
+      const configVal = configSel.value;
+      if (!configVal) {
+        seccionSel.innerHTML = '<option value="">— Elegí configuración primero —</option>';
+        return;
+      }
+      const seccionActual = seccionSel.value;
+      const secciones = (SECCION_ALTA_POTENCIA && SECCION_ALTA_POTENCIA[configVal]) || [];
+      seccionSel.innerHTML = '<option value="">— Seleccioná sección —</option>' + optsMM2ConOtro(secciones);
+      if (seccionActual) {
+        const matchOpt = Array.from(seccionSel.options).find(o => o.value === seccionActual || o.value === (seccionActual + ' mm²'));
+        if (matchOpt) seccionSel.value = matchOpt.value;
+      }
+      const bloque = seccionSel.closest('.item-block');
+      if (bloque) agregarCamposOtro(bloque, 'alta_potencia');
+      actualizarEjemploSeccionOtro(seccionSel, configVal);
+    }
+
     function actualizarEjemploSeccionOtro(seccionSel, configVal) {
       const wrapper = seccionSel.nextElementSibling;
       if (!wrapper || !wrapper.classList.contains('campo-otro-item')) return;
@@ -3842,7 +3894,7 @@
       else if (configVal === '4 conductores') input.placeholder = 'Ej: 4  ó  3x25/16';
       else input.placeholder = 'Ej: 4  ó  10';
     }
-    
+
     function removeItem(id) { const el = document.getElementById(id); if (el) el.remove(); }
 
     function validateBlock(fam, block) {
@@ -4035,6 +4087,17 @@
             const seccionVal = item[`subterraneo_seccion_${n}`];
             if (seccionVal) {
               const seccionSel = bloque.querySelector(`[name="subterraneo_seccion_${n}"]`);
+              if (seccionSel) {
+                const match = Array.from(seccionSel.options).find(o => o.value === seccionVal || o.value === (seccionVal + ' mm²'));
+                if (match) seccionSel.value = match.value;
+              }
+            }
+          }
+          if (fam === 'alta_potencia') {
+            actualizarAltaPotenciaCable(n);
+            const seccionVal = item[`alta_potencia_seccion_${n}`];
+            if (seccionVal) {
+              const seccionSel = bloque.querySelector(`[name="alta_potencia_seccion_${n}"]`);
               if (seccionSel) {
                 const match = Array.from(seccionSel.options).find(o => o.value === seccionVal || o.value === (seccionVal + ' mm²'));
                 if (match) seccionSel.value = match.value;
