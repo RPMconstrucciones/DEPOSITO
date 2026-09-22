@@ -2294,11 +2294,11 @@
         // ============================================================
         const CONFIG = {
             zona: "Instalación Eléctrica",
-            appsScriptUrl: "PEGAR_AQUI_LA_URL_DE_APPS_SCRIPT", // TODO: completar con la URL real
+            appsScriptUrl: "https://script.google.com/macros/s/AKfycbzQVmgnoPG86r8LKnkdMn0yP17FGvoLj02LSNz8BC_mhZzEmJZgV_jgpLFArInlgUOx/exechttps://script.google.com/macros/s/AKfycbzQVmgnoPG86r8LKnkdMn0yP17FGvoLj02LSNz8BC_mhZzEmJZgV_jgpLFArInlgUOx/exec"
             storageKey: "rpm_borrador_instalacion_electrica",
             pollingIntervalMs: 25000,
             ubicacion: {
-                depositos: ['X'], // TODO: completar con el/los número(s) de depósito real(es)
+                depositos: ['4'], // TODO: completar con el/los número(s) de depósito real(es)
                 estantes: ['1', '2', '3', '4', '5', '6', '7', '8'],
                 columnas: Array.from({ length: 20 }, (_, i) => String(i + 1)),
                 filas: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'],
@@ -3665,7 +3665,7 @@
                     '<option value="">— Seleccioná —</option>' + opts(['Conector', 'Unión', 'Curva', 'Pipeta', 'Otro']) + '</select>' +
                     lbl('canieria', 'material', 'Material') +
                     '<select data-fam="canieria" data-campo="material">' +
-                    '<option value="">— Seleccioná —</option>' + opts(['PVC Rígido', 'Corrugado (plástico flexible)', 'Hierro galvanizado / Semipesado', 'Otro']) + '</select>' +
+                    '<option value="">— Seleccioná —</option>' + opts(['PVC', 'Corrugado (plástico flexible)', 'Hierro galvanizado / Semipesado', 'Otro']) + '</select>' +
                     lbl('canieria', 'diametro_medida', 'Diámetro / Medida') +
                     '<select data-fam="canieria" data-campo="diametro_medida">' +
                     '<option value="">— Seleccioná —</option>' + opts(MEDIDAS_CANIERIA) + '</select>' +
