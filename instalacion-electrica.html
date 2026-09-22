@@ -3250,6 +3250,23 @@
             canieria: '🛠️ Accesorios de cañería',
         };
 
+        const MARCAS_INSTALACION = [
+            'Conextube',
+            'Genrod',
+            'Jeluz',
+            'Kalop',
+            'Roker',
+            'Romax',
+            'Sica',
+            'Sistelectric',
+            'Taad',
+            'Tubelectric',
+            'Valero',
+            'Variplast',
+            'Sin marca',
+            'Otro'
+        ];
+
         function uOpts(fam) { return (UNITS[fam] || ['un']).map(u => '<option value="' + u + '">' + u + '</option>').join(''); }
         function opts(arr) { return arr.map(v => '<option value="' + v + '">' + v + '</option>').join(''); }
 
@@ -3357,7 +3374,7 @@
 
                 const otroInput = document.createElement('input');
                 otroInput.type = 'text';
-                otroInput.placeholder = 'Especificá cuál';
+                otroInput.placeholder = campo === 'marca' ? 'Especificá la marca' : 'Especificá cuál';
                 otroInput.className = 'campo-otro-item';
                 otroInput.dataset.fam = fam;
                 otroInput.dataset.campo = campo + '_otro';
@@ -3429,7 +3446,7 @@
                 if (el.dataset.fam !== fam) return;
                 const campo = el.dataset.campo;
                 if (['cantidad', 'deposito', 'estante', 'columna', 'fila'].includes(campo)) return;
-                if (el.value && el.value !== 'Otro' && el.value !== 'OTRO') partes.push(el.value.trim());
+                if (el.value && el.value !== 'Otro' && el.value !== 'OTRO' && el.value !== 'Sin marca' && el.value !== 'No especificado') partes.push(el.value.trim());
             });
             return partes.join('|');
         }
@@ -3618,7 +3635,7 @@
                     '<input type="text" class="campo-otro-item" data-fam="cajas" data-campo="medida_otro" id="cajas_medida_otro_' + n + '" placeholder="Especificá la medida">' +
                     '<label>Marca <span class="opc">(opcional)</span></label>' +
                     '<select data-fam="cajas" data-campo="marca">' +
-                    '<option value="">— Seleccioná —</option>' + opts(['Genrod', 'Tubelectric', 'Roker', 'Viyilant', 'No especificado', 'Otro']) + '</select>' +
+                    '<option value="">— Seleccioná —</option>' + opts(MARCAS_INSTALACION) + '</select>' +
                     lbl('cajas', 'cantidad', 'Cantidad') + qtyRow +
                     '<label>Observaciones</label>' +
                     '<input type="text" name="cajas_observaciones_' + n + '" placeholder="Opcional">',
@@ -3626,7 +3643,7 @@
                 canieria:
                     lbl('canieria', 'tipo', 'Tipo de accesorio') +
                     '<select data-fam="canieria" data-campo="tipo">' +
-                    '<option value="">— Seleccioná —</option>' + opts(['Conector', 'Unión o Cupla', 'Curva (cambio de dirección 90°)', 'Grampa de fijación', 'Otro']) + '</select>' +
+                    '<option value="">— Seleccioná —</option>' + opts(['Conector', 'Unión', 'Curva', 'Otro']) + '</select>' +
                     lbl('canieria', 'material', 'Material') +
                     '<select data-fam="canieria" data-campo="material">' +
                     '<option value="">— Seleccioná —</option>' + opts(['PVC Rígido', 'Corrugado (plástico flexible)', 'Hierro galvanizado / Semipesado', 'Otro']) + '</select>' +
@@ -3634,7 +3651,8 @@
                     '<select data-fam="canieria" data-campo="diametro_medida">' +
                     '<option value="">— Seleccioná —</option>' + opts(['16 mm (5/8")', '20 mm (3/4")', '22 mm (7/8")', '25 mm (1")', '32 mm (1 1/4")', '40 mm (1 1/2")', '50 mm (2")', 'Otro']) + '</select>' +
                     '<label>Marca <span class="opc">(opcional)</span></label>' +
-                    '<input type="text" data-fam="canieria" data-campo="marca" placeholder="Ej: Awaduct, Dexson (opcional)">' +
+                    '<select data-fam="canieria" data-campo="marca">' +
+                    '<option value="">— Seleccioná —</option>' + opts(MARCAS_INSTALACION) + '</select>' +
                     lbl('canieria', 'cantidad', 'Cantidad') + qtyRow +
                     '<label>Observaciones</label>' +
                     '<input type="text" name="canieria_observaciones_' + n + '" placeholder="Opcional">',
@@ -3752,6 +3770,15 @@
                 });
                 const fotosItem = fotosPendientes[fam + '_' + n];
                 if (n && fotosItem && fotosItem.length) data.fotos_base64 = fotosItem;
+
+                Object.keys(data).forEach(k => {
+                    if (!k.endsWith('_otro')) return;
+                    const base = k.slice(0, -5);
+                    if (data[base] === 'Otro' && data[k]) {
+                        data[base] = data[k].trim();
+                    }
+                });
+
                 return Object.values(data).some(v => v) ? data : null;
             }).filter(Boolean);
         }

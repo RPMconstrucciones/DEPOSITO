@@ -2311,7 +2311,7 @@
         </div>
 
         <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_conc')" style="margin-top:8px">🟠 Cable
-          Concéntrico (Antihurto) <span class="acordeon-arrow">▾</span></button>
+          Concéntrico <span class="acordeon-arrow">▾</span></button>
         <div id="bloque_conc" class="acordeon-body">
           <div id="items_conc"></div><button class="btn-add" onclick="addItem('conc')">+ Agregar cable
             concéntrico</button>
@@ -3491,7 +3491,7 @@
 
         const otroInput = document.createElement('input');
         otroInput.type = 'text';
-        otroInput.placeholder = 'Especificá cuál';
+        otroInput.placeholder = (campo === 'config' && fam === 'conc') ? 'Ej: 1X10/10, 2X4/4...' : 'Especificá cuál';
         otroInput.className = 'campo-otro-item';
         otroInput.dataset.fam = fam;
         otroInput.dataset.campo = campo + '_otro';
@@ -3789,7 +3789,7 @@
       ${lbl('conc', 'material', 'Material del conductor')}
       <select name="conc_material_${n}" data-fam="conc" data-campo="material"><option value="">— Seleccioná material —</option>${opts(['Aluminio (AL)', 'Cobre (CU)', 'Sin especificar'])}</select>
       ${lbl('conc', 'config', 'Configuración fase / neutro')}
-      <select name="conc_config_${n}" data-fam="conc" data-campo="config"><option value="">— Seleccioná configuración —</option>${opts(['1X4/4', '1X6/6', '1X6+6'])}</select>
+      <select name="conc_config_${n}" data-fam="conc" data-campo="config"><option value="">— Seleccioná configuración —</option>${optsConOtro(['1X4/4', '1X6/6', '1X6+6'])}</select>
       ${marcaField('conc', n)}
       ${presentacionField('conc', n)}
       ${lbl('conc', 'cantidad', 'Cantidad (metros)')}${qtyRow}
