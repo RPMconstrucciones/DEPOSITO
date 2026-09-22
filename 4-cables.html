@@ -2303,8 +2303,8 @@
             de alta potencia morado</button>
         </div>
 
-        <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_preen')" style="margin-top:8px">🟣 Cable
-          Preensamblado de Aluminio (Aéreo) <span class="acordeon-arrow">▾</span></button>
+        <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_preen')" style="margin-top:8px">🔴 Cable
+          Preensamblado de Aluminio <span class="acordeon-arrow">▾</span></button>
         <div id="bloque_preen" class="acordeon-body">
           <div id="items_preen"></div><button class="btn-add" onclick="addItem('preen')">+ Agregar cable
             preensamblado</button>
@@ -3353,7 +3353,7 @@
       ttr: '🟤 Cable TTR',
       subterraneo: '🟡 Cable Subterráneo',
       alta_potencia: '🟣 Cable de Alta Potencia Morado',
-      preen: '🟣 Cable Preensamblado',
+      preen: '🔴 Cable Preensamblado',
       conc: '🟠 Cable Concéntrico',
       desnudo: '⚫ Cable Desnudo',
       especial: '🟢 Cable Especial',
@@ -3801,7 +3801,7 @@
       ${lbl('desnudo', 'material', 'Material')}
       <select name="desnudo_material_${n}" data-fam="desnudo" data-campo="material"><option value="">— Seleccioná material —</option>${opts(['Cobre', 'Aluminio', 'Acerado recubierto de Cobre'])}</select>
       ${lbl('desnudo', 'seccion', 'Sección mm²')}
-      <select name="desnudo_seccion_${n}" data-fam="desnudo" data-campo="seccion"><option value="">— Seleccioná sección —</option>${optsMM2ConOtro(['10', '16', '25', '35', '50', '70'])}</select>
+      <select name="desnudo_seccion_${n}" data-fam="desnudo" data-campo="seccion"><option value="">— Seleccioná sección —</option>${optsMM2ConOtro(['2', '2,5', '4', '6', '10', '16', '25', '35', '50', '70'])}</select>
       ${marcaField('desnudo', n)}
       ${presentacionField('desnudo', n)}
       ${lbl('desnudo', 'cantidad', 'Cantidad (metros)')}${qtyRow}

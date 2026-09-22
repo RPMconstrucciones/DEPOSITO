@@ -3506,7 +3506,7 @@
                 cell.value = h.label;
                 cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
-                cell.alignment = { vertical: 'middle' };
+                cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
                 cell.border = {
                     top: { style: 'thin', color: { argb: 'FF334155' } },
                     left: { style: 'thin', color: { argb: 'FF334155' } },
@@ -3546,17 +3546,18 @@
                         right: { style: 'thin', color: { argb: 'FFCBD5E1' } },
                     };
                     cell.font = { name: 'Calibri', size: 11 };
+                    cell.alignment = { vertical: 'middle' };
                 });
 
                 row.getCell(1).font = { name: 'Consolas', size: 11, bold: true, color: { argb: 'FF334155' } }; // ID
                 row.getCell(3).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E40AF' } };  // Familia
                 row.getCell(5).font = { name: 'Calibri', size: 11, bold: true };                               // Descripción
-                row.getCell(8).alignment = { horizontal: 'right' };                                             // Stock mínimo
-                row.getCell(9).alignment = { horizontal: 'right' };
+                row.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' };                         // Stock mínimo
+                row.getCell(9).alignment = { horizontal: 'right', vertical: 'middle' };
                 row.getCell(9).font = { name: 'Calibri', size: 12, bold: true };                                // Stock actual
 
                 const estadoCell = row.getCell(10);
-                estadoCell.alignment = { horizontal: 'center' };
+                estadoCell.alignment = { horizontal: 'center', vertical: 'middle' };
                 estadoCell.font = { bold: true, color: { argb: isReponer ? 'FF991B1B' : 'FF166534' } };
                 estadoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isReponer ? 'FFFEE2E2' : 'FFDCFCE7' } };
             });
