@@ -3562,6 +3562,26 @@
                 estadoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isReponer ? 'FFFEE2E2' : 'FFDCFCE7' } };
             });
 
+            // Autoajuste de ancho: cada columna toma el ancho de su contenido más
+            // largo (o el del encabezado, si es mayor). Descripción queda con
+            // ancho fijo porque su texto se resuelve con wrapText, no con ancho.
+            const idxDescripcion = headers.findIndex(h => h.key === 'descripcion') + 1;
+            sheet.columns.forEach((col, i) => {
+                const colIndex = i + 1;
+                if (colIndex === idxDescripcion) {
+                    col.width = 42;
+                    return;
+                }
+                let maxLen = headers[i].label.length;
+                sheet.eachRow({ includeEmpty: false }, (row, rowNum) => {
+                    if (rowNum < 5) return; // saltar título, subtítulo, separador y encabezado
+                    const val = row.getCell(colIndex).value;
+                    const len = (val === null || val === undefined) ? 0 : String(val).length;
+                    if (len > maxLen) maxLen = len;
+                });
+                col.width = Math.min(Math.max(maxLen + 2, 8), 40);
+            });
+
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const url = URL.createObjectURL(blob);
@@ -3576,6 +3596,7 @@
         function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
         function escapeAttr(s) { return escapeHtml(s); }
 
+        
         // ============================================================
         // WIRE UP
         // ============================================================

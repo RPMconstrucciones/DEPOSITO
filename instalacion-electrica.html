@@ -3255,6 +3255,7 @@
             'Genrod',
             'Jeluz',
             'Kalop',
+            'Percan-Plast',
             'Roker',
             'Romax',
             'Sica',
@@ -3264,6 +3265,24 @@
             'Valero',
             'Variplast',
             'Sin marca',
+            'Otro'
+        ];
+
+        const MEDIDAS_CANIERIA = [
+            '5/8" (16 mm)',
+            '3/4" (20 mm)',
+            '7/8" (22,22 mm)',
+            '1" (25 mm)',
+            '1 1/4" (32 mm)',
+            '1 1/2" (40 mm)',
+            '2" (50 mm)',
+            'Otro'
+        ];
+
+        const COLORES_CANIERIA = [
+            'Blanco',
+            'Gris',
+            'Negro',
             'Otro'
         ];
 
@@ -3643,13 +3662,16 @@
                 canieria:
                     lbl('canieria', 'tipo', 'Tipo de accesorio') +
                     '<select data-fam="canieria" data-campo="tipo">' +
-                    '<option value="">— Seleccioná —</option>' + opts(['Conector', 'Unión', 'Curva', 'Otro']) + '</select>' +
+                    '<option value="">— Seleccioná —</option>' + opts(['Conector', 'Unión', 'Curva', 'Pipeta', 'Otro']) + '</select>' +
                     lbl('canieria', 'material', 'Material') +
                     '<select data-fam="canieria" data-campo="material">' +
                     '<option value="">— Seleccioná —</option>' + opts(['PVC Rígido', 'Corrugado (plástico flexible)', 'Hierro galvanizado / Semipesado', 'Otro']) + '</select>' +
                     lbl('canieria', 'diametro_medida', 'Diámetro / Medida') +
                     '<select data-fam="canieria" data-campo="diametro_medida">' +
-                    '<option value="">— Seleccioná —</option>' + opts(['16 mm (5/8")', '20 mm (3/4")', '22 mm (7/8")', '25 mm (1")', '32 mm (1 1/4")', '40 mm (1 1/2")', '50 mm (2")', 'Otro']) + '</select>' +
+                    '<option value="">— Seleccioná —</option>' + opts(MEDIDAS_CANIERIA) + '</select>' +
+                    '<label>Color <span class="opc">(opcional)</span></label>' +
+                    '<select data-fam="canieria" data-campo="color">' +
+                    '<option value="">— Seleccioná —</option>' + opts(COLORES_CANIERIA) + '</select>' +
                     '<label>Marca <span class="opc">(opcional)</span></label>' +
                     '<select data-fam="canieria" data-campo="marca">' +
                     '<option value="">— Seleccioná —</option>' + opts(MARCAS_INSTALACION) + '</select>' +
@@ -3908,6 +3930,25 @@
                                     const otroInput = bloque.querySelector('[data-campo="medida_otro"]');
                                     if (otroInput) { otroInput.style.display = 'block'; otroInput.value = item['dc__medida_otro'] || ''; }
                                 }
+                            }
+                        }
+                    }
+                    if (fam === 'canieria') {
+                        const medidaSel = bloque.querySelector('[data-fam="canieria"][data-campo="diametro_medida"]');
+                        const medidaGuardada = item['dc__diametro_medida'];
+                        if (medidaSel && medidaGuardada) {
+                            const mapaMedidas = {
+                                '16 mm (5/8")': '5/8" (16 mm)',
+                                '20 mm (3/4")': '3/4" (20 mm)',
+                                '22 mm (7/8")': '7/8" (22,22 mm)',
+                                '22,22 mm (7/8")': '7/8" (22,22 mm)',
+                                '25 mm (1")': '1" (25 mm)',
+                                '32 mm (1 1/4")': '1 1/4" (32 mm)',
+                                '40 mm (1 1/2")': '1 1/2" (40 mm)',
+                                '50 mm (2")': '2" (50 mm)'
+                            };
+                            if (mapaMedidas[medidaGuardada]) {
+                                medidaSel.value = mapaMedidas[medidaGuardada];
                             }
                         }
                     }
