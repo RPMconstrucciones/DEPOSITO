@@ -3552,6 +3552,7 @@
                 row.getCell(1).font = { name: 'Consolas', size: 11, bold: true, color: { argb: 'FF334155' } }; // ID
                 row.getCell(3).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E40AF' } };  // Familia
                 row.getCell(5).font = { name: 'Calibri', size: 11, bold: true };                               // Descripción
+                row.getCell(5).alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };          // Ajustar texto (baja de línea en vez de cortar)
                 row.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' };                         // Stock mínimo
                 row.getCell(9).alignment = { horizontal: 'right', vertical: 'middle' };
                 row.getCell(9).font = { name: 'Calibri', size: 12, bold: true };                                // Stock actual
