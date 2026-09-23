@@ -3359,7 +3359,7 @@
       especial: '🟢 Cable Especial',
     };
 
-    const MARCAS_CABLE = ['Prysmian', 'Cimet', 'Marlew', 'Argenplas', 'IMSA', 'Fonseca', 'Kalop', 'EME', 'MH', 'Otro', 'No especificado'];
+    const MARCAS_CABLE = ['Prysmian', 'Cimet', 'CEARCA', 'Marlew', 'Argenplas', 'IMSA', 'Fonseca', 'Kalop', 'EME', 'MH', 'Otro', 'No especificado'];
     // Familias cuyo campo "Sección" es siempre en mm² — si el usuario elige "Otro"
     // y no escribe la unidad, se le agrega " mm²" automáticamente al enviar.
     const FAMILIAS_SECCION_MM2 = ['unipolar', 'ttr', 'desnudo', 'subterraneo', 'alta_potencia'];
@@ -3379,6 +3379,23 @@
       "4 conductores": ["1,5", "2,5", "4", "6", "10", "16", "25", "35", "50", "70", "95", "120", "150", "185", "240", "3x25/16", "3x35/16", "3x50/25", "3x70/35", "3x95/50", "3x120/70"]
     };
     window.SECCION_ALTA_POTENCIA = SECCION_ALTA_POTENCIA;
+
+    const SECCIONES_PREEN = [
+      '16', '25', '35', '50', '70', '95',
+      '2x16', '1x16+16', '16/16',
+      '1x25/25', '2x25', '25/25',
+      '1x35/35', '2x35', '35/35',
+      '3x25', '3x35', '3x50', '3x70', '3x95',
+      '3x25/50', '25/50',
+      '3x35/50', '35/50',
+      '3x50/50', '50/50',
+      '3x50/70', '50/70',
+      '3x70/50', '70/50',
+      '3x95/16', '95/16',
+      '3x95/50', '95/50',
+      '3x95/70', '95/70'
+    ];
+    window.SECCIONES_PREEN = SECCIONES_PREEN;
 
     function uOpts(fam) { return (UNITS[fam] || ['m']).map(u => `<option value="${u}">${u}</option>`).join(''); }
     function opts(arr) { return arr.map(v => `<option value="${v}">${v}</option>`).join(''); }
@@ -3491,7 +3508,11 @@
 
         const otroInput = document.createElement('input');
         otroInput.type = 'text';
-        otroInput.placeholder = (campo === 'config' && fam === 'conc') ? 'Ej: 1X10/10, 2X4/4...' : 'Especificá cuál';
+        let placeholderOtro = 'Especificá cuál';
+        if (campo === 'config' && fam === 'conc') placeholderOtro = 'Ej: 1X10/10, 2X4/4...';
+        else if (campo === 'config' && fam === 'preen') placeholderOtro = 'Ej: 2 conductores, etc.';
+        else if (campo === 'seccion' && fam === 'preen') placeholderOtro = 'Ej: 3x95/50, 1x16+16, 25...';
+        otroInput.placeholder = placeholderOtro;
         otroInput.className = 'campo-otro-item';
         otroInput.dataset.fam = fam;
         otroInput.dataset.campo = campo + '_otro';
@@ -3775,9 +3796,9 @@
         campos = `
       <div class="nota-info">📡 Uso en líneas aéreas. Cada bobina tiene número único de identificación.</div>
       ${lbl('preen', 'config', 'Configuración')}
-      <select name="preen_config_${n}" data-fam="preen" data-campo="config"><option value="">— Seleccioná —</option>${opts(['1 conductor', '3 conductores'])}</select>
+      <select name="preen_config_${n}" data-fam="preen" data-campo="config"><option value="">— Seleccioná —</option>${optsConOtro(['1 conductor', '2 conductores', '3 conductores', '4 conductores'])}</select>
       ${lbl('preen', 'seccion', 'Sección fase / neutro mm²')}
-      <select name="preen_seccion_${n}" data-fam="preen" data-campo="seccion"><option value="">— Seleccioná sección —</option>${optsConOtro(['16/16', '25/25', '25/50', '35/35', '35/50', '50/50', '50/70', '70/50', '95/16', '95/50', '95/70'])}</select>
+      <select name="preen_seccion_${n}" data-fam="preen" data-campo="seccion"><option value="">— Seleccioná sección —</option>${optsConOtro(SECCIONES_PREEN)}</select>
       ${marcaField('preen', n)}
       ${presentacionField('preen', n)}
       ${lbl('preen', 'cantidad', 'Cantidad (metros)')}${qtyRow}
