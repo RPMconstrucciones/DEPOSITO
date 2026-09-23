@@ -514,21 +514,24 @@
         }
 
         /* Opción 1: Optimización de espaciado interno (padding) y micro-flechas */
-        #stockTable td:nth-child(1), #stickyStockTable th:nth-child(1) {
+        #stockTable td:nth-child(1),
+        #stickyStockTable th:nth-child(1) {
             min-width: 48px;
             text-align: center;
             padding-left: 3px;
             padding-right: 3px;
         }
 
-        #stockTable td:nth-child(2), #stickyStockTable th:nth-child(2) {
+        #stockTable td:nth-child(2),
+        #stickyStockTable th:nth-child(2) {
             min-width: 66px;
             text-align: center;
             padding-left: 3px;
             padding-right: 3px;
         }
 
-        #stockTable td:nth-child(7), #stickyStockTable th:nth-child(7) {
+        #stockTable td:nth-child(7),
+        #stickyStockTable th:nth-child(7) {
             min-width: 52px;
             text-align: center;
             padding-left: 3px;
@@ -1225,10 +1228,13 @@
                         id="statusText">Conectando…</span></div>
             </div>
             <div class="header-actions">
-                <a href="buscador-stock.html" class="btn small" id="btnBuscadorStock" title="Ir al Buscador General de Stock">🔍 Buscador Stock</a>
+                <a href="buscador-stock.html" class="btn small" id="btnBuscadorStock"
+                    title="Ir al Buscador General de Stock">🔍 Buscador Stock</a>
                 <button class="btn primary small" id="btnNewProduct">➕ Nuevo Producto</button>
                 <button class="btn ghost small" id="btnRefresh">↻ Actualizar</button>
-                <button class="btn small" id="btnExport">📊 Exportar a Excel</button>
+                <button class="btn small" id="btnExport">📊 Exportar Excel</button>
+                <button class="btn small ghost" id="btnExportAll"
+                    title="Exporta todos los materiales, ignorando filtros y selección">📦 Exportar todo</button>
             </div>
         </div>
 
@@ -1270,8 +1276,10 @@
                         <table class="sticky-header-table" id="stickyStockTable">
                             <thead>
                                 <tr>
-                                    <th data-sort="seleccion" style="text-align:center;">Sel. <span class="arrow"></span></th>
-                                    <th data-sort="fotos" style="text-align:center;">Foto(s) <span class="arrow"></span></th>
+                                    <th data-sort="seleccion" style="text-align:center;">Sel. <span
+                                            class="arrow"></span></th>
+                                    <th data-sort="fotos" style="text-align:center;">Foto(s) <span class="arrow"></span>
+                                    </th>
                                     <th data-sort="familia">Familia <span class="arrow"></span></th>
                                     <th data-sort="descripcion">Descripción <span class="arrow"></span></th>
                                     <th data-sort="marca">Marca <span class="arrow"></span></th>
@@ -1374,7 +1382,8 @@
             </div>
             <div class="field">
                 <label>Observaciones generales del envío (opcional)</label>
-                <input type="text" id="adjustObsGeneral" placeholder="Transporte, motivo o aclaración del envío…" style="text-transform:uppercase;">
+                <input type="text" id="adjustObsGeneral" placeholder="Transporte, motivo o aclaración del envío…"
+                    style="text-transform:uppercase;">
             </div>
             <div class="modal-err" id="adjustErr"></div>
             <div class="modal-actions">
@@ -1389,87 +1398,96 @@
         <div class="modal" style="max-width: 400px; width: 100%;">
             <button type="button" id="editProdCloseX" title="Cerrar ventana">✕</button>
             <div class="modal-body">
-            <h3 id="editProdTitle" style="padding-right: 32px;">Editar Producto</h3>
-            <div class="sub" id="editProdSub"></div>
-            <div class="field">
-                <label>Descripción del Producto</label>
-                <textarea id="editProdDesc" placeholder="Descripción…" rows="1" oninput="autoResizeTextarea(this)"></textarea>
-            </div>
-            <div class="field">
-                <label>Marca</label>
-                <input type="text" id="editProdMarca" placeholder="Marca…">
-            </div>
-            <div class="field">
-                <label>Familia</label>
-                <input type="text" id="editProdFamilia" placeholder="Familia…">
-            </div>
-            <div class="field">
-                <label>Stock Mínimo</label>
-                <input type="number" id="editProdMin" min="0" placeholder="0">
-            </div>
-            <div class="field"
-                style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0;">
-                <div
-                    style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
-                    <span>📍</span> Ubicación física
+                <h3 id="editProdTitle" style="padding-right: 32px;">Editar Producto</h3>
+                <div class="sub" id="editProdSub"></div>
+                <div class="field">
+                    <label>Descripción del Producto</label>
+                    <textarea id="editProdDesc" placeholder="Descripción…" rows="1"
+                        oninput="autoResizeTextarea(this)"></textarea>
                 </div>
-                <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 0.9fr; gap: 8px; align-items: end;">
-                    <div style="display: flex; flex-direction: column;">
-                        <label
-                            style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Depósito</label>
-                        <select id="editProdUbiDep" onchange="toggleCustomEditUbiDepInput(this)"
-                            style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box; cursor: pointer;">
-                            <option value="">—</option>
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5A">5A</option>
-                            <option value="5B">5B</option>
-                            <option value="5C">5C</option>
-                            <option value="6">6</option>
-                            <option value="__OTRO__">➕ Otro...</option>
-                        </select>
-                    </div>
-                    <div style="display: flex; flex-direction: column;">
-                        <label
-                            style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Estante</label>
-                        <input type="number" id="editProdUbiEst" min="0" step="1" placeholder="Ej: 2"
-                            style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
-                    </div>
-                    <div style="display: flex; flex-direction: column;">
-                        <label
-                            style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Columna</label>
-                        <input type="number" id="editProdUbiCol" min="0" step="1" placeholder="Ej: 5"
-                            style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
-                    </div>
-                    <div style="display: flex; flex-direction: column;">
-                        <label
-                            style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Fila</label>
-                        <input type="text" id="editProdUbiFila" maxlength="1" placeholder="Ej: B"
-                            style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 800; font-size: 13px; text-transform: uppercase; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
-                    </div>
+                <div class="field">
+                    <label>Marca</label>
+                    <input type="text" id="editProdMarca" placeholder="Marca…">
                 </div>
-                <input type="text" id="editProdUbiDepCustom" placeholder="Nombre/Nº del depósito personalizado..." style="display:none; margin-top:8px; text-transform:uppercase;">
-            </div>
+                <div class="field">
+                    <label>Familia</label>
+                    <input type="text" id="editProdFamilia" placeholder="Familia…">
+                </div>
+                <div class="field">
+                    <label>Stock Mínimo</label>
+                    <input type="number" id="editProdMin" min="0" placeholder="0">
+                </div>
+                <div class="field"
+                    style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0;">
+                    <div
+                        style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                        <span>📍</span> Ubicación física
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 0.9fr; gap: 8px; align-items: end;">
+                        <div style="display: flex; flex-direction: column;">
+                            <label
+                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Depósito</label>
+                            <select id="editProdUbiDep" onchange="toggleCustomEditUbiDepInput(this)"
+                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box; cursor: pointer;">
+                                <option value="">—</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5A">5A</option>
+                                <option value="5B">5B</option>
+                                <option value="5C">5C</option>
+                                <option value="6">6</option>
+                                <option value="__OTRO__">➕ Otro...</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <label
+                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Estante</label>
+                            <input type="number" id="editProdUbiEst" min="0" step="1" placeholder="Ej: 2"
+                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <label
+                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Columna</label>
+                            <input type="number" id="editProdUbiCol" min="0" step="1" placeholder="Ej: 5"
+                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
+                        </div>
+                        <div style="display: flex; flex-direction: column;">
+                            <label
+                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Fila</label>
+                            <input type="text" id="editProdUbiFila" maxlength="1" placeholder="Ej: B"
+                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 800; font-size: 13px; text-transform: uppercase; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
+                        </div>
+                    </div>
+                    <input type="text" id="editProdUbiDepCustom" placeholder="Nombre/Nº del depósito personalizado..."
+                        style="display:none; margin-top:8px; text-transform:uppercase;">
+                </div>
 
-            <div class="field"
-                style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0;">
-                <div
-                    style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
-                    <span>📷</span> Fotos del producto <span style="font-weight:400; color: var(--txt-faint); text-transform:none; letter-spacing:0;">(máx. 2)</span>
+                <div class="field"
+                    style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0;">
+                    <div
+                        style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                        <span>📷</span> Fotos del producto <span
+                            style="font-weight:400; color: var(--txt-faint); text-transform:none; letter-spacing:0;">(máx.
+                            2)</span>
+                    </div>
+                    <div id="editProdFotosPreview" style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                    </div>
+                    <input type="file" accept="image/*" id="editProdFotoInput" style="display:none"
+                        onchange="manejarSeleccionFotoEditProd(this)">
+                    <button type="button" class="btn small" id="editProdFotoBtn"
+                        onclick="document.getElementById('editProdFotoInput').click()">+ Agregar foto</button>
+                    <div id="editProdFotoMsg"
+                        style="display:none; font-size:11px; color: var(--txt-faint); margin-top: 6px;">Ya tenés las 2
+                        fotos máximas cargadas. Eliminá una (✕) para poder agregar otra.</div>
                 </div>
-                <div id="editProdFotosPreview" style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;"></div>
-                <input type="file" accept="image/*" id="editProdFotoInput" style="display:none" onchange="manejarSeleccionFotoEditProd(this)">
-                <button type="button" class="btn small" id="editProdFotoBtn" onclick="document.getElementById('editProdFotoInput').click()">+ Agregar foto</button>
-                <div id="editProdFotoMsg" style="display:none; font-size:11px; color: var(--txt-faint); margin-top: 6px;">Ya tenés las 2 fotos máximas cargadas. Eliminá una (✕) para poder agregar otra.</div>
-            </div>
 
-            <div class="field">
-                <label>Observaciones</label>
-                <input type="text" id="editProdObs" placeholder="Observaciones…">
-            </div>
-            <div class="modal-err" id="editProdErr"></div>
+                <div class="field">
+                    <label>Observaciones</label>
+                    <input type="text" id="editProdObs" placeholder="Observaciones…">
+                </div>
+                <div class="modal-err" id="editProdErr"></div>
             </div>
             <div class="modal-actions">
                 <button class="btn ghost" id="editProdCancel">Cancelar</button>
@@ -1485,10 +1503,12 @@
             <div class="modal-body">
                 <h3 style="padding-right: 32px;">Registrar Nuevo Producto</h3>
                 <div class="sub">Ingresá los datos del nuevo producto para darlo de alta en el sistema.</div>
-                
+
                 <!-- ===== TIPO DE INGRESO / ALTA ===== -->
-                <div class="field" style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;">
-                    <div style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                <div class="field"
+                    style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;">
+                    <div
+                        style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
                         <span>📦</span> Tipo de ingreso / alta <span style="color:var(--bad-fg);">*</span>
                     </div>
                     <select id="newProdTipoAlta" onchange="npTipoAltaChanged()" style="width:100%;">
@@ -1498,14 +1518,18 @@
 
                     <!-- Lugar de retiro (solo visible en modo RETIRO) -->
                     <div id="newProdRetiroWrap" style="display:none; margin-top:10px;">
-                        <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">Lugar de retiro / proveedor <span style="color:var(--bad-fg);">*</span></label>
-                        <input type="text" id="newProdLugarRetiro" placeholder="Ej: Corralón El Amigo, Corralón Omega…" style="text-transform:uppercase; margin-top:4px;">
+                        <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">Lugar de retiro /
+                            proveedor <span style="color:var(--bad-fg);">*</span></label>
+                        <input type="text" id="newProdLugarRetiro" placeholder="Ej: Corralón El Amigo, Corralón Omega…"
+                            style="text-transform:uppercase; margin-top:4px;">
                     </div>
 
                     <!-- N.º de factura (opcional, siempre visible) -->
                     <div style="margin-top:10px;">
-                        <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">N.º de factura <span style="font-weight:400; color:var(--txt-faint);">(opcional)</span></label>
-                        <input type="text" id="newProdFactura" placeholder="Ej: FC-0001-00012345" style="margin-top:4px; text-transform:uppercase;">
+                        <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">N.º de factura <span
+                                style="font-weight:400; color:var(--txt-faint);">(opcional)</span></label>
+                        <input type="text" id="newProdFactura" placeholder="Ej: FC-0001-00012345"
+                            style="margin-top:4px; text-transform:uppercase;">
                     </div>
                 </div>
 
@@ -1515,12 +1539,14 @@
                     <select id="newProdZona" onchange="toggleCustomZonaInput(this)" style="width:100%;">
                         <option value="">Cargando zonas...</option>
                     </select>
-                    <input type="text" id="newProdZonaCustom" placeholder="Nombre del nuevo depósito o zona..." style="display:none; margin-top:6px; text-transform:uppercase;">
+                    <input type="text" id="newProdZonaCustom" placeholder="Nombre del nuevo depósito o zona..."
+                        style="display:none; margin-top:6px; text-transform:uppercase;">
                 </div>
 
                 <div class="field">
                     <label>Descripción del Producto <span style="color:var(--bad-fg);">*</span></label>
-                    <textarea id="newProdDesc" placeholder="Descripción detallada del producto…" rows="2" oninput="autoResizeTextarea(this)" style="text-transform:uppercase;"></textarea>
+                    <textarea id="newProdDesc" placeholder="Descripción detallada del producto…" rows="2"
+                        oninput="autoResizeTextarea(this)" style="text-transform:uppercase;"></textarea>
                 </div>
 
                 <div class="field" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -1532,14 +1558,18 @@
                             <option value="NO ESPECIFICADA">No especificada</option>
                             <option value="__OTRA__">➕ Otra marca (escribir)...</option>
                         </select>
-                        <input type="text" id="newProdMarcaCustom" placeholder="Escribir marca..." oninput="this.value=this.value.toUpperCase()" style="display:none; margin-top:4px; text-transform:uppercase;">
+                        <input type="text" id="newProdMarcaCustom" placeholder="Escribir marca..."
+                            oninput="this.value=this.value.toUpperCase()"
+                            style="display:none; margin-top:4px; text-transform:uppercase;">
                     </div>
                     <div>
                         <label>Familia <span style="color:var(--bad-fg);">*</span></label>
                         <select id="newProdFamiliaSel" onchange="toggleCustomFamiliaInput(this)" style="width:100%;">
                             <option value="">Seleccionar o escribir...</option>
                         </select>
-                        <input type="text" id="newProdFamiliaCustom" placeholder="Escribir familia..." oninput="this.value=this.value.toUpperCase()" style="display:none; margin-top:4px; text-transform:uppercase;">
+                        <input type="text" id="newProdFamiliaCustom" placeholder="Escribir familia..."
+                            oninput="this.value=this.value.toUpperCase()"
+                            style="display:none; margin-top:4px; text-transform:uppercase;">
                     </div>
                 </div>
 
@@ -1581,7 +1611,8 @@
                         <div style="display: flex; flex-direction: column;">
                             <label
                                 style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Depósito</label>
-                            <select id="newProdUbiDep" onchange="toggleCustomUbiDepInput(this); actualizarVisibilidadAclaracionUbi();"
+                            <select id="newProdUbiDep"
+                                onchange="toggleCustomUbiDepInput(this); actualizarVisibilidadAclaracionUbi();"
                                 style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box; cursor: pointer;">
                                 <option value="">—</option>
                                 <option value="1">1</option>
@@ -1598,33 +1629,41 @@
                         <div style="display: flex; flex-direction: column;">
                             <label
                                 style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Estante</label>
-                            <input type="number" id="newProdUbiEst" min="0" step="1" placeholder="Ej: 2" oninput="actualizarVisibilidadAclaracionUbi()"
+                            <input type="number" id="newProdUbiEst" min="0" step="1" placeholder="Ej: 2"
+                                oninput="actualizarVisibilidadAclaracionUbi()"
                                 style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
                         </div>
                         <div style="display: flex; flex-direction: column;">
                             <label
                                 style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Columna</label>
-                            <input type="number" id="newProdUbiCol" min="0" step="1" placeholder="Ej: 5" oninput="actualizarVisibilidadAclaracionUbi()"
+                            <input type="number" id="newProdUbiCol" min="0" step="1" placeholder="Ej: 5"
+                                oninput="actualizarVisibilidadAclaracionUbi()"
                                 style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
                         </div>
                         <div style="display: flex; flex-direction: column;">
                             <label
                                 style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Fila</label>
-                            <input type="text" id="newProdUbiFila" maxlength="1" placeholder="Ej: B" oninput="actualizarVisibilidadAclaracionUbi()"
+                            <input type="text" id="newProdUbiFila" maxlength="1" placeholder="Ej: B"
+                                oninput="actualizarVisibilidadAclaracionUbi()"
                                 style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 800; font-size: 13px; text-transform: uppercase; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
                         </div>
                     </div>
-                    <input type="text" id="newProdUbiDepCustom" placeholder="Nombre/Nº del depósito personalizado..." style="display:none; margin-top:8px; text-transform:uppercase;">
-                    
+                    <input type="text" id="newProdUbiDepCustom" placeholder="Nombre/Nº del depósito personalizado..."
+                        style="display:none; margin-top:8px; text-transform:uppercase;">
+
                     <!-- Aclaración de ubicación obligatoria si no hay estante/columna/fila -->
-                    <div id="newProdUbiAclaracionWrap" style="margin-top:10px; padding:10px 12px; background:rgba(217, 119, 6, 0.08); border:1px solid rgba(217, 119, 6, 0.35); border-radius:8px;">
-                        <div style="font-size:11px; font-weight:700; color:#d97706; display:flex; align-items:center; gap:5px; margin-bottom:4px;">
+                    <div id="newProdUbiAclaracionWrap"
+                        style="margin-top:10px; padding:10px 12px; background:rgba(217, 119, 6, 0.08); border:1px solid rgba(217, 119, 6, 0.35); border-radius:8px;">
+                        <div
+                            style="font-size:11px; font-weight:700; color:#d97706; display:flex; align-items:center; gap:5px; margin-bottom:4px;">
                             <span>⚠️</span> Aclaración de ubicación <span style="color:var(--bad-fg);">*</span>
                         </div>
                         <div style="font-size:11px; color:var(--txt-dim); margin-bottom:6px; line-height:1.35;">
                             Al no indicar Estante, Columna y Fila exactos, aclará dónde se ubica físicamente:
                         </div>
-                        <input type="text" id="newProdUbiObs" placeholder="Ej: en pallet pasillo central / en piso / al lado de caja..." style="width:100%; text-transform:uppercase;">
+                        <input type="text" id="newProdUbiObs"
+                            placeholder="Ej: en pallet pasillo central / en piso / al lado de caja..."
+                            style="width:100%; text-transform:uppercase;">
                     </div>
                 </div>
 
@@ -1632,28 +1671,38 @@
                     style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0;">
                     <div
                         style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
-                        <span>📷</span> Fotos del producto <span style="font-weight:400; color: var(--txt-faint); text-transform:none; letter-spacing:0;">(máx. 2)</span>
+                        <span>📷</span> Fotos del producto <span
+                            style="font-weight:400; color: var(--txt-faint); text-transform:none; letter-spacing:0;">(máx.
+                            2)</span>
                     </div>
-                    <div id="newProdFotosPreview" style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;"></div>
-                    <input type="file" accept="image/*" id="newProdFotoInput" style="display:none" onchange="manejarSeleccionFotoNewProd(this)">
-                    <button type="button" class="btn small" id="newProdFotoBtn" onclick="document.getElementById('newProdFotoInput').click()">+ Agregar foto</button>
-                    <div id="newProdFotoMsg" style="display:none; font-size:11px; color: var(--txt-faint); margin-top: 6px;">Ya tenés las 2 fotos máximas cargadas. Eliminá una (✕) para poder agregar otra.</div>
+                    <div id="newProdFotosPreview" style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
+                    </div>
+                    <input type="file" accept="image/*" id="newProdFotoInput" style="display:none"
+                        onchange="manejarSeleccionFotoNewProd(this)">
+                    <button type="button" class="btn small" id="newProdFotoBtn"
+                        onclick="document.getElementById('newProdFotoInput').click()">+ Agregar foto</button>
+                    <div id="newProdFotoMsg"
+                        style="display:none; font-size:11px; color: var(--txt-faint); margin-top: 6px;">Ya tenés las 2
+                        fotos máximas cargadas. Eliminá una (✕) para poder agregar otra.</div>
                 </div>
 
                 <div class="field" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                     <div>
                         <label>Responsable</label>
-                        <input type="text" id="newProdResponsable" placeholder="Nombre de quien registra" style="text-transform:uppercase;">
+                        <input type="text" id="newProdResponsable" placeholder="Nombre de quien registra"
+                            style="text-transform:uppercase;">
                     </div>
                     <div>
                         <label>Observaciones del ítem</label>
-                        <input type="text" id="newProdObs" placeholder="Observaciones de la pieza/ficha…" style="text-transform:uppercase;">
+                        <input type="text" id="newProdObs" placeholder="Observaciones de la pieza/ficha…"
+                            style="text-transform:uppercase;">
                     </div>
                 </div>
 
                 <div class="field">
                     <label>Observaciones generales del envío (opcional - Movimientos)</label>
-                    <input type="text" id="newProdObsGeneral" placeholder="Transporte, motivo o aclaración del envío…" style="text-transform:uppercase;">
+                    <input type="text" id="newProdObsGeneral" placeholder="Transporte, motivo o aclaración del envío…"
+                        style="text-transform:uppercase;">
                 </div>
 
                 <div class="modal-err" id="newProdErr"></div>
@@ -1707,7 +1756,8 @@
 
                 <div class="field">
                     <label>Observaciones generales del envío (opcional)</label>
-                    <input type="text" id="adjustBatchObsGeneral" placeholder="Transporte, motivo o aclaración del envío…" style="text-transform:uppercase;">
+                    <input type="text" id="adjustBatchObsGeneral"
+                        placeholder="Transporte, motivo o aclaración del envío…" style="text-transform:uppercase;">
                 </div>
 
                 <div class="modal-err" id="adjustBatchErr"></div>
@@ -1749,6 +1799,7 @@
     <div class="lightbox" id="lightbox"><img id="lightboxImg" src="" alt=""></div>
     <div class="toast" id="toast"></div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
     <script>
         // ============================================================
         // CONFIG — completar con la URL del Web App (Implementar > Nueva implementación)
@@ -2049,7 +2100,7 @@
         // ============================================================
         // RENDER — STOCK TABLE
         // ============================================================
-                function buildStockRowHtml(p) {
+        function buildStockRowHtml(p) {
             const loc = ubicacionStr(p);
             const isSel = state.selectedIds.has(p.id);
             const imgs = (p.imagen || '').split('||').map(x => x.trim()).filter(Boolean);
@@ -2219,7 +2270,7 @@
                 selEditDep.value = '__OTRO__';
                 editUbiDepCustom.style.display = 'block';
                 editUbiDepCustom.value = depOriginal;
-            }            document.getElementById('editProdUbiEst').value = (p.ubicacion_estante !== undefined && p.ubicacion_estante !== null) ? p.ubicacion_estante : '';
+            } document.getElementById('editProdUbiEst').value = (p.ubicacion_estante !== undefined && p.ubicacion_estante !== null) ? p.ubicacion_estante : '';
             document.getElementById('editProdUbiCol').value = (p.ubicacion_columna !== undefined && p.ubicacion_columna !== null) ? p.ubicacion_columna : '';
             document.getElementById('editProdUbiFila').value = (p.ubicacion_fila || '').toUpperCase();
             document.getElementById('editProdObs').value = p.ult_obs || '';
@@ -2676,265 +2727,265 @@
             renderNewProdFotos();
         }
 
-// ============================================================
-// REEMPLAZAR la función confirmNewProduct() completa por esta versión.
-// Motivo: dejar de armar un texto "obsFinal" con datos duplicados y
-// mandar cada dato en su propio campo, tal como lo espera el
-// Codigo.gs corregido (que arma el Obs. ítem limpio del lado del
-// servidor y guarda la factura en su propia columna).
-// ============================================================
-async function confirmNewProduct() {
-    const errBox = document.getElementById('newProdErr');
-    errBox.style.display = 'none';
+        // ============================================================
+        // REEMPLAZAR la función confirmNewProduct() completa por esta versión.
+        // Motivo: dejar de armar un texto "obsFinal" con datos duplicados y
+        // mandar cada dato en su propio campo, tal como lo espera el
+        // Codigo.gs corregido (que arma el Obs. ítem limpio del lado del
+        // servidor y guarda la factura en su propia columna).
+        // ============================================================
+        async function confirmNewProduct() {
+            const errBox = document.getElementById('newProdErr');
+            errBox.style.display = 'none';
 
-    // ── Tipo de alta ────────────────────────────────────────────
-    const tipoAlta = document.getElementById('newProdTipoAlta').value; // 'DEPOSITO' | 'RETIRO'
-    const esRetiro = tipoAlta === 'RETIRO';
+            // ── Tipo de alta ────────────────────────────────────────────
+            const tipoAlta = document.getElementById('newProdTipoAlta').value; // 'DEPOSITO' | 'RETIRO'
+            const esRetiro = tipoAlta === 'RETIRO';
 
-    // ── Lugar de retiro (solo en modo RETIRO) ──────────────────
-    const lugarRetiro = esRetiro
-        ? document.getElementById('newProdLugarRetiro').value.trim().toUpperCase()
-        : '';
+            // ── Lugar de retiro (solo en modo RETIRO) ──────────────────
+            const lugarRetiro = esRetiro
+                ? document.getElementById('newProdLugarRetiro').value.trim().toUpperCase()
+                : '';
 
-    // ── Factura (opcional en ambos modos) — viaja SOLA, sin prefijo ──
-    const factura = document.getElementById('newProdFactura').value.trim().toUpperCase();
+            // ── Factura (opcional en ambos modos) — viaja SOLA, sin prefijo ──
+            const factura = document.getElementById('newProdFactura').value.trim().toUpperCase();
 
-    // ── Zona (solo requerida en modo DEPÓSITO) ─────────────────
-    const selZona = document.getElementById('newProdZona').value;
-    const customZona = document.getElementById('newProdZonaCustom').value.trim().toUpperCase();
-    const zona = esRetiro ? '' : (selZona === '__OTRA__' ? customZona : selZona).trim().toUpperCase();
+            // ── Zona (solo requerida en modo DEPÓSITO) ─────────────────
+            const selZona = document.getElementById('newProdZona').value;
+            const customZona = document.getElementById('newProdZonaCustom').value.trim().toUpperCase();
+            const zona = esRetiro ? '' : (selZona === '__OTRA__' ? customZona : selZona).trim().toUpperCase();
 
-    const desc = document.getElementById('newProdDesc').value.trim().toUpperCase();
+            const desc = document.getElementById('newProdDesc').value.trim().toUpperCase();
 
-    // ── Marca ──────────────────────────────────────────────────
-    const selMarca = document.getElementById('newProdMarcaSel').value;
-    const customMarca = document.getElementById('newProdMarcaCustom').value.trim().toUpperCase();
-    const marca = (selMarca === '__OTRA__' ? customMarca : selMarca).trim().toUpperCase();
+            // ── Marca ──────────────────────────────────────────────────
+            const selMarca = document.getElementById('newProdMarcaSel').value;
+            const customMarca = document.getElementById('newProdMarcaCustom').value.trim().toUpperCase();
+            const marca = (selMarca === '__OTRA__' ? customMarca : selMarca).trim().toUpperCase();
 
-    const selFam = document.getElementById('newProdFamiliaSel').value;
-    const customFam = document.getElementById('newProdFamiliaCustom').value.trim().toUpperCase();
-    const familia = (selFam === '__OTRA__' ? customFam : selFam).trim().toUpperCase();
+            const selFam = document.getElementById('newProdFamiliaSel').value;
+            const customFam = document.getElementById('newProdFamiliaCustom').value.trim().toUpperCase();
+            const familia = (selFam === '__OTRA__' ? customFam : selFam).trim().toUpperCase();
 
-    const unidad = document.getElementById('newProdUnidad').value;
-    const stockInicialVal = document.getElementById('newProdStockInicial').value.trim();
-    const stockMin = Number(document.getElementById('newProdStockMin').value) || 0;
+            const unidad = document.getElementById('newProdUnidad').value;
+            const stockInicialVal = document.getElementById('newProdStockInicial').value.trim();
+            const stockMin = Number(document.getElementById('newProdStockMin').value) || 0;
 
-    // ── Ubicación física (solo relevante en modo DEPÓSITO) ─────
-    const selUbiDep = document.getElementById('newProdUbiDep').value;
-    const customUbiDep = document.getElementById('newProdUbiDepCustom').value.trim().toUpperCase();
-    const ubiDep = esRetiro ? '' : (selUbiDep === '__OTRO__' ? customUbiDep : selUbiDep).trim().toUpperCase();
-    const ubiEst = esRetiro ? '' : document.getElementById('newProdUbiEst').value.trim();
-    const ubiCol = esRetiro ? '' : document.getElementById('newProdUbiCol').value.trim();
-    const ubiFila = esRetiro ? '' : document.getElementById('newProdUbiFila').value.trim().toUpperCase();
+            // ── Ubicación física (solo relevante en modo DEPÓSITO) ─────
+            const selUbiDep = document.getElementById('newProdUbiDep').value;
+            const customUbiDep = document.getElementById('newProdUbiDepCustom').value.trim().toUpperCase();
+            const ubiDep = esRetiro ? '' : (selUbiDep === '__OTRO__' ? customUbiDep : selUbiDep).trim().toUpperCase();
+            const ubiEst = esRetiro ? '' : document.getElementById('newProdUbiEst').value.trim();
+            const ubiCol = esRetiro ? '' : document.getElementById('newProdUbiCol').value.trim();
+            const ubiFila = esRetiro ? '' : document.getElementById('newProdUbiFila').value.trim().toUpperCase();
 
-    const responsable = document.getElementById('newProdResponsable').value.trim().toUpperCase();
-    const obs = document.getElementById('newProdObs').value.trim().toUpperCase();
-    const obsGeneralEnvio = document.getElementById('newProdObsGeneral').value.trim().toUpperCase();
+            const responsable = document.getElementById('newProdResponsable').value.trim().toUpperCase();
+            const obs = document.getElementById('newProdObs').value.trim().toUpperCase();
+            const obsGeneralEnvio = document.getElementById('newProdObsGeneral').value.trim().toUpperCase();
 
-    // ── Validaciones ───────────────────────────────────────────
-    if (!desc) {
-        errBox.textContent = 'La descripción del producto es obligatoria.';
-        errBox.style.display = 'block';
-        return;
-    }
-    if (!marca) {
-        errBox.textContent = selMarca === '__OTRA__'
-            ? 'Ingresá el nombre de la marca.'
-            : 'Seleccioná o ingresá una Marca obligatoria.';
-        errBox.style.display = 'block';
-        return;
-    }
-    if (stockInicialVal === '' || isNaN(Number(stockInicialVal)) || Number(stockInicialVal) < 0) {
-        errBox.textContent = 'El Stock Inicial es obligatorio (ingresá 0 o un valor mayor).';
-        errBox.style.display = 'block';
-        return;
-    }
-    const stockInicial = Number(stockInicialVal);
-
-    if (!familia) {
-        errBox.textContent = 'Seleccioná o ingresá una Familia.';
-        errBox.style.display = 'block';
-        return;
-    }
-    if (!responsable) {
-        errBox.textContent = 'Ingresá el responsable que carga el producto.';
-        errBox.style.display = 'block';
-        return;
-    }
-
-    if (esRetiro && !lugarRetiro) {
-        errBox.textContent = 'Indicá el lugar de retiro / proveedor.';
-        errBox.style.display = 'block';
-        return;
-    }
-    if (!esRetiro && !zona) {
-        errBox.textContent = 'Seleccioná o ingresá una Zona / Depósito.';
-        errBox.style.display = 'block';
-        return;
-    }
-
-    // ── Aclaración de ubicación (solo en modo DEPÓSITO) ───────
-    // Viaja SOLA como "ubicacion_aclaracion" — el backend decide si va
-    // al Obs. ítem (solo si además falta estante/columna/fila).
-    let aclaracionUbi = '';
-    if (!esRetiro) {
-        const tieneEstanteriaCompleta = ubiEst !== '' && ubiCol !== '' && ubiFila !== '';
-        if (!tieneEstanteriaCompleta) {
-            aclaracionUbi = document.getElementById('newProdUbiObs').value.trim().toUpperCase();
-            if (!aclaracionUbi) {
-                errBox.textContent = 'Al no indicar Estante, Columna y Fila exactos, debés ingresar la Aclaración de Ubicación física obligatoria.';
+            // ── Validaciones ───────────────────────────────────────────
+            if (!desc) {
+                errBox.textContent = 'La descripción del producto es obligatoria.';
                 errBox.style.display = 'block';
                 return;
             }
-        }
-    }
+            if (!marca) {
+                errBox.textContent = selMarca === '__OTRA__'
+                    ? 'Ingresá el nombre de la marca.'
+                    : 'Seleccioná o ingresá una Marca obligatoria.';
+                errBox.style.display = 'block';
+                return;
+            }
+            if (stockInicialVal === '' || isNaN(Number(stockInicialVal)) || Number(stockInicialVal) < 0) {
+                errBox.textContent = 'El Stock Inicial es obligatorio (ingresá 0 o un valor mayor).';
+                errBox.style.display = 'block';
+                return;
+            }
+            const stockInicial = Number(stockInicialVal);
 
-    // ── Etiqueta de Obra, SOLO para reflejar en pantalla al instante ──
-    // (el backend recalcula esto mismo a partir de tipo_alta; no se manda)
-    const obraMovimiento = esRetiro
-        ? 'Ingreso inicial / Alta - Retiro'
-        : 'Ingreso inicial / Alta - Depósito';
+            if (!familia) {
+                errBox.textContent = 'Seleccioná o ingresá una Familia.';
+                errBox.style.display = 'block';
+                return;
+            }
+            if (!responsable) {
+                errBox.textContent = 'Ingresá el responsable que carga el producto.';
+                errBox.style.display = 'block';
+                return;
+            }
 
-    // ── Obs. ítem local, SOLO para reflejar en pantalla al instante ──
-    // (el backend arma la versión real que se guarda en la planilla)
-    let obsItemLocalParts = [];
-    if (esRetiro && lugarRetiro) obsItemLocalParts.push('Retiro: ' + lugarRetiro);
-    if (!esRetiro && aclaracionUbi) obsItemLocalParts.push(aclaracionUbi);
-    if (obs) obsItemLocalParts.push(obs);
-    const obsItemLocal = obsItemLocalParts.join(' | ');
+            if (esRetiro && !lugarRetiro) {
+                errBox.textContent = 'Indicá el lugar de retiro / proveedor.';
+                errBox.style.display = 'block';
+                return;
+            }
+            if (!esRetiro && !zona) {
+                errBox.textContent = 'Seleccioná o ingresá una Zona / Depósito.';
+                errBox.style.display = 'block';
+                return;
+            }
 
-    const btnConfirm = document.getElementById('newProdConfirm');
-    btnConfirm.disabled = true;
-    btnConfirm.textContent = 'Registrando…';
+            // ── Aclaración de ubicación (solo en modo DEPÓSITO) ───────
+            // Viaja SOLA como "ubicacion_aclaracion" — el backend decide si va
+            // al Obs. ítem (solo si además falta estante/columna/fila).
+            let aclaracionUbi = '';
+            if (!esRetiro) {
+                const tieneEstanteriaCompleta = ubiEst !== '' && ubiCol !== '' && ubiFila !== '';
+                if (!tieneEstanteriaCompleta) {
+                    aclaracionUbi = document.getElementById('newProdUbiObs').value.trim().toUpperCase();
+                    if (!aclaracionUbi) {
+                        errBox.textContent = 'Al no indicar Estante, Columna y Fila exactos, debés ingresar la Aclaración de Ubicación física obligatoria.';
+                        errBox.style.display = 'block';
+                        return;
+                    }
+                }
+            }
 
-    try {
-        // Copia de las fotos ANTES de que closeNewProductModal() las borre
-        const fotosParaEnviar = newProductCurrentImages.slice();
+            // ── Etiqueta de Obra, SOLO para reflejar en pantalla al instante ──
+            // (el backend recalcula esto mismo a partir de tipo_alta; no se manda)
+            const obraMovimiento = esRetiro
+                ? 'Ingreso inicial / Alta - Retiro'
+                : 'Ingreso inicial / Alta - Depósito';
 
-        // Generar ID local para reflejar al instante
-        const maxNum = state.stock.reduce((max, p) => {
-            const m = String(p.id || '').match(/PROD-(\d+)/i);
-            return m ? Math.max(max, parseInt(m[1], 10)) : max;
-        }, 0);
-        const localId = 'PROD-' + String(maxNum + 1).padStart(3, '0');
+            // ── Obs. ítem local, SOLO para reflejar en pantalla al instante ──
+            // (el backend arma la versión real que se guarda en la planilla)
+            let obsItemLocalParts = [];
+            if (esRetiro && lugarRetiro) obsItemLocalParts.push('Retiro: ' + lugarRetiro);
+            if (!esRetiro && aclaracionUbi) obsItemLocalParts.push(aclaracionUbi);
+            if (obs) obsItemLocalParts.push(obs);
+            const obsItemLocal = obsItemLocalParts.join(' | ');
 
-        const fotosDrive = fotosParaEnviar.map(x => x.dataUrl).join('||');
-        const nuevoProducto = {
-            id: localId,
-            zona: zona,
-            familia: familia,
-            marca: marca,
-            descripcion: desc,
-            unidad: unidad,
-            entradas: stockInicial > 0 ? stockInicial : 0,
-            salidas: 0,
-            devoluciones: 0,
-            stock_actual: stockInicial,
-            stock_minimo: stockMin,
-            estado: stockInicial <= stockMin ? 'REPONER' : 'OK',
-            ult_mov: stockInicial > 0 ? 'ENTRADA' : 'ALTA',
-            ult_fecha: new Date().toLocaleDateString('es-AR'),
-            ult_hora: horaAhora(),
-            ubicacion_deposito: ubiDep,
-            ubicacion_estante: ubiEst,
-            ubicacion_columna: ubiCol,
-            ubicacion_fila: ubiFila,
-            imagen: fotosDrive,
-            ult_obs: obsItemLocal
-        };
+            const btnConfirm = document.getElementById('newProdConfirm');
+            btnConfirm.disabled = true;
+            btnConfirm.textContent = 'Registrando…';
 
-        // Agregar localmente
-        state.stock.unshift(nuevoProducto);
+            try {
+                // Copia de las fotos ANTES de que closeNewProductModal() las borre
+                const fotosParaEnviar = newProductCurrentImages.slice();
 
-        if (stockInicial > 0) {
-            state.mov.unshift({
-                fecha: new Date().toLocaleDateString('es-AR') + ' ' + horaAhora(),
-                tipo: 'ENTRADA',
-                zona: zona,
-                descripcion: desc,
-                cantidad: stockInicial,
-                responsable: responsable || 'ALTA DE PRODUCTO',
-                obra: obraMovimiento
-            });
-        }
+                // Generar ID local para reflejar al instante
+                const maxNum = state.stock.reduce((max, p) => {
+                    const m = String(p.id || '').match(/PROD-(\d+)/i);
+                    return m ? Math.max(max, parseInt(m[1], 10)) : max;
+                }, 0);
+                const localId = 'PROD-' + String(maxNum + 1).padStart(3, '0');
 
-        closeNewProductModal();
-        buildZoneChips();
-        populateFamiliaFilter();
-        renderAll();
-        showSuccessModal(`¡Producto "${desc}" registrado con éxito! (ID: ${localId})`);
+                const fotosDrive = fotosParaEnviar.map(x => x.dataUrl).join('||');
+                const nuevoProducto = {
+                    id: localId,
+                    zona: zona,
+                    familia: familia,
+                    marca: marca,
+                    descripcion: desc,
+                    unidad: unidad,
+                    entradas: stockInicial > 0 ? stockInicial : 0,
+                    salidas: 0,
+                    devoluciones: 0,
+                    stock_actual: stockInicial,
+                    stock_minimo: stockMin,
+                    estado: stockInicial <= stockMin ? 'REPONER' : 'OK',
+                    ult_mov: stockInicial > 0 ? 'ENTRADA' : 'ALTA',
+                    ult_fecha: new Date().toLocaleDateString('es-AR'),
+                    ult_hora: horaAhora(),
+                    ubicacion_deposito: ubiDep,
+                    ubicacion_estante: ubiEst,
+                    ubicacion_columna: ubiCol,
+                    ubicacion_fila: ubiFila,
+                    imagen: fotosDrive,
+                    ult_obs: obsItemLocal
+                };
 
-        // Sincronizar en Apps Script si no es demo
-        if (!isDemo) {
-            const payload = {
-                accion: 'crear-producto',
-                zona: zona,
-                familia: familia,
-                marca: marca,
-                descripcion: desc,
-                unidad: unidad,
-                stock_inicial: stockInicial,
-                stock_minimo: stockMin,
-                deposito: ubiDep,
-                estante: ubiEst,
-                columna: ubiCol,
-                fila: ubiFila,
-                responsable: responsable,
-                observaciones: obs,                 // ← observación libre, SIN concatenar nada más
-                obs_general: obsGeneralEnvio,
-                tipo_alta: tipoAlta,                // 'DEPOSITO' | 'RETIRO' — el backend arma "Obra" con esto
-                lugar_retiro: lugarRetiro,
-                ubicacion_aclaracion: aclaracionUbi, // ← nuevo nombre de campo, va suelto
-                factura: factura,                    // ← va a su propia columna, sin prefijo
-                fotos_base64: fotosParaEnviar.map(x => x.base64)
-            };
-            const res = await apiPost(payload);
-            if (res && res.ok && res.id) {
-                nuevoProducto.id = res.id;
-                // Reemplazamos el preview local (base64) por el link real de Drive
-                if (res.imagen) {
-                    nuevoProducto.imagen = res.imagen;
-                } else if (fotosParaEnviar.length > 0) {
-                    // Fallback: si el backend no procesó las fotos en crear-producto,
-                    // las subimos mediante actualizar-imagen para garantizar que queden en Drive
-                    let subidas = [];
-                    for (let i = 0; i < fotosParaEnviar.length; i++) {
-                        try {
-                            const resFoto = await apiPost({
-                                accion: 'actualizar-imagen',
-                                id: res.id,
-                                foto_base64: fotosParaEnviar[i].base64,
-                                modo: i === 0 ? 'reemplazar' : 'agregar'
-                            });
-                            if (resFoto && resFoto.ok && resFoto.imagen) {
-                                subidas = resFoto.imagen.split('||').map(s => s.trim()).filter(Boolean);
+                // Agregar localmente
+                state.stock.unshift(nuevoProducto);
+
+                if (stockInicial > 0) {
+                    state.mov.unshift({
+                        fecha: new Date().toLocaleDateString('es-AR') + ' ' + horaAhora(),
+                        tipo: 'ENTRADA',
+                        zona: zona,
+                        descripcion: desc,
+                        cantidad: stockInicial,
+                        responsable: responsable || 'ALTA DE PRODUCTO',
+                        obra: obraMovimiento
+                    });
+                }
+
+                closeNewProductModal();
+                buildZoneChips();
+                populateFamiliaFilter();
+                renderAll();
+                showSuccessModal(`¡Producto "${desc}" registrado con éxito! (ID: ${localId})`);
+
+                // Sincronizar en Apps Script si no es demo
+                if (!isDemo) {
+                    const payload = {
+                        accion: 'crear-producto',
+                        zona: zona,
+                        familia: familia,
+                        marca: marca,
+                        descripcion: desc,
+                        unidad: unidad,
+                        stock_inicial: stockInicial,
+                        stock_minimo: stockMin,
+                        deposito: ubiDep,
+                        estante: ubiEst,
+                        columna: ubiCol,
+                        fila: ubiFila,
+                        responsable: responsable,
+                        observaciones: obs,                 // ← observación libre, SIN concatenar nada más
+                        obs_general: obsGeneralEnvio,
+                        tipo_alta: tipoAlta,                // 'DEPOSITO' | 'RETIRO' — el backend arma "Obra" con esto
+                        lugar_retiro: lugarRetiro,
+                        ubicacion_aclaracion: aclaracionUbi, // ← nuevo nombre de campo, va suelto
+                        factura: factura,                    // ← va a su propia columna, sin prefijo
+                        fotos_base64: fotosParaEnviar.map(x => x.base64)
+                    };
+                    const res = await apiPost(payload);
+                    if (res && res.ok && res.id) {
+                        nuevoProducto.id = res.id;
+                        // Reemplazamos el preview local (base64) por el link real de Drive
+                        if (res.imagen) {
+                            nuevoProducto.imagen = res.imagen;
+                        } else if (fotosParaEnviar.length > 0) {
+                            // Fallback: si el backend no procesó las fotos en crear-producto,
+                            // las subimos mediante actualizar-imagen para garantizar que queden en Drive
+                            let subidas = [];
+                            for (let i = 0; i < fotosParaEnviar.length; i++) {
+                                try {
+                                    const resFoto = await apiPost({
+                                        accion: 'actualizar-imagen',
+                                        id: res.id,
+                                        foto_base64: fotosParaEnviar[i].base64,
+                                        modo: i === 0 ? 'reemplazar' : 'agregar'
+                                    });
+                                    if (resFoto && resFoto.ok && resFoto.imagen) {
+                                        subidas = resFoto.imagen.split('||').map(s => s.trim()).filter(Boolean);
+                                    }
+                                } catch (errFoto) {
+                                    console.error("Error subiendo foto de nuevo producto:", errFoto);
+                                }
                             }
-                        } catch (errFoto) {
-                            console.error("Error subiendo foto de nuevo producto:", errFoto);
+                            if (subidas.length > 0) {
+                                nuevoProducto.imagen = subidas.join('||');
+                            }
                         }
-                    }
-                    if (subidas.length > 0) {
-                        nuevoProducto.imagen = subidas.join('||');
+                        renderStock();
+                        if (res.error_fotos) {
+                            showToast(`Producto guardado (ID ${res.id}), pero la foto no se pudo subir: ${res.error_fotos}`, true);
+                        } else {
+                            showToast(`Guardado en la nube con ID ${res.id} ✓`);
+                        }
+                    } else if (res && !res.ok) {
+                        showToast('Error al guardar en la nube: ' + (res.error || ''), true);
                     }
                 }
-                renderStock();
-                if (res.error_fotos) {
-                    showToast(`Producto guardado (ID ${res.id}), pero la foto no se pudo subir: ${res.error_fotos}`, true);
-                } else {
-                    showToast(`Guardado en la nube con ID ${res.id} ✓`);
-                }
-            } else if (res && !res.ok) {
-                showToast('Error al guardar en la nube: ' + (res.error || ''), true);
+            } catch (e) {
+                console.error("Error al registrar producto:", e);
+                showToast('Error al registrar el producto', true);
+            } finally {
+                btnConfirm.disabled = false;
+                btnConfirm.textContent = 'Registrar Producto';
             }
         }
-    } catch (e) {
-        console.error("Error al registrar producto:", e);
-        showToast('Error al registrar el producto', true);
-    } finally {
-        btnConfirm.disabled = false;
-        btnConfirm.textContent = 'Registrar Producto';
-    }
-}
 
         // ============================================================
         // BATCH ACTIONS (CARRITO / SELECCIONADOS)
@@ -3378,92 +3429,166 @@ async function confirmNewProduct() {
             document.getElementById('successOverlay').classList.remove('show');
         }
 
-        function exportExcel() {
-            const list = stockFiltrado();
-            const zonaNombre = state.zona || 'Todos los depósitos';
+        async function exportExcel(modo) {
+            // Prioridad de selección: si hay tildes, se exportan esos productos
+            // sin importar qué se haya buscado/filtrado después.
+            // "Exportar todo" (modo 'todos') ignora selección y filtros.
+            let list;
+            let alcanceTexto;
+            let nombreAlcance;
+
+            if (modo === 'todos') {
+                list = state.stock.slice();
+                alcanceTexto = 'Todos los materiales (todos los depósitos, sin filtros)';
+                nombreAlcance = 'todos';
+            } else if (state.selectedIds.size > 0) {
+                list = state.stock.filter(p => state.selectedIds.has(p.id));
+                alcanceTexto = `Seleccionados (${list.length} producto${list.length === 1 ? '' : 's'})`;
+                nombreAlcance = 'seleccionados';
+            } else {
+                list = stockFiltrado();
+                alcanceTexto = state.zona || 'Todos los depósitos';
+                nombreAlcance = state.zona || 'todos';
+            }
+
+            if (list.length === 0) {
+                showToast('No hay productos para exportar', true);
+                return;
+            }
+            if (typeof ExcelJS === 'undefined') {
+                showToast('No se pudo cargar el generador de Excel (revisá tu conexión)', true);
+                return;
+            }
+
             const fechaHoy = new Date().toLocaleDateString('es-AR') + ' ' + new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 
             const headers = [
-                { key: 'id', label: 'ID Producto' },
-                { key: 'zona', label: 'Depósito / Zona' },
-                { key: 'familia', label: 'Familia' },
-                { key: 'marca', label: 'Marca' },
-                { key: 'descripcion', label: 'Descripción' },
-                { key: 'ubicacion', label: 'Ubicación' },
-                { key: 'unidad', label: 'Unidad' },
-                { key: 'stock_minimo', label: 'Stock Mínimo' },
-                { key: 'stock_actual', label: 'Stock Actual' },
-                { key: 'estado', label: 'Estado' },
-                { key: 'ult_mov', label: 'Últ. Movimiento' },
-                { key: 'ult_fecha', label: 'Fecha Últ. Mov.' }
+                { key: 'id', label: 'ID Producto', width: 14 },
+                { key: 'zona', label: 'Depósito / Zona', width: 18 },
+                { key: 'familia', label: 'Familia', width: 20 },
+                { key: 'marca', label: 'Marca', width: 16 },
+                { key: 'descripcion', label: 'Descripción', width: 42 },
+                { key: 'ubicacion', label: 'Ubicación', width: 16 },
+                { key: 'unidad', label: 'Unidad', width: 10 },
+                { key: 'stock_minimo', label: 'Stock Mínimo', width: 12 },
+                { key: 'stock_actual', label: 'Stock Actual', width: 12 },
+                { key: 'estado', label: 'Estado', width: 12 },
+                { key: 'ult_mov', label: 'Últ. Movimiento', width: 16 },
+                { key: 'ult_fecha', label: 'Fecha Últ. Mov.', width: 18 },
             ];
 
-            const tableHeaderHtml = headers.map(h =>
-                `<th style="background-color: #1e293b; color: #ffffff; font-weight: bold; border: 1px solid #334155; padding: 8px 12px; text-align: left; font-family: Calibri, Arial, sans-serif;">${h.label}</th>`
-            ).join('');
+            const workbook = new ExcelJS.Workbook();
+            workbook.creator = 'RPM Construcciones';
+            workbook.created = new Date();
+            const sheet = workbook.addWorksheet('Stock Depósito', {
+                views: [{ state: 'frozen', ySplit: 4 }]
+            });
+            sheet.columns = headers.map(h => ({ key: h.key, width: h.width }));
 
-            const tableRowsHtml = list.map((p, idx) => {
+            // Fila 1: título
+            sheet.mergeCells(1, 1, 1, headers.length);
+            const titleCell = sheet.getCell(1, 1);
+            titleCell.value = 'RPM Construcciones — Reporte de Stock';
+            titleCell.font = { bold: true, size: 14, color: { argb: 'FF0F172A' } };
+
+            // Fila 2: subtítulo (alcance / fecha / total)
+            sheet.mergeCells(2, 1, 2, headers.length);
+            const subCell = sheet.getCell(2, 1);
+            subCell.value = `Alcance: ${alcanceTexto}  |  Generado: ${fechaHoy}  |  Total productos: ${list.length}`;
+            subCell.font = { italic: true, size: 10, color: { argb: 'FF64748B' } };
+
+            sheet.getRow(3).height = 4; // separador
+
+            // Fila 4: encabezados (mismo estilo oscuro que la tabla en pantalla)
+            const headerRow = sheet.getRow(4);
+            headers.forEach((h, i) => {
+                const cell = headerRow.getCell(i + 1);
+                cell.value = h.label;
+                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+                cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                cell.border = {
+                    top: { style: 'thin', color: { argb: 'FF334155' } },
+                    left: { style: 'thin', color: { argb: 'FF334155' } },
+                    bottom: { style: 'thin', color: { argb: 'FF334155' } },
+                    right: { style: 'thin', color: { argb: 'FF334155' } },
+                };
+            });
+            headerRow.height = 20;
+
+            // Filas de datos: filas alternadas + semáforo de estado
+            list.forEach((p, idx) => {
                 const loc = ubicacionStr(p) || '—';
-                const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
                 const isReponer = p.estado === 'REPONER';
-                const estadoBg = isReponer ? '#fee2e2' : '#dcfce7';
-                const estadoColor = isReponer ? '#991b1b' : '#166534';
+                const rowBg = idx % 2 === 0 ? 'FFFFFFFF' : 'FFF8FAFC';
 
-                return `<tr style="background-color: ${rowBg};">
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Consolas, monospace; font-weight: bold; color: #334155;">${escapeHtml(p.id)}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Calibri, Arial, sans-serif;">${escapeHtml(p.zona)}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Calibri, Arial, sans-serif; font-weight: bold; color: #1e40af;">${escapeHtml(p.familia)}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Calibri, Arial, sans-serif;">${escapeHtml(p.marca || '—')}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Calibri, Arial, sans-serif; font-weight: 600;">${escapeHtml(p.descripcion)}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Calibri, Arial, sans-serif;">${escapeHtml(loc)}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Calibri, Arial, sans-serif;">${escapeHtml(p.unidad || 'un')}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; text-align: right; font-family: Calibri, Arial, sans-serif;">${p.stock_minimo || 0}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; text-align: right; font-family: Calibri, Arial, sans-serif; font-weight: bold; font-size: 14px;">${p.stock_actual || 0}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; text-align: center; font-family: Calibri, Arial, sans-serif; font-weight: bold; background-color: ${estadoBg}; color: ${estadoColor};">${escapeHtml(p.estado)}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Calibri, Arial, sans-serif;">${escapeHtml(p.ult_mov || '—')}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 10px; font-family: Calibri, Arial, sans-serif;">${escapeHtml((p.ult_fecha || '') + ' ' + (p.ult_hora || ''))}</td>
-                </tr>`;
-            }).join('');
+                const row = sheet.addRow({
+                    id: p.id,
+                    zona: p.zona,
+                    familia: p.familia,
+                    marca: p.marca || '—',
+                    descripcion: p.descripcion,
+                    ubicacion: loc,
+                    unidad: p.unidad || 'un',
+                    stock_minimo: p.stock_minimo || 0,
+                    stock_actual: p.stock_actual || 0,
+                    estado: p.estado,
+                    ult_mov: p.ult_mov || '—',
+                    ult_fecha: `${p.ult_fecha || ''} ${p.ult_hora || ''}`.trim(),
+                });
 
-            const excelHtml = `
-                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-                <head>
-                    <meta charset="utf-8">
-                    <!--[if gte mso 9]>
-                    <xml>
-                        <x:ExcelWorkbook>
-                            <x:ExcelWorksheets>
-                                <x:ExcelWorksheet>
-                                    <x:Name>Stock Depósito</x:Name>
-                                    <x:WorksheetOptions>
-                                        <x:DisplayGridlines/>
-                                    </x:WorksheetOptions>
-                                </x:ExcelWorksheet>
-                            </x:ExcelWorksheets>
-                        </x:ExcelWorkbook>
-                    </xml>
-                    <![endif]-->
-                </head>
-                <body style="font-family: Calibri, Arial, sans-serif;">
-                    <h2 style="color: #0f172a; margin-bottom: 4px;">RPM Construcciones — Reporte de Stock</h2>
-                    <p style="color: #64748b; font-size: 12px; margin-top: 0; margin-bottom: 12px;">Filtro / Depósito: <strong>${escapeHtml(zonaNombre)}</strong> | Generado: ${fechaHoy} | Total productos: <strong>${list.length}</strong></p>
-                    <table border="1" style="border-collapse: collapse;">
-                        <thead>
-                            <tr>${tableHeaderHtml}</tr>
-                        </thead>
-                        <tbody>
-                            ${tableRowsHtml}
-                        </tbody>
-                    </table>
-                </body>
-                </html>
-            `;
+                row.eachCell((cell) => {
+                    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: rowBg } };
+                    cell.border = {
+                        top: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                        left: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                        bottom: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                        right: { style: 'thin', color: { argb: 'FFCBD5E1' } },
+                    };
+                    cell.font = { name: 'Calibri', size: 11 };
+                    cell.alignment = { vertical: 'middle' };
+                });
 
-            const blob = new Blob(['\uFEFF' + excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+                row.getCell(1).font = { name: 'Consolas', size: 11, bold: true, color: { argb: 'FF334155' } }; // ID
+                row.getCell(3).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FF1E40AF' } };  // Familia
+                row.getCell(5).font = { name: 'Calibri', size: 11, bold: true };                               // Descripción
+                row.getCell(5).alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };          // Ajustar texto (baja de línea en vez de cortar)
+                row.getCell(8).alignment = { horizontal: 'right', vertical: 'middle' };                         // Stock mínimo
+                row.getCell(9).alignment = { horizontal: 'right', vertical: 'middle' };
+                row.getCell(9).font = { name: 'Calibri', size: 12, bold: true };                                // Stock actual
+
+                const estadoCell = row.getCell(10);
+                estadoCell.alignment = { horizontal: 'center', vertical: 'middle' };
+                estadoCell.font = { bold: true, color: { argb: isReponer ? 'FF991B1B' : 'FF166534' } };
+                estadoCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: isReponer ? 'FFFEE2E2' : 'FFDCFCE7' } };
+            });
+
+            // Autoajuste de ancho: cada columna toma el ancho de su contenido más
+            // largo (o el del encabezado, si es mayor). Descripción queda con
+            // ancho fijo porque su texto se resuelve con wrapText, no con ancho.
+            const idxDescripcion = headers.findIndex(h => h.key === 'descripcion') + 1;
+            sheet.columns.forEach((col, i) => {
+                const colIndex = i + 1;
+                if (colIndex === idxDescripcion) {
+                    col.width = 42;
+                    return;
+                }
+                let maxLen = headers[i].label.length;
+                sheet.eachRow({ includeEmpty: false }, (row, rowNum) => {
+                    if (rowNum < 5) return; // saltar título, subtítulo, separador y encabezado
+                    const val = row.getCell(colIndex).value;
+                    const len = (val === null || val === undefined) ? 0 : String(val).length;
+                    if (len > maxLen) maxLen = len;
+                });
+                col.width = Math.min(Math.max(maxLen + 2, 8), 40);
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `stock_${(state.zona || 'todos').replace(/\s+/g, '_')}_${Date.now()}.xls`;
+            a.download = `stock_${String(nombreAlcance).replace(/\s+/g, '_')}_${Date.now()}.xlsx`;
             a.click();
             URL.revokeObjectURL(url);
             showToast('Excel generado correctamente ✓');
@@ -3472,6 +3597,7 @@ async function confirmNewProduct() {
         function escapeHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
         function escapeAttr(s) { return escapeHtml(s); }
 
+        
         // ============================================================
         // WIRE UP
         // ============================================================
@@ -3498,7 +3624,8 @@ async function confirmNewProduct() {
         wireSortHeaders('stickyMovTable', state.movUi, renderMov);
 
         document.getElementById('btnRefresh').addEventListener('click', () => cargarTodo(false));
-        document.getElementById('btnExport').addEventListener('click', exportExcel);
+        document.getElementById('btnExport').addEventListener('click', () => exportExcel('auto'));
+        document.getElementById('btnExportAll').addEventListener('click', () => exportExcel('todos'));
 
         document.querySelectorAll('#tipoSeg button').forEach(b => b.addEventListener('click', () => selectTipo(b.dataset.tipo)));
         document.getElementById('adjustCancel').addEventListener('click', closeAdjustModal);
