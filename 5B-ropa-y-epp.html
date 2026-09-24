@@ -748,7 +748,7 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
       </div>
 
       <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_arneses')" style="margin-top:8px">
-        🧗 Arneses y Cabos de Vida <span class="acordeon-arrow">▾</span>
+        🧗 Equipos de Altura y Sujeción <span class="acordeon-arrow">▾</span>
       </button>
       <div id="bloque_arneses" class="acordeon-body">
         <div id="items_arneses"></div>
@@ -1906,7 +1906,7 @@ const FAM_NAMES = {
   protectores:   '😷 Protectores',
   cascos:        '⛑️ Cascos',
   bolsos:        '🎒 Bolsos',
-  arneses:       '🧗 Arneses y Cabos',
+  arneses:       '🧗 Equipos de Altura y Sujeción',
   eslingas:      '🏗️ Eslingas',
   criquets:      '🔧 Criquets',
   botas:         '🥾 Botas de Goma',
@@ -2282,10 +2282,13 @@ function addItem(fam) {
     arneses: `
       ${lbl('arneses','tipo','Tipo de Equipo')}
       <select name="arneses_tipo_${n}" data-fam="arneses" data-campo="tipo">
-        <option value="">— Seleccioná —</option>${opts(['Arnés de seguridad completo','Arnés p/ casco soldador','Cabo de vida simple','Cabo de vida doble (dos ganchos)','Cabo de vida con amortiguador','Soga de vida','Línea de vida horizontal','Conector / Mosquetón de seguridad','Otro'])}</select>
+        <option value="">— Seleccioná —</option>${opts(['Arnés de seguridad','Cabo de vida simple','Cabo de vida con doble mosquetón','Cabo de vida con doble amortiguador con doble mosquetón','Mosquetón individual','Línea de vida','Dispositivo antitrauma','Punto de anclaje tipo Eslinga','Otro'])}</select>
       ${lbl('arneses','marca','Marca')}
       <select name="arneses_marca_${n}" data-fam="arneses" data-campo="marca">
         <option value="">— Seleccioná —</option>${opts(['Delta Plus','Caran','3M','Karam','Protecta','Sin marca','Otro'])}</select>
+      <label>Color <span class="opc">(opcional)</span></label>
+      <select name="arneses_color_${n}" data-fam="arneses" data-campo="color">
+        <option value="">— Seleccioná —</option>${opts(['Amarillo','Negro','Sin especificar','Otro'])}</select>
       ${campoEstado('arneses',n)}
       ${lbl('arneses','cantidad','Cantidad')}${qtyRow}
       <label>Observaciones</label>
