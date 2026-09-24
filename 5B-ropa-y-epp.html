@@ -2363,10 +2363,11 @@ function addItem(fam) {
       ${lbl('arneses','marca','Marca')}
       <select name="arneses_marca_${n}" data-fam="arneses" data-campo="marca">
         <option value="">— Seleccioná —</option>${opts(['Delta Plus','Caran','3M','Karam','Protecta','Sin marca','Otro'])}</select>
-      <label>Color <span class="opc">(opcional)</span></label>
+      <label>Color <span class="opc">(opcional, solo aplicable para el punto de anclaje)</span></label>
       <select name="arneses_color_${n}" data-fam="arneses" data-campo="color">
         <option value="">— Seleccioná —</option>${opts(['Amarillo','Negro','Sin especificar','Otro'])}</select>
       ${campoEstado('arneses',n)}
+      <div id="accesorios_placeholder_arneses_${n}"></div>
       ${lbl('arneses','cantidad','Cantidad')}${qtyRow}
       <label>Observaciones</label>
       <input type="text" name="arneses_observaciones_${n}" placeholder="Ej: Longitud 1.5m, gancho giratorio, certificado IRAM...">`,
@@ -2626,7 +2627,8 @@ function addItem(fam) {
     actualizarVisibilidadUbicacionItem(fam, n, document.getElementById('tipo_movimiento').value);
 
     if (fam === 'arneses') {
-      bloque.insertAdjacentHTML('beforeend', bloqueAccesoriosArnes(fam, n));
+      const placeholder = bloque.querySelector(`#accesorios_placeholder_arneses_${n}`);
+      if (placeholder) placeholder.outerHTML = bloqueAccesoriosArnes(fam, n);
       const tipoSel = bloque.querySelector(`[name="arneses_tipo_${n}"]`);
       if (tipoSel) tipoSel.addEventListener('change', () => toggleAccesoriosArnes(fam, n));
     }
