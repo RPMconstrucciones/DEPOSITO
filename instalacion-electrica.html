@@ -3162,6 +3162,10 @@
             if (responsable === "OTRO") responsable = document.getElementById("carrito_responsable_otro").value.trim();
             let obra = document.getElementById("carrito_obra").value;
             if (obra === "OTRO") obra = document.getElementById("carrito_obra_otro").value.trim();
+            if (!navigator.onLine) {
+                mostrarCartelFallaConexion(() => enviarCarritoRapido(overlay));
+                return;
+            }
             const obsGeneral = document.getElementById("carrito_obs_general").value.trim();
             if (!responsable || !obra) { toastDep("⚠ Completá Responsable y Obra", "error"); return; }
             const btn = overlay.querySelector("#btn_confirmar_carrito");
@@ -3175,17 +3179,30 @@
                 fecha: new Date().toLocaleString("es-AR", { hour12: false }),
                 items: carritoRapido.items.map(it => ({ id: it.id, familia: it.familia, marca: it.marca, descripcion: it.descripcion, cantidad: it.cantidad, unidad: it.unidad }))
             };
+            const ctrl = new AbortController();
+            const tid = setTimeout(() => ctrl.abort(), 20000);
             try {
-                const resp = await fetch(APPS_SCRIPT_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) });
+                const resp = await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(payload),
+                    signal: ctrl.signal
+                });
+                clearTimeout(tid);
                 const resultado = await resp.json();
+                if (!resultado.ok) {
+                    btn.disabled = false; btn.textContent = "Registrar movimiento";
+                    toastDep('❌ Error: ' + resultado.error, "error");
+                    return;
+                }
                 overlay.remove();
-                if (!resultado.ok) { toastDep('❌ Error: ' + resultado.error, "error"); return; }
                 toastDep("✅ " + carritoRapido.tipo + " registrada correctamente", "ok");
                 vaciarCarritoRapido();
                 loadStock();
             } catch (e) {
-                toastDep('❌ Fallo de conexión: ' + e.message, "error");
+                clearTimeout(tid);
                 btn.disabled = false; btn.textContent = "Registrar movimiento";
+                mostrarCartelFallaConexion(() => enviarCarritoRapido(overlay));
             }
         }
 
@@ -4135,8 +4152,16 @@
 
             const total = FAMILIES.reduce((s, f) => s + (payload[f] || []).length, 0) + (nuevoDesc ? 1 : 0);
 
+            if (!navigator.onLine) {
+                mostrarCartelFallaConexion(() => submitForm());
+                return;
+            }
+
             const btn = document.getElementById('btn-submit');
             btn.disabled = true; btn.textContent = 'Enviando...';
+
+            const ctrlEnvio = new AbortController();
+            const tidEnvio = setTimeout(() => ctrlEnvio.abort(), 20000);
 
             try {
                 await fetch(APPS_SCRIPT_URL, {
@@ -4144,16 +4169,19 @@
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
+                    signal: ctrlEnvio.signal
                 });
+                clearTimeout(tidEnvio);
                 try { localStorage.removeItem(CONFIG.storageKey); } catch (e) { }
                 document.getElementById('ov-ok-detail').textContent =
                     tipo + ' registrada por ' + resp + ' — ' + total + ' producto' + (total !== 1 ? 's' : '') + ' guardado' + (total !== 1 ? 's' : '') + '.';
                 document.getElementById('ov-ok').classList.add('show');
                 btn.style.display = 'none';
                 stockLoaded = false;
-            } catch {
-                alert('Error al enviar. Verificá tu conexión.');
+            } catch (err) {
+                clearTimeout(tidEnvio);
                 btn.disabled = false; btn.textContent = 'Registrar movimiento';
+                mostrarCartelFallaConexion(() => submitForm());
             }
         }
 
@@ -4245,6 +4273,7 @@
             intentarAbrir();
         }
     </script>
+    <script src="conexion-protegida.js"></script>
 </body>
 
 </html>

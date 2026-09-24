@@ -1872,12 +1872,26 @@
                 await new Promise(r => setTimeout(r, 400));
                 return { ok: true, id: 'DEMO-000', envio: 'ENV-DEMO' };
             }
-            const res = await fetch(CONFIG.WEB_APP_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS con Apps Script
-                body: JSON.stringify(payload),
-            });
-            return res.json();
+            if (!navigator.onLine) {
+                mostrarCartelFallaConexion();
+                throw new Error('Sin conexión a internet. No se enviaron los datos.');
+            }
+            const ctrl = new AbortController();
+            const tid = setTimeout(() => ctrl.abort(), 20000);
+            try {
+                const res = await fetch(CONFIG.WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS con Apps Script
+                    body: JSON.stringify(payload),
+                    signal: ctrl.signal
+                });
+                clearTimeout(tid);
+                return await res.json();
+            } catch (err) {
+                clearTimeout(tid);
+                mostrarCartelFallaConexion();
+                throw err;
+            }
         }
 
         async function cargarTodo(silencioso) {
@@ -3970,6 +3984,7 @@
         // Inicializar puntos con tema por defecto al cargar
         applyTheme('maestroSlate');
     </script>
+    <script src="conexion-protegida.js"></script>
 </body>
 
 </html>
