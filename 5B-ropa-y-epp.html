@@ -2039,6 +2039,11 @@ function agregarAccesorioArnes(fam, n) {
         <option value="">— Seleccioná accesorio —</option>${opts(ACCESORIOS_ARNES_OPTS)}
       </select>
       <input type="text" class="campo-otro-item" placeholder="Especificá cuál" data-accesorio-otro style="display:none;margin-top:8px;margin-bottom:0;">
+      <select data-accesorio-estado style="margin-top:8px;margin-bottom:0;">
+        <option value="">— Estado del accesorio —</option>
+        <option value="Nuevo">Nuevo</option>
+        <option value="Usado">Usado</option>
+      </select>
     </div>`;
   lista.insertAdjacentHTML('beforeend', html);
 
@@ -2703,7 +2708,10 @@ function collectItems(fam) {
             const otro = sel.parentElement.querySelector('[data-accesorio-otro]');
             val = otro && otro.value ? otro.value.trim() : '';
           }
-          return val;
+          if (!val) return '';
+          const estadoSel = sel.parentElement.querySelector('[data-accesorio-estado]');
+          const estadoVal = estadoSel && estadoSel.value ? estadoSel.value.trim().toUpperCase() : '';
+          return estadoVal ? `${val} ${estadoVal}` : val;
         })
         .filter(Boolean);
       if (accesorios.length) data.accesorios = accesorios.join(' + ');
