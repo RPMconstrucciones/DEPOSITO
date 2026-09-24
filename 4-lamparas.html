@@ -3299,17 +3299,13 @@
         fecha: new Date().toLocaleString("es-AR", { hour12: false }),
         items: carritoRapido.items.map(it => ({ id: it.id, familia: it.familia, marca: it.marca, descripcion: it.descripcion, cantidad: it.cantidad, unidad: it.unidad }))
       };
-      const ctrl = new AbortController();
-      const tid = setTimeout(() => ctrl.abort(), 20000);
       try {
-        const resp = await fetch(APPS_SCRIPT_URL, {
+        const respFetch = await fetch(APPS_SCRIPT_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload),
-          signal: ctrl.signal
+          body: JSON.stringify(payload)
         });
-        clearTimeout(tid);
-        const resultado = await resp.json();
+        const resultado = await respFetch.json();
         if (!resultado.ok) {
           btn.disabled = false; btn.textContent = "Registrar movimiento";
           toastDep('❌ Error: ' + resultado.error, "error");
@@ -3320,7 +3316,6 @@
         vaciarCarritoRapido();
         loadStock();
       } catch (e) {
-        clearTimeout(tid);
         btn.disabled = false; btn.textContent = "Registrar movimiento";
         mostrarCartelFallaConexion(() => enviarCarritoRapido(overlay));
       }
@@ -4092,8 +4087,8 @@
       normalizarCamposOtroAlEnviar();
 
       const tipo = document.getElementById('tipo_movimiento').value;
-      let resp = document.getElementById('responsable').value;
-      if (resp === 'OTRO') resp = document.getElementById('responsable_otro').value.trim();
+      let responsableForm = document.getElementById('responsable').value;
+      if (responsableForm === 'OTRO') responsableForm = document.getElementById('responsable_otro').value.trim();
       let obra = document.getElementById('obra').value;
       if (obra === 'OTRO') obra = document.getElementById('obra_otro').value.trim();
 
@@ -4119,7 +4114,7 @@
       }
 
       if (!tipo) markGlobal('tipo_movimiento', 'Datos generales → Tipo de movimiento');
-      if (!resp) markGlobal('responsable', 'Datos generales → Responsable');
+      if (!responsableForm) markGlobal('responsable', 'Datos generales → Responsable');
       if (!obra) markGlobal('obra', 'Datos generales → Obra o destino');
 
       FAMILIES.forEach(fam => {
@@ -4196,7 +4191,7 @@
       const payload = {
         fecha: new Date().toLocaleString('es-AR', { hour12: false }),
         tipo_movimiento: normalizarTipoMovimiento(tipo),
-        responsable: resp,
+        responsable: responsableForm,
         obra,
         zona: ZONA_FIJA,
         observaciones: document.getElementById('observaciones').value.trim(),
@@ -4239,26 +4234,33 @@
       clearTimeout(draftTimer);
       borradorBloqueado = true;
 
-      const ctrlEnvio = new AbortController();
-      const tidEnvio = setTimeout(() => ctrlEnvio.abort(), 20000);
-
+      // Sin AbortController con timeout corto: cortar la espera del lado del
+      // cliente NO cancela la ejecución en Apps Script — el dato puede quedar
+      // guardado igual mientras el navegador ya decidió que "falló", y eso
+      // llevaba a que el usuario reintentara y se duplicara el movimiento.
       try {
-        await fetch(APPS_SCRIPT_URL, {
+        const resp = await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-          signal: ctrlEnvio.signal
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
         });
-        clearTimeout(tidEnvio);
+        const resultado = await resp.json();
+
+        if (!resultado.ok) {
+          btn.disabled = false; btn.textContent = 'Registrar movimiento';
+          borradorBloqueado = false;
+          document.getElementById('ov-err-list').innerHTML = '<li>Error del servidor: ' + resultado.error + '</li>';
+          document.getElementById('ov-err').classList.add('show');
+          return;
+        }
+
         try { localStorage.removeItem(CONFIG.storageKey); } catch (e) { }
         document.getElementById('ov-ok-detail').textContent =
-          tipo + ' registrada por ' + resp + ' — ' + total + ' producto' + (total !== 1 ? 's' : '') + ' guardado' + (total !== 1 ? 's' : '') + '.';
+          tipo + ' registrada por ' + responsableForm + ' — ' + total + ' producto' + (total !== 1 ? 's' : '') + ' guardado' + (total !== 1 ? 's' : '') + '.';
         document.getElementById('ov-ok').classList.add('show');
         btn.style.display = 'none';
         stockLoaded = false;
       } catch (err) {
-        clearTimeout(tidEnvio);
         borradorBloqueado = false;
         btn.disabled = false; btn.textContent = 'Registrar movimiento';
         mostrarCartelFallaConexion(() => submitForm());
