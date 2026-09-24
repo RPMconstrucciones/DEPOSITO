@@ -172,22 +172,18 @@
     const txid       = generarUUID();
     const optionsConTxid = inyectarTxid(options, txid);
 
-    // ── Pre-chequeo: ¿hay conexión real? ──
-    const hayConexion = await _pingConexionReal();
-    if (!hayConexion) {
-      // Sin conexión confirmada → encolar directo, sin intentar el envío
-      return encolarRequest(url, optionsConTxid, txid);
-    }
-
+    // Ya NO se hace un pre-ping a un tercero (google.com/generate_204).
+    // Ese endpoint puede fallar por motivos ajenos a tu conexión real
+    // (operador móvil, DNS, firewall del wifi), dando falsos "sin conexión"
+    // aunque el Apps Script sí esté disponible. Ahora se intenta el envío
+    // real directamente, y solo se encola si ESE intento falla de verdad.
     try {
-      // Conexión confirmada → intentar el envío real
       const resp = await _fetchOriginal(url, optionsConTxid);
       // El servidor respondió (OK o error HTTP) → devolver tal cual
-      // El código del HTML maneja resp.json() y sus propios errores
       return resp;
 
     } catch (error) {
-      // ── Si se cae la conexión justo durante el envío → encolar igual ──
+      // ── Solo acá se considera "sin conexión": cuando el envío real falló ──
       if (esErrorDeRed(error)) {
         return encolarRequest(url, optionsConTxid, txid);
       }
@@ -409,18 +405,7 @@
     document.getElementById('cartel-btn-reintentar').addEventListener('click', async function () {
       const btn = this;
       btn.disabled = true;
-      btn.innerHTML = '<span>⏳</span> Verificando...';
-
-      const hayConexion = await _pingConexionReal();
-
-      btn.disabled = false;
-      btn.innerHTML = '<span>🔄</span> Intentar de nuevo ahora';
-
-      if (!hayConexion) {
-        actualizarBadge(false);
-        mostrarBanner(false, '⚠️ Aún sin conexión. Esperá unos segundos.');
-        return;
-      }
+      btn.innerHTML = '<span>⏳</span> Reintentando...';
 
       cerrarCartel();
 
@@ -431,6 +416,9 @@
       } else {
         procesarCola();
       }
+
+      btn.disabled = false;
+      btn.innerHTML = '<span>🔄</span> Intentar de nuevo ahora';
     });
   }
 
