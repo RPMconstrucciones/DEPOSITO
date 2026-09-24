@@ -2176,12 +2176,12 @@
                     <button class="btn-add" onclick="addItem('modulos')">+ Agregar módulo</button>
                 </div>
 
-                <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_cajas')" style="margin-top:8px">
+                <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_cajas_ie')" style="margin-top:8px">
                     📦 Cajas para embutir <span class="acordeon-arrow">▾</span>
                 </button>
-                <div id="bloque_cajas" class="acordeon-body">
-                    <div id="items_cajas"></div>
-                    <button class="btn-add" onclick="addItem('cajas')">+ Agregar caja</button>
+                <div id="bloque_cajas_ie" class="acordeon-body">
+                    <div id="items_cajas_ie"></div>
+                    <button class="btn-add" onclick="addItem('cajas_ie')">+ Agregar caja</button>
                 </div>
 
                 <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_canieria')" style="margin-top:8px">
@@ -3246,24 +3246,23 @@
         }
 
         // ── 3.6.2 LÓGICA DE ÍTEMS ──
-        const counters = { modulos: 0, cajas: 0, canieria: 0 };
+        const counters = { modulos: 0, cajas_ie: 0, canieria: 0 };
         const FAMILIES = Object.keys(counters);
 
         const REQUIRED = {
             modulos: [['tipo', 'Tipo de componente'], ['cantidad', 'Cantidad']],
-            cajas: [['formato', 'Formato de la caja'], ['material', 'Material'], ['medida', 'Medida'], ['cantidad', 'Cantidad']],
-            canieria: [['tipo', 'Tipo de accesorio'], ['material', 'Material'], ['diametro_medida', 'Diámetro / Medida'], ['cantidad', 'Cantidad']],
+            cajas_ie: [['formato', 'Formato de la caja'], ['material', 'Material'], ['medida', 'Medida'], ['cantidad', 'Cantidad']],            canieria: [['tipo', 'Tipo de accesorio'], ['material', 'Material'], ['diametro_medida', 'Diámetro / Medida'], ['cantidad', 'Cantidad']],
         };
 
         const UNITS = {
             modulos: ['un', 'caja'],
-            cajas: ['un', 'caja'],
+            cajas_ie: ['un', 'caja'],
             canieria: ['un', 'caja', 'rollo'],
         };
 
         const FAM_NAMES = {
             modulos: '🔌 Módulos para embutir',
-            cajas: '📦 Cajas para embutir',
+            cajas_ie: '📦 Cajas para embutir',
             canieria: '🛠️ Accesorios de cañería',
         };
 
@@ -3604,8 +3603,8 @@
         function actualizarMedidaCaja(select, n) {
             const bloque = select.closest('.item-block');
             if (!bloque) return;
-            const medidaSelect = bloque.querySelector('#cajas_medida_' + n);
-            const otroInput = bloque.querySelector('#cajas_medida_otro_' + n);
+            const medidaSelect = bloque.querySelector('#cajas_ie_medida_' + n);
+            const otroInput = bloque.querySelector('#cajas_ie_medida_otro_' + n);
             if (!medidaSelect) return;
             const valores = MEDIDAS_CAJA[select.value] || [];
             medidaSelect.innerHTML = '<option value="">— Seleccioná —</option>' +
@@ -3617,7 +3616,7 @@
         function mostrarOtroMedidaCaja(select, n) {
             const bloque = select.closest('.item-block');
             if (!bloque) return;
-            const otroInput = bloque.querySelector('#cajas_medida_otro_' + n);
+            const otroInput = bloque.querySelector('#cajas_ie_medida_otro_' + n);
             if (!otroInput) return;
             otroInput.style.display = select.value === 'Otro' ? 'block' : 'none';
             if (select.value !== 'Otro') otroInput.value = '';
@@ -3633,7 +3632,7 @@
             const qtyRow = '' +
                 '<div class="qty-unit">' +
                 '<input type="number" name="' + fam + '_cantidad_' + n + '" data-fam="' + fam + '" data-campo="cantidad" min="1" placeholder="0">' +
-                '<select name="' + fam + '_unidad_' + n + '" ' + oc + '>' + uOpts(fam) + '</select>' +
+                '<select name="' + fam + '_unidad_' + n + '" data-fam="' + fam + '" data-campo="unidad" ' + oc + '>' + uOpts(fam) + '</select>' +
                 '</div>' + hint;
 
             const TEMPLATES = {
@@ -3657,24 +3656,24 @@
                     '<label>Observaciones</label>' +
                     '<input type="text" name="modulos_observaciones_' + n + '" placeholder="Opcional">',
 
-                cajas:
-                    lbl('cajas', 'formato', 'Formato de la caja') +
-                    '<select data-fam="cajas" data-campo="formato" onchange="actualizarMedidaCaja(this, ' + n + ')">' +
+                cajas_ie:
+                    lbl('cajas_ie', 'formato', 'Formato de la caja') +
+                    '<select data-fam="cajas_ie" data-campo="formato" onchange="actualizarMedidaCaja(this, ' + n + ')">' +
                     '<option value="">— Seleccioná —</option>' + opts(['Rectangular', 'Octogonal', 'Cuadrada', 'Caja Mignon', 'Otro']) + '</select>' +
-                    lbl('cajas', 'material', 'Material') +
-                    '<select data-fam="cajas" data-campo="material">' +
+                    lbl('cajas_ie', 'material', 'Material') +
+                    '<select data-fam="cajas_ie" data-campo="material">' +
                     '<option value="">— Seleccioná —</option>' + opts(['Plástica (PVC libre de halógenos / alto impacto)', 'Metálica (Chapa galvanizada)', 'Otro']) + '</select>' +
-                    lbl('cajas', 'medida', 'Medida') +
-                    '<select data-fam="cajas" data-campo="medida" id="cajas_medida_' + n + '" onchange="mostrarOtroMedidaCaja(this, ' + n + ')">' +
+                    lbl('cajas_ie', 'medida', 'Medida') +
+                    '<select data-fam="cajas_ie" data-campo="medida" id="cajas_ie_medida_' + n + '" onchange="mostrarOtroMedidaCaja(this, ' + n + ')">' +
                     '<option value="">— Seleccioná el formato primero —</option>' +
                     '</select>' +
-                    '<input type="text" class="campo-otro-item" data-fam="cajas" data-campo="medida_otro" id="cajas_medida_otro_' + n + '" placeholder="Especificá la medida">' +
+                    '<input type="text" class="campo-otro-item" data-fam="cajas_ie" data-campo="medida_otro" id="cajas_ie_medida_otro_' + n + '" placeholder="Especificá la medida">' +
                     '<label>Marca <span class="opc">(opcional)</span></label>' +
-                    '<select data-fam="cajas" data-campo="marca">' +
+                    '<select data-fam="cajas_ie" data-campo="marca">' +
                     '<option value="">— Seleccioná —</option>' + opts(MARCAS_INSTALACION) + '</select>' +
-                    lbl('cajas', 'cantidad', 'Cantidad') + qtyRow +
+                    lbl('cajas_ie', 'cantidad', 'Cantidad') + qtyRow +
                     '<label>Observaciones</label>' +
-                    '<input type="text" name="cajas_observaciones_' + n + '" placeholder="Opcional">',
+                    '<input type="text" name="cajas_ie_observaciones_' + n + '" placeholder="Opcional">',
 
                 canieria:
                     lbl('canieria', 'tipo', 'Tipo de accesorio') +
@@ -3935,12 +3934,12 @@
                         const tipoSel = bloque.querySelector('[data-fam="modulos"][data-campo="tipo"]');
                         if (tipoSel && tipoSel.value) manejarTipoModulo(tipoSel, Number(bloque.id.replace('item_modulos_', '')));
                     }
-                    if (fam === 'cajas') {
-                        const formatoSel = bloque.querySelector('[data-fam="cajas"][data-campo="formato"]');
+                    if (fam === 'cajas_ie') {
+                        const formatoSel = bloque.querySelector('[data-fam="cajas_ie"][data-campo="formato"]');
                         const medidaGuardada = item['dc__medida'];
                         if (formatoSel && formatoSel.value) {
-                            actualizarMedidaCaja(formatoSel, Number(bloque.id.replace('item_cajas_', '')));
-                            const medidaSel = bloque.querySelector('[data-fam="cajas"][data-campo="medida"]');
+                            actualizarMedidaCaja(formatoSel, Number(bloque.id.replace('item_cajas_ie_', '')));
+                            const medidaSel = bloque.querySelector('[data-fam="cajas_ie"][data-campo="medida"]');
                             if (medidaSel && medidaGuardada) {
                                 medidaSel.value = medidaGuardada;
                                 if (medidaGuardada === 'Otro') {
