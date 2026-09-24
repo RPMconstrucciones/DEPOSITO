@@ -3,10 +3,12 @@
  * ═══════════════════════════════════════════════════════════════════
  * FLUJO:
  *   1. Usuario presiona Guardar → se genera UUID único (_txid)
- *   2. Se intenta el envío REAL directamente (sin pre-ping que bloquee)
- *   3. ✅ Respuesta OK   → limpiar borrador, confirmar al usuario
- *   4. ❌ Error de RED   → encolar con su UUID, mostrar modal offline
- *   5. 🔄 Al reconectar → reenviar con mismo UUID (idempotente)
+ *   2. Se verifica conexión real con un PRE-PING (generate_204)
+ *   3. ✅ Hay conexión  → se intenta el envío REAL
+ *      ❌ No hay conexión → se encola directo, sin intentar el POST
+ *   4. ✅ Respuesta OK   → limpiar borrador, confirmar al usuario
+ *   5. ❌ Error de RED durante el envío → encolar con su UUID, mostrar modal offline
+ *   6. 🔄 Al reconectar → reenviar con mismo UUID (idempotente)
  *
  * EN EL SERVIDOR (Apps Script) agregar al inicio del doPost():
  *   var txid = payload._txid;
@@ -138,6 +140,23 @@
   }
 
   // ──────────────────────────────────────────────────────────────
+  // 5.1 PRE-PING — verificar conexión real ANTES de enviar
+  // ──────────────────────────────────────────────────────────────
+  async function _pingConexionReal() {
+    try {
+      const ctrl = new AbortController();
+      const tid = setTimeout(function () { ctrl.abort(); }, 4000);
+      const r = await _fetchOriginal('https://www.google.com/generate_204?_chk=' + Date.now(), {
+        method: 'GET', cache: 'no-store', signal: ctrl.signal
+      });
+      clearTimeout(tid);
+      return r.status === 204 || r.ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────
   // 6. INTERCEPTOR CENTRAL DE FETCH
   // ──────────────────────────────────────────────────────────────
   window.fetch = async function protectedFetch(url, options) {
@@ -153,15 +172,22 @@
     const txid       = generarUUID();
     const optionsConTxid = inyectarTxid(options, txid);
 
+    // ── Pre-chequeo: ¿hay conexión real? ──
+    const hayConexion = await _pingConexionReal();
+    if (!hayConexion) {
+      // Sin conexión confirmada → encolar directo, sin intentar el envío
+      return encolarRequest(url, optionsConTxid, txid);
+    }
+
     try {
-      // Intento DIRECTO — sin pre-ping bloqueante
+      // Conexión confirmada → intentar el envío real
       const resp = await _fetchOriginal(url, optionsConTxid);
       // El servidor respondió (OK o error HTTP) → devolver tal cual
       // El código del HTML maneja resp.json() y sus propios errores
       return resp;
 
     } catch (error) {
-      // ── Solo encolar si es un error REAL de red ──
+      // ── Si se cae la conexión justo durante el envío → encolar igual ──
       if (esErrorDeRed(error)) {
         return encolarRequest(url, optionsConTxid, txid);
       }
@@ -385,19 +411,7 @@
       btn.disabled = true;
       btn.innerHTML = '<span>⏳</span> Verificando...';
 
-      // Verificar conexión real con un GET a generate_204
-      let hayConexion = false;
-      try {
-        const ctrl = new AbortController();
-        const tid = setTimeout(function () { ctrl.abort(); }, 4000);
-        const r = await _fetchOriginal('https://www.google.com/generate_204?_chk=' + Date.now(), {
-          method: 'GET', cache: 'no-store', signal: ctrl.signal
-        });
-        clearTimeout(tid);
-        hayConexion = r.status === 204 || r.ok;
-      } catch (e) {
-        hayConexion = false;
-      }
+      const hayConexion = await _pingConexionReal();
 
       btn.disabled = false;
       btn.innerHTML = '<span>🔄</span> Intentar de nuevo ahora';
@@ -483,11 +497,7 @@
     // Esperar que la conexión se estabilice
     await new Promise(function (r) { setTimeout(r, 1500); });
     // Verificar que sea real
-    let ok = false;
-    try {
-      const r = await _fetchOriginal('https://www.google.com/generate_204?_chk=' + Date.now(), { method: 'GET', cache: 'no-store' });
-      ok = r.status === 204 || r.ok;
-    } catch (e) { ok = false; }
+    const ok = await _pingConexionReal();
 
     if (ok) {
       cerrarCartel();
@@ -520,12 +530,7 @@
   // ──────────────────────────────────────────────────────────────
   window.mostrarCartelFallaConexion = function (cb) { abrirCartel(cb); };
   window.cerrarCartelFallaConexion  = cerrarCartel;
-  window.verificarConexionReal      = async function () {
-    try {
-      const r = await _fetchOriginal('https://www.google.com/generate_204?_chk=' + Date.now(), { method: 'GET', cache: 'no-store' });
-      return r.status === 204 || r.ok;
-    } catch (e) { return false; }
-  };
+  window.verificarConexionReal      = _pingConexionReal;
 
   // ──────────────────────────────────────────────────────────────
   // 16. INIT
