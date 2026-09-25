@@ -3897,6 +3897,12 @@
 
     let draftTimer = null;
     let borradorBloqueado = false;
+    let txidActual = null;
+
+    function generarTxid() {
+      if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+      return 'txid-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+}
 
     function actualizarEstadoBorrador(texto) {
 
@@ -4032,6 +4038,7 @@
     function resetForm(limpiarBorrador = true) {
       clearTimeout(draftTimer);
       borradorBloqueado = false;
+      txidActual = null;
       if (limpiarBorrador) { try { localStorage.removeItem(CONFIG.storageKey); } catch (e) { } }
       document.getElementById('tipo_movimiento').value = '';
       document.getElementById('responsable').value = '';
@@ -4188,6 +4195,8 @@
         return;
       }
 
+      if (!txidActual) txidActual = generarTxid();
+
       const payload = {
         fecha: new Date().toLocaleString('es-AR', { hour12: false }),
         tipo_movimiento: normalizarTipoMovimiento(tipo),
@@ -4195,6 +4204,7 @@
         obra,
         zona: ZONA_FIJA,
         observaciones: document.getElementById('observaciones').value.trim(),
+        _txid: txidActual,
       };
 
       FAMILIES.forEach(f => { payload[f] = collectItems(f); });
@@ -4255,6 +4265,7 @@
         }
 
         try { localStorage.removeItem(CONFIG.storageKey); } catch (e) { }
+        txidActual = null;
         document.getElementById('ov-ok-detail').textContent =
           tipo + ' registrada por ' + responsableForm + ' — ' + total + ' producto' + (total !== 1 ? 's' : '') + ' guardado' + (total !== 1 ? 's' : '') + '.';
         document.getElementById('ov-ok').classList.add('show');
