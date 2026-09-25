@@ -3076,6 +3076,7 @@
     // ============================================================
     let carritoRapido = { tipo: null, items: [] };
     let tipoMovimientoStockGlobal = null;
+    let txidCarritoActual = null;
 
     function obtenerItemCarrito(id) { return carritoRapido.items.find(it => it.id === id); }
     function renderBadgeCarrito(id) {
@@ -3234,6 +3235,7 @@
     function vaciarCarritoRapido() {
       carritoRapido = { tipo: null, items: [] };
       tipoMovimientoStockGlobal = null;
+      txidCarritoActual = null;
       actualizarBarraCarrito();
       applyFilters();
     }
@@ -3290,6 +3292,9 @@
       if (!responsable || !obra) { toastDep("⚠ Completá Responsable y Obra", "error"); return; }
       const btn = overlay.querySelector("#btn_confirmar_carrito");
       btn.disabled = true; btn.textContent = "Enviando...";
+
+      if (!txidCarritoActual) txidCarritoActual = generarTxid();
+
       const payload = {
         accion: "ajuste-rapido",
         zona: ZONA_FIJA,
@@ -3297,7 +3302,8 @@
         responsable, obra,
         obs_general: obsGeneral,
         fecha: new Date().toLocaleString("es-AR", { hour12: false }),
-        items: carritoRapido.items.map(it => ({ id: it.id, familia: it.familia, marca: it.marca, descripcion: it.descripcion, cantidad: it.cantidad, unidad: it.unidad }))
+        items: carritoRapido.items.map(it => ({ id: it.id, familia: it.familia, marca: it.marca, descripcion: it.descripcion, cantidad: it.cantidad, unidad: it.unidad })),
+        _txid: txidCarritoActual
       };
       try {
         const respFetch = await fetch(APPS_SCRIPT_URL, {
