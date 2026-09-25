@@ -2491,6 +2491,27 @@
       setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3200);
     }
 
+    function mostrarCartelFallaConexion(onReintentar) {
+      const anterior = document.querySelector('.modal-overlay-conexion');
+      if (anterior) anterior.remove();
+
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay modal-overlay-conexion';
+      overlay.innerHTML =
+        '<div class="modal-box">' +
+        '<p>⚠️ No se pudo confirmar el envío.<br>Verificá tu conexión e intentá de nuevo.</p>' +
+        '<button class="modal-btn primary" id="btn_reintentar_conexion">Reintentar</button>' +
+        '<button class="modal-btn cancel" id="btn_cerrar_conexion">Cerrar</button>' +
+        '</div>';
+      document.body.appendChild(overlay);
+
+      overlay.querySelector('#btn_reintentar_conexion').onclick = () => {
+        overlay.remove();
+        if (typeof onReintentar === 'function') onReintentar();
+      };
+      overlay.querySelector('#btn_cerrar_conexion').onclick = () => overlay.remove();
+    }
+
     function abrirZoomImagen(src) {
       const overlay = document.createElement('div');
       overlay.className = 'zoom-overlay';
@@ -4373,7 +4394,6 @@
       intentarAbrir();
     }
   </script>
-  <script src="conexion-protegida.js"></script>
 </body>
 
 </html>
