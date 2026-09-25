@@ -1876,22 +1876,23 @@
                 mostrarCartelFallaConexion();
                 throw new Error('Sin conexión a internet. No se enviaron los datos.');
             }
-            const ctrl = new AbortController();
-            const tid = setTimeout(() => ctrl.abort(), 20000);
+            if (!payload._txid) payload._txid = generarTxid();
             try {
                 const res = await fetch(CONFIG.WEB_APP_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS con Apps Script
-                    body: JSON.stringify(payload),
-                    signal: ctrl.signal
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
                 });
-                clearTimeout(tid);
                 return await res.json();
             } catch (err) {
-                clearTimeout(tid);
                 mostrarCartelFallaConexion();
                 throw err;
             }
+        }
+
+        function generarTxid() {
+            if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+            return 'txid-' + Date.now() + '-' + Math.random().toString(36).slice(2);
         }
 
         async function cargarTodo(silencioso) {
@@ -2302,6 +2303,9 @@
         }
 
         async function confirmEditProduct() {
+            const btn = document.getElementById('editProdConfirm');
+            if (btn.disabled) return;
+
             if (!editProductCurrentId) return;
             const p = state.stock.find(x => x.id === editProductCurrentId);
             if (!p) return;
@@ -2328,6 +2332,8 @@
                 errBox.style.display = 'block';
                 return;
             }
+
+            btn.disabled = true;
 
             p.descripcion = nuevaDesc;
             p.marca = nuevaMarca;
@@ -2386,6 +2392,9 @@
                     showToast('No se pudo guardar en la nube. Reintentá.', true);
                 }
             }
+
+            btn.disabled = false;
+
         }
 
         // ============================================================
@@ -2749,6 +2758,9 @@
         // servidor y guarda la factura en su propia columna).
         // ============================================================
         async function confirmNewProduct() {
+            const btnConfirm = document.getElementById('newProdConfirm');
+            if (btnConfirm.disabled) return;
+
             const errBox = document.getElementById('newProdErr');
             errBox.style.display = 'none';
 
@@ -2868,7 +2880,6 @@
             if (obs) obsItemLocalParts.push(obs);
             const obsItemLocal = obsItemLocalParts.join(' | ');
 
-            const btnConfirm = document.getElementById('newProdConfirm');
             btnConfirm.disabled = true;
             btnConfirm.textContent = 'Registrando…';
 
@@ -3165,6 +3176,8 @@
         }
 
         async function confirmBatchAdjust() {
+            const btn = document.getElementById('adjustBatchConfirm');
+            if (btn.disabled) return;
             const list = state.stock.filter(p => state.selectedIds.has(p.id));
             if (list.length === 0) return;
 
@@ -3197,7 +3210,6 @@
                 return;
             }
 
-            const btn = document.getElementById('adjustBatchConfirm');
             btn.disabled = true; btn.textContent = 'Guardando…';
 
             try {
@@ -3367,6 +3379,9 @@
         }
 
         async function confirmAdjust() {
+            const btn = document.getElementById('adjustConfirm');
+            if (btn.disabled) return;
+
             const cantidad = Number(document.getElementById('adjustCantidad').value);
             const responsable = document.getElementById('adjustResponsable').value.trim().toUpperCase();
             const obra = document.getElementById('adjustObra').value.trim().toUpperCase();
@@ -3379,7 +3394,6 @@
             const p = state.stock.find(x => x.id === document.getElementById('adjustOverlay').dataset.id);
             if (!p) { errBox.textContent = 'No se encontró el producto.'; errBox.style.display = 'block'; return; }
 
-            const btn = document.getElementById('adjustConfirm');
             btn.disabled = true; btn.textContent = 'Guardando…';
 
             try {
