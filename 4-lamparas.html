@@ -3280,18 +3280,24 @@
       forzarMayusculas(document.getElementById('carrito_obra_otro'));
     }
     async function enviarCarritoRapido(overlay) {
+      const btn = overlay.querySelector("#btn_confirmar_carrito");
+      if (btn.disabled) return; // ya hay un envío en curso — ignora el toque repetido
+
       let responsable = document.getElementById("carrito_responsable").value;
       if (responsable === "OTRO") responsable = document.getElementById("carrito_responsable_otro").value.trim();
       let obra = document.getElementById("carrito_obra").value;
       if (obra === "OTRO") obra = document.getElementById("carrito_obra_otro").value.trim();
+
+      const obsGeneral = document.getElementById("carrito_obs_general").value.trim();
+      if (!responsable || !obra) { toastDep("⚠ Completá Responsable y Obra", "error"); return; }
+
+      btn.disabled = true; btn.textContent = "Enviando...";
+
       if (!navigator.onLine) {
+        btn.disabled = false; btn.textContent = "Registrar movimiento";
         mostrarCartelFallaConexion(() => enviarCarritoRapido(overlay));
         return;
       }
-      const obsGeneral = document.getElementById("carrito_obs_general").value.trim();
-      if (!responsable || !obra) { toastDep("⚠ Completá Responsable y Obra", "error"); return; }
-      const btn = overlay.querySelector("#btn_confirmar_carrito");
-      btn.disabled = true; btn.textContent = "Enviando...";
 
       if (!txidCarritoActual) txidCarritoActual = generarTxid();
 
@@ -4097,6 +4103,9 @@
     }
 
     async function submitForm() {
+      const btn = document.getElementById('btn-submit');
+      if (btn.disabled) return; // ya hay un envío en curso — ignora el toque repetido
+
       normalizarCamposOtroAlEnviar();
 
       const tipo = document.getElementById('tipo_movimiento').value;
@@ -4239,13 +4248,13 @@
 
       const total = FAMILIES.reduce((s, f) => s + (payload[f] || []).length, 0) + (nuevoDesc ? 1 : 0);
 
+      btn.disabled = true; btn.textContent = 'Enviando...';
+
       if (!navigator.onLine) {
+        btn.disabled = false; btn.textContent = 'Registrar movimiento';
         mostrarCartelFallaConexion(() => submitForm());
         return;
       }
-
-      const btn = document.getElementById('btn-submit');
-      btn.disabled = true; btn.textContent = 'Enviando...';
 
       clearTimeout(draftTimer);
       borradorBloqueado = true;
