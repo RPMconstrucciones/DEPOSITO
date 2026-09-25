@@ -1039,6 +1039,27 @@ function toastDep(mensaje, tipo = 'info') {
   setTimeout(() => { if (toast.parentNode) toast.remove(); }, 3200);
 }
 
+function mostrarCartelFallaConexion(onReintentar) {
+  const anterior = document.querySelector('.modal-overlay-conexion');
+  if (anterior) anterior.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay modal-overlay-conexion';
+  overlay.innerHTML =
+    '<div class="modal-box">' +
+    '<p>⚠️ No se pudo confirmar el envío.<br>Verificá tu conexión e intentá de nuevo.</p>' +
+    '<button class="modal-btn primary" id="btn_reintentar_conexion">Reintentar</button>' +
+    '<button class="modal-btn cancel" id="btn_cerrar_conexion">Cerrar</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#btn_reintentar_conexion').onclick = () => {
+    overlay.remove();
+    if (typeof onReintentar === 'function') onReintentar();
+  };
+  overlay.querySelector('#btn_cerrar_conexion').onclick = () => overlay.remove();
+}
+
 function abrirZoomImagen(src) {
   const overlay = document.createElement('div');
   overlay.className = 'zoom-overlay';
@@ -1074,6 +1095,7 @@ let activeFamilia = '';
 let activeChips   = {};
 let carritoRapido = { tipo: null, items: [] };
 let tipoMovimientoStockGlobal = null;
+let txidCarritoActual = null;
 let stockPollingTimer = null;
 
 function iniciarPollingStock() {
@@ -1859,6 +1881,7 @@ function actualizarBarraCarrito(){
 function vaciarCarritoRapido(){
   carritoRapido={tipo:null,items:[]};
   tipoMovimientoStockGlobal=null;
+  txidCarritoActual=null;
   actualizarBarraCarrito();
   applyFilters();
 }
@@ -1903,18 +1926,27 @@ function abrirModalConfirmarCarrito(){
   forzarMayusculas(document.getElementById('carrito_obra_otro'));
 }
 async function enviarCarritoRapido(overlay){
+  const btn=overlay.querySelector("#btn_confirmar_carrito");
+  if(btn.disabled)return; // ya hay un envío en curso — ignora el toque repetido
+
   let responsable=document.getElementById("carrito_responsable").value;
   if(responsable==="OTRO")responsable=document.getElementById("carrito_responsable_otro").value.trim();
   let obra=document.getElementById("carrito_obra").value;
   if(obra==="OTRO")obra=document.getElementById("carrito_obra_otro").value.trim();
+
+  const obsGeneral=document.getElementById("carrito_obs_general").value.trim();
+  if(!responsable||!obra){toastDep("⚠ Completá Responsable y Obra","error");return;}
+
+  btn.disabled=true;btn.textContent="Enviando...";
+
   if(!navigator.onLine){
+    btn.disabled=false;btn.textContent="Registrar movimiento";
     mostrarCartelFallaConexion(()=>enviarCarritoRapido(overlay));
     return;
   }
-  const obsGeneral=document.getElementById("carrito_obs_general").value.trim();
-  if(!responsable||!obra){toastDep("⚠ Completá Responsable y Obra","error");return;}
-  const btn=overlay.querySelector("#btn_confirmar_carrito");
-  btn.disabled=true;btn.textContent="Enviando...";
+
+  if(!txidCarritoActual)txidCarritoActual=generarTxid();
+
   const payload={
     accion:"ajuste-rapido",
     zona:ZONA_FIJA,
@@ -1922,18 +1954,15 @@ async function enviarCarritoRapido(overlay){
     responsable,obra,
     obs_general:obsGeneral,
     fecha:new Date().toLocaleString("es-AR",{hour12:false}),
-    items:carritoRapido.items.map(it=>({id:it.id,familia:it.familia,marca:it.marca,descripcion:it.descripcion,cantidad:it.cantidad,unidad:it.unidad}))
+    items:carritoRapido.items.map(it=>({id:it.id,familia:it.familia,marca:it.marca,descripcion:it.descripcion,cantidad:it.cantidad,unidad:it.unidad})),
+    _txid: txidCarritoActual
   };
-  const ctrl = new AbortController();
-  const tid = setTimeout(() => ctrl.abort(), 20000);
   try{
     const resp=await fetch(APPS_SCRIPT_URL,{
       method:"POST",
       headers:{"Content-Type":"text/plain;charset=utf-8"},
-      body:JSON.stringify(payload),
-      signal: ctrl.signal
+      body:JSON.stringify(payload)
     });
-    clearTimeout(tid);
     const resultado=await resp.json();
     if(!resultado.ok){
       btn.disabled=false;btn.textContent="Registrar movimiento";
@@ -1945,7 +1974,6 @@ async function enviarCarritoRapido(overlay){
     vaciarCarritoRapido();
     loadStock();
   }catch(e){
-    clearTimeout(tid);
     btn.disabled=false;btn.textContent="Registrar movimiento";
     mostrarCartelFallaConexion(()=>enviarCarritoRapido(overlay));
   }
@@ -2030,9 +2058,13 @@ function bloqueFotoItem(fam, n) {
   return `
     <div class="foto-bloque">
       <label>Fotos de referencia <span class="opc">(opcional, máx. 2)</span></label>
-      <div id="${fam}_foto_preview_${n}" class="foto-preview-gestion"></div>
-      <input type="file" accept="image/*" id="${fam}_foto_input_${n}" style="display:none" onchange="manejarSeleccionFotoItem(this, '${fam}', ${n})">
-      <button type="button" class="btn-add" id="${fam}_foto_btn_${n}" onclick="document.getElementById('${fam}_foto_input_${n}').click()">+ Agregar foto</button>
+      <div id="${fam}_foto_preview_${n}" class="foto-preview-gestion" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;"></div>
+      <input type="file" accept="image/*" capture="environment" id="${fam}_foto_input_camara_${n}" style="display:none" onchange="manejarSeleccionFotoItem(this, '${fam}', ${n})">
+      <input type="file" accept="image/*" id="${fam}_foto_input_galeria_${n}" style="display:none" onchange="manejarSeleccionFotoItem(this, '${fam}', ${n})">
+      <div id="${fam}_foto_btns_${n}" style="display:flex;gap:8px;">
+        <button type="button" class="btn-add" style="flex:1;" onclick="document.getElementById('${fam}_foto_input_camara_${n}').click()">📷 Tomar foto</button>
+        <button type="button" class="btn-add" style="flex:1;" onclick="document.getElementById('${fam}_foto_input_galeria_${n}').click()">🖼️ Galería</button>
+      </div>
     </div>`;
 }
 
@@ -2063,14 +2095,14 @@ function renderFotosItem(fam, n) {
   const key = `${fam}_${n}`;
   const fotos = fotosPendientes[key] || [];
   const preview = document.getElementById(`${fam}_foto_preview_${n}`);
-  const btn = document.getElementById(`${fam}_foto_btn_${n}`);
+  const btns = document.getElementById(`${fam}_foto_btns_${n}`);
   if (!preview) return;
   preview.innerHTML = fotos.map((b64, i) => `
     <div class="foto-slot">
       <img src="data:image/jpeg;base64,${b64}" onclick="abrirZoomImagen('data:image/jpeg;base64,${b64}')">
       <button type="button" class="foto-slot-del" onclick="eliminarFotoItem('${fam}',${n},${i})" title="Eliminar">🗑️</button>
     </div>`).join('');
-  if (btn) btn.style.display = fotos.length >= 2 ? 'none' : 'block';
+  if (btns) btns.style.display = fotos.length >= 2 ? 'none' : 'flex';
 }
 
 // ── Bloque de ubicación genérico por ítem ──
@@ -2662,6 +2694,13 @@ function closeErrOverlay() {
 
 // ── (dentro de 3.6) Borrador automático en localStorage — estándar del proyecto ──
 let draftTimer = null;
+let borradorBloqueado = false;
+let txidActual = null;
+
+function generarTxid() {
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'txid-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+}
 
 function actualizarEstadoBorrador(texto) {
   const el = document.getElementById('borrador_estado');
@@ -2669,6 +2708,7 @@ function actualizarEstadoBorrador(texto) {
 }
 
 function guardarBorrador() {
+  if (borradorBloqueado) return;
   const estado = {
     tipo_movimiento: document.getElementById('tipo_movimiento').value,
     responsable: document.getElementById('responsable').value,
@@ -2769,6 +2809,9 @@ function restaurarBorrador() {
 }
 
 function resetForm(limpiarBorrador = true) {
+  clearTimeout(draftTimer);
+  borradorBloqueado = false;
+  txidActual = null;
   if (limpiarBorrador) { try { localStorage.removeItem(CONFIG.storageKey); } catch (e) {} }
   document.getElementById('tipo_movimiento').value = '';
   document.getElementById('responsable').value     = '';
@@ -2818,6 +2861,8 @@ function resetForm(limpiarBorrador = true) {
 }
 
 async function submitForm() {
+  if (document.getElementById('btn-submit').disabled) return; // ya hay un envío en curso — ignora el toque repetido
+
   normalizarCamposOtroAlEnviar();
 
   const tipo = document.getElementById('tipo_movimiento').value;
@@ -2949,34 +2994,50 @@ async function submitForm() {
 
   const total = FAMILIES.reduce((s, f) => s + (payload[f]||[]).length, 0) + (nuevoDesc ? 1 : 0);
 
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+
   if (!navigator.onLine) {
+    btn.disabled = false; btn.textContent = 'Registrar movimiento';
     mostrarCartelFallaConexion(() => submitForm());
     return;
   }
 
-  const btn = document.getElementById('btn-submit');
-  btn.disabled = true; btn.textContent = 'Enviando...';
+  if (!txidActual) txidActual = generarTxid();
+  payload._txid = txidActual;
 
-  const ctrlEnvio = new AbortController();
-  const tidEnvio = setTimeout(() => ctrlEnvio.abort(), 20000);
+  clearTimeout(draftTimer);
+  borradorBloqueado = true;
 
+  // Sin AbortController con timeout corto: cortar la espera del lado del
+  // cliente NO cancela la ejecución en Apps Script — el dato puede quedar
+  // guardado igual mientras el navegador ya decidió que "falló", y eso
+  // llevaba a que el usuario reintentara y se duplicara el movimiento.
   try {
-    await fetch(APPS_SCRIPT_URL, {
+    const resp2 = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: ctrlEnvio.signal
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
     });
-    clearTimeout(tidEnvio);
+    const resultado = await resp2.json();
+
+    if (!resultado.ok) {
+      btn.disabled = false; btn.textContent = 'Registrar movimiento';
+      borradorBloqueado = false;
+      document.getElementById('ov-err-list').innerHTML = '<li>Error del servidor: ' + resultado.error + '</li>';
+      document.getElementById('ov-err').classList.add('show');
+      return;
+    }
+
     try { localStorage.removeItem(CONFIG.storageKey); } catch (e) {}
+    txidActual = null;
     document.getElementById('ov-ok-detail').textContent =
       `${tipo} registrada por ${resp} — ${total} producto${total!==1?'s':''} guardado${total!==1?'s':''}.`;
     document.getElementById('ov-ok').classList.add('show');
     btn.style.display = 'none';
     stockLoaded = false;
   } catch (err) {
-    clearTimeout(tidEnvio);
+    borradorBloqueado = false;
     btn.disabled = false; btn.textContent = 'Registrar movimiento';
     mostrarCartelFallaConexion(() => submitForm());
   }
@@ -3045,8 +3106,27 @@ document.addEventListener('DOMContentLoaded', function() {
     if (e.target.matches('input, select, textarea')) programarGuardado();
   });
   restaurarBorrador();
+  revisarDeepLinkProducto();
 });
+
+function revisarDeepLinkProducto() {
+  const params = new URLSearchParams(window.location.search);
+  const idProducto = params.get('id');
+  if (!idProducto) return;
+
+  goStock();
+  const intentarAbrir = () => {
+    const idx = stockData.findIndex(p => p.id === idProducto);
+    if (idx >= 0) {
+      openDetail(idx);
+    } else if (stockLoaded) {
+      // ya cargó el stock pero no está ese ID — no hacemos nada más
+    } else {
+      setTimeout(intentarAbrir, 300); // el fetch todavía no terminó, reintenta
+    }
+  };
+  intentarAbrir();
+}
 </script>
-<script src="conexion-protegida.js"></script>
 </body>
 </html>
