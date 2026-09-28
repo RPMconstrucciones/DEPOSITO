@@ -3303,7 +3303,12 @@
         ];
 
         function uOpts(fam) { return (UNITS[fam] || ['un']).map(u => '<option value="' + u + '">' + u + '</option>').join(''); }
-        function opts(arr) { return arr.map(v => '<option value="' + v + '">' + v + '</option>').join(''); }
+        function opts(arr) {
+            return arr.map(v => {
+                const esc = String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+                return '<option value="' + esc + '">' + v + '</option>';
+            }).join('');
+        }
 
         function lbl(fam, campo, texto) {
             const req = (REQUIRED[fam] || []).some(([c]) => c === campo);
