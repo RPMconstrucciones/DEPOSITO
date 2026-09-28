@@ -2165,8 +2165,6 @@
                 <div class="f-section-title">Productos a registrar</div>
                 <p style="font-size:12px;color:#9ca3af;margin-bottom:14px;">Tocá la familia para desplegar. Podés cargar
                     varias en un mismo envío. La ubicación se pide en ENTRADA y DEVOLUCIÓN; en SALIDA no hace falta.</p>
-                <div id="borrador_estado" class="borrador-estado">Borrador guardado automáticamente en este navegador.
-                </div>
 
                 <button class="acordeon-btn" onclick="toggleAcordeon(this,'bloque_modulos')">
                     🔌 Módulos para embutir <span class="acordeon-arrow">▾</span>
@@ -3251,7 +3249,7 @@
 
         const REQUIRED = {
             modulos: [['tipo', 'Tipo de componente'], ['cantidad', 'Cantidad']],
-            cajas_ie: [['formato', 'Formato de la caja'], ['material', 'Material'], ['medida', 'Medida'], ['cantidad', 'Cantidad']],            canieria: [['tipo', 'Tipo de accesorio'], ['material', 'Material'], ['diametro_medida', 'Diámetro / Medida'], ['cantidad', 'Cantidad']],
+            cajas_ie: [['formato', 'Formato de la caja'], ['material', 'Material'], ['medida', 'Medida'], ['cantidad', 'Cantidad']], canieria: [['tipo', 'Tipo de accesorio'], ['material', 'Material'], ['diametro_medida', 'Diámetro / Medida'], ['cantidad', 'Cantidad']],
         };
 
         const UNITS = {
@@ -3924,11 +3922,12 @@
         }
 
         function programarGuardado() {
-            clearTimeout(draftTimer);
-            draftTimer = setTimeout(guardarBorrador, 250);
+            return; // borrador desactivado
         }
 
         function restaurarBorrador() {
+            try { localStorage.removeItem(CONFIG.storageKey); } catch (e) { }
+            return; // borrador desactivado: siempre arranca vacío
             let raw;
             try { raw = localStorage.getItem(CONFIG.storageKey); } catch (e) { raw = null; }
             if (!raw) {
