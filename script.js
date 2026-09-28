@@ -129,7 +129,7 @@ const ORDEN_DESCRIPCION = {
   // ── Instalación Eléctrica (formulario nuevo) ──
   modulos:     ['tipo', 'subtipo', 'color'],
   cajas_ie:    ['formato', 'material', 'medida'],
-  canieria:    ['tipo', 'material', 'diametro_medida', 'color']
+  canieria:    ['tipo', 'tuerca', 'material', 'diametro_medida', 'color']
 };
 
 const FAMILIAS = {
@@ -275,7 +275,7 @@ const DEP_COL_MOV = {
   UBIC_COLUMNA:  17,
   UBIC_FILA:     18,
   NRO_FACTURA:   19,
-  TOTAL:         19,
+  TOTAL:         19 // ✅ Mantiene explícito el conteo total de columnas mapeadas,
 };
 
 const DEP_COL_STOCK = {
@@ -694,25 +694,47 @@ function doPost(e) {
 
     const ss = SpreadsheetApp.openById('1PWCKGAQgZfBEWPwqWppsbylLdJLxJe3I6XWrEAhBwQk');
 
-    if (data.accion === 'ajuste-rapido') {
-      return ajusteRapidoStockOpcionB(data, ss);
-    } else if (data.accion === 'crear-producto') {
-      return crearProductoNuevo(data, ss);
-    } else if (data.accion === 'actualizar-observacion') {
-      return actualizarObservacionProducto(data, ss);
-    } else if (data.accion === 'actualizar-ubicacion') {
-      return actualizarUbicacionProducto(data, ss);
-    } else if (data.accion === 'actualizar-datos') {
-      return actualizarDatosProducto(data, ss);
-    } else if (data.accion === 'actualizar-imagen') {
-      return actualizarImagenProducto(data, ss);
-    } else if (data.accion === 'eliminar-imagen') {
-      return eliminarImagenProducto(data, ss);
-    } else if (data.tipo === 'Traslado') {
-      return procesarTraslado(data, ss);
-    } else {
-      return procesarDeposito(data, ss);
+    // ── PROTECCIÓN CONTRA DUPLICADOS (_txid) ──────────────────
+    // Si el HTML manda un _txid y ya lo procesamos antes (por ejemplo,
+    // el navegador reintenta porque no le llegó la respuesta la primera
+    // vez), devolvemos la MISMA respuesta guardada sin volver a escribir
+    // nada en Movimientos/Stock.
+    const txid = data._txid;
+    let hojaLog = null;
+    if (txid) {
+      hojaLog = ss.getSheetByName('_txlog') || ss.insertSheet('_txlog');
+      const ultimaFilaLog = hojaLog.getLastRow();
+      if (ultimaFilaLog > 0) {
+        const filas = hojaLog.getRange(1, 1, ultimaFilaLog, 2).getValues();
+        for (let i = 0; i < filas.length; i++) {
+          if (filas[i][0] === txid) {
+            Logger.log('Txid repetido, devolviendo respuesta guardada: ' + txid);
+            return ContentService
+              .createTextOutput(filas[i][1])
+              .setMimeType(ContentService.MimeType.JSON);
+          }
+        }
+      }
     }
+
+    let respuesta;
+    if (data.accion === 'actualizar-imagen') {
+      respuesta = actualizarImagenProducto(data, ss);
+    } else if (data.accion === 'eliminar-imagen') {
+      respuesta = eliminarImagenProducto(data, ss);
+    } else if (data.tipo === 'Traslado') {
+      respuesta = procesarTraslado(data, ss);
+    } else {
+      respuesta = procesarDeposito(data, ss);
+    }
+
+    // Guardar el txid junto con la respuesta, para poder devolverla
+    // igual si este mismo pedido se reintenta más adelante.
+    if (txid && hojaLog) {
+      hojaLog.appendRow([txid, respuesta.getContent(), new Date()]);
+    }
+
+    return respuesta;
 
   } catch (err) {
     Logger.log('ERROR doPost: ' + err.message);
@@ -1168,12 +1190,6 @@ function ajusteRapidoStockOpcionB(data, ss) {
       fila:     String(fila[DEP_COL_STOCK.UBIC_FILA     - 1] || '')
     };
 
-    dep_actualizarStock(
-      hojaStock, zonaItem, familia, marca, descripcion,
-      tipo, Number(item.cantidad) || 0, fechaHoy, horaAhora,
-      ubicacion, unidad, '', data.obs_general || '', ''
-    );
-
     hojaMov.appendRow([
       idPedido, dep_normalizarFecha(data.fecha, timezone), tipo, data.responsable || '', data.obra || '', zonaItem,
       familia, marca, descripcion,
@@ -1181,6 +1197,13 @@ function ajusteRapidoStockOpcionB(data, ss) {
       ubicacion.deposito, ubicacion.estante, ubicacion.columna, ubicacion.fila,
       ''   // N° Factura — no aplica a este tipo de movimiento
     ]);
+
+    dep_actualizarStock(
+      hojaStock, zonaItem, familia, marca, descripcion,
+      tipo, Number(item.cantidad) || 0, fechaHoy, horaAhora,
+      ubicacion, unidad, '', data.obs_general || '', ''
+    );
+
   });
 
   if (noEncontrados.length > 0) {

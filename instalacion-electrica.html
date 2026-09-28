@@ -3593,6 +3593,24 @@
             }
         }
 
+        // Cañería: si el tipo es "Conector", exige definir si es Con tuerca o Sin tuerca
+        function manejarTipoCanieria(select, n) {
+            const bloque = select.closest('.item-block');
+            if (!bloque) return;
+            const tuercaBloque = bloque.querySelector('#canieria_tuerca_bloque_' + n);
+            const tuercaSelect = bloque.querySelector('#canieria_tuerca_' + n);
+            if (!tuercaBloque || !tuercaSelect) return;
+            if (select.value === 'Conector') {
+                tuercaBloque.classList.add('visible');
+            } else {
+                tuercaBloque.classList.remove('visible');
+                tuercaSelect.value = '';
+                tuercaSelect.classList.remove('err');
+                const errEl = bloque.querySelector('[data-err="canieria_tuerca"]');
+                if (errEl) errEl.classList.remove('show');
+            }
+        }
+
         // Cajas: la medida depende del formato elegido
         const MEDIDAS_CAJA = {
             'Rectangular': ['50 x 100 mm (10 x 5 cm)'],
@@ -3677,8 +3695,14 @@
 
                 canieria:
                     lbl('canieria', 'tipo', 'Tipo de accesorio') +
-                    '<select data-fam="canieria" data-campo="tipo">' +
-                    '<option value="">— Seleccioná —</option>' + opts(['Conector', 'Unión', 'Curva', 'Pipeta', 'Otro']) + '</select>' +
+                    '<select data-fam="canieria" data-campo="tipo" onchange="manejarTipoCanieria(this, ' + n + ')">' +
+                    '<option value="">— Seleccioná —</option>' + opts(['Conector', 'Unión', 'Curva', 'Pipeta', 'Tuerca para conector', 'Otro']) + '</select>' +
+                    '<div class="campo-condicional" id="canieria_tuerca_bloque_' + n + '">' +
+                    '<label>Tuerca <span class="req">*</span></label>' +
+                    '<span class="f-err-msg" data-err="canieria_tuerca">⚠ Obligatorio para conectores</span>' +
+                    '<select data-fam="canieria" data-campo="tuerca" id="canieria_tuerca_' + n + '">' +
+                    '<option value="">— Seleccioná —</option>' + opts(['Con tuerca', 'Sin tuerca']) + '</select>' +
+                    '</div>' +
                     lbl('canieria', 'material', 'Material') +
                     '<select data-fam="canieria" data-campo="material">' +
                     '<option value="">— Seleccioná —</option>' + opts(['PVC', 'Corrugado (plástico flexible)', 'Hierro galvanizado / Semipesado', 'Otro']) + '</select>' +
@@ -3782,6 +3806,24 @@
                 }
             }
 
+            // Cañería: si el tipo es "Conector", la tuerca es obligatoria
+            if (fam === 'canieria') {
+                const tipoEl = block.querySelector('[data-fam="canieria"][data-campo="tipo"]');
+                if (tipoEl && tipoEl.value === 'Conector') {
+                    const tuercaEl = block.querySelector('[data-fam="canieria"][data-campo="tuerca"]');
+                    const valTuerca = tuercaEl && tuercaEl.value ? tuercaEl.value.trim() : '';
+                    const errEl = block.querySelector('[data-err="canieria_tuerca"]');
+                    if (!valTuerca) {
+                        if (tuercaEl) tuercaEl.classList.add('err');
+                        if (errEl) errEl.classList.add('show');
+                        errs.push('Tuerca para conector (obligatorio: Con tuerca / Sin tuerca)');
+                    } else {
+                        if (tuercaEl) tuercaEl.classList.remove('err');
+                        if (errEl) errEl.classList.remove('show');
+                    }
+                }
+            }
+
             return errs;
         }
 
@@ -3808,6 +3850,10 @@
                 });
                 const fotosItem = fotosPendientes[fam + '_' + n];
                 if (n && fotosItem && fotosItem.length) data.fotos_base64 = fotosItem;
+
+                if (fam === 'canieria' && data.tipo !== 'Conector') {
+                    delete data.tuerca;
+                }
 
                 Object.keys(data).forEach(k => {
                     if (!k.endsWith('_otro')) return;
@@ -3950,10 +3996,34 @@
                         }
                     }
                     if (fam === 'canieria') {
+                        const tipoSel = bloque.querySelector('[data-fam="canieria"][data-campo="tipo"]');
+                        if (tipoSel && tipoSel.value) {
+                            manejarTipoCanieria(tipoSel, Number(bloque.id.replace('item_canieria_', '')));
+                            const tuercaSel = bloque.querySelector('[data-fam="canieria"][data-campo="tuerca"]');
+                            const tuercaGuardada = item['dc__tuerca'];
+                            if (tuercaSel && tuercaGuardada) {
+                                tuercaSel.value = tuercaGuardada;
+                            }
+                        }
                         const medidaSel = bloque.querySelector('[data-fam="canieria"][data-campo="diametro_medida"]');
                         const medidaGuardada = item['dc__diametro_medida'];
                         if (medidaSel && medidaGuardada) {
                             const mapaMedidas = {
+                                '5/8"': '5/8" (16 mm)',
+                                '3/4"': '3/4" (20 mm)',
+                                '7/8"': '7/8" (22,22 mm)',
+                                '1"': '1" (25 mm)',
+                                '1 1/4"': '1 1/4" (32 mm)',
+                                '1 1/2"': '1 1/2" (40 mm)',
+                                '2"': '2" (50 mm)',
+                                '16 mm': '5/8" (16 mm)',
+                                '20 mm': '3/4" (20 mm)',
+                                '22 mm': '7/8" (22,22 mm)',
+                                '22,22 mm': '7/8" (22,22 mm)',
+                                '25 mm': '1" (25 mm)',
+                                '32 mm': '1 1/4" (32 mm)',
+                                '40 mm': '1 1/2" (40 mm)',
+                                '50 mm': '2" (50 mm)',
                                 '16 mm (5/8")': '5/8" (16 mm)',
                                 '20 mm (3/4")': '3/4" (20 mm)',
                                 '22 mm (7/8")': '7/8" (22,22 mm)',
@@ -3965,6 +4035,12 @@
                             };
                             if (mapaMedidas[medidaGuardada]) {
                                 medidaSel.value = mapaMedidas[medidaGuardada];
+                            } else {
+                                medidaSel.value = medidaGuardada;
+                                if (medidaGuardada === 'Otro') {
+                                    const otroInput = bloque.querySelector('[data-campo="diametro_medida_otro"]');
+                                    if (otroInput) { otroInput.style.display = 'block'; otroInput.value = item['dc__diametro_medida_otro'] || ''; }
+                                }
                             }
                         }
                     }
