@@ -548,6 +548,19 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
   font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
   padding: 0; touch-action: manipulation;
 }
+.detail-hist { background: #1e293b; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+.detail-hist-titulo { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.hist-item { padding: 10px 0; border-top: 1px solid #334155; }
+.hist-item:first-child { border-top: none; padding-top: 0; }
+.hist-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.hist-tipo { font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 20px; }
+.hist-ent { background: #052e16; color: #4ade80; }
+.hist-sal { background: #2d0b0b; color: #f87171; }
+.hist-dev { background: #0f2044; color: #60a5fa; }
+.hist-cant { font-size: 15px; font-weight: 800; color: #f1f5f9; }
+.hist-fecha { font-size: 11px; color: #64748b; margin-bottom: 4px; }
+.hist-linea { font-size: 12px; color: #94a3b8; line-height: 1.5; }
+.hist-vacio { font-size: 12px; color: #64748b; }
 </style>
 </head>
 <body>
@@ -1286,10 +1299,48 @@ function openDetail(idx) {
       'Fecha: <strong>' + p.ult_fecha + '</strong> &nbsp;|&nbsp; Hora: <strong>' + p.ult_hora + '</strong><br>' +
       (p.ult_mov_obs ? '📝 <strong>Observación del envío:</strong> ' + p.ult_mov_obs : '<span style="color:#64748b;">Sin observación registrada para este envío</span>') +
     '</div>' : '');
+  document.getElementById('detail-body').insertAdjacentHTML('beforeend',
+    '<div class="detail-hist"><div class="detail-hist-titulo">Historial de movimientos</div>' +
+    '<div id="historial_lista"><div class="hist-vacio">Cargando...</div></div></div>');
   document.getElementById('detail-overlay').classList.add('show');
+  cargarHistorial(p.id);
 }
 
 function closeDetail() { document.getElementById('detail-overlay').classList.remove('show'); }
+
+let historialIdActual = null;
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+async function cargarHistorial(idProducto) {
+  historialIdActual = idProducto;
+  try {
+    const resp = await fetch(APPS_SCRIPT_URL + '?action=historial&id=' + encodeURIComponent(idProducto));
+    const data = await resp.json();
+    if (!data.ok) throw new Error(data.error || 'Error del servidor');
+    if (historialIdActual !== idProducto) return;
+    const cont = document.getElementById('historial_lista');
+    if (!cont) return;
+    if (!data.movimientos.length) { cont.innerHTML = '<div class="hist-vacio">Sin movimientos registrados</div>'; return; }
+    cont.innerHTML = data.movimientos.map(m => {
+      const t = String(m.tipo || '').toUpperCase();
+      const clase = t === 'ENTRADA' ? 'ent' : (t === 'SALIDA' ? 'sal' : 'dev');
+      const signo = t === 'SALIDA' ? '−' : '+';
+      return '<div class="hist-item">' +
+        '<div class="hist-top"><span class="hist-tipo hist-' + clase + '">' + escHtml(m.tipo) + '</span>' +
+        '<span class="hist-cant">' + signo + m.cantidad + ' ' + escHtml(m.unidad) + '</span></div>' +
+        '<div class="hist-fecha">' + escHtml(m.fecha) + '</div>' +
+        '<div class="hist-linea">👤 ' + escHtml(m.responsable || '—') + ' · 🏗️ ' + escHtml(m.obra || '—') + '</div>' +
+        (m.obs_item ? '<div class="hist-linea">🔧 ' + escHtml(m.obs_item) + '</div>' : '') +
+        (m.obs_general ? '<div class="hist-linea">📝 ' + escHtml(m.obs_general) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  } catch (e) {
+    if (historialIdActual !== idProducto) return;
+    const cont = document.getElementById('historial_lista');
+    if (cont) cont.innerHTML = '<div class="hist-vacio">No se pudo cargar el historial.</div>';
+  }
+}
 
 // ── 3.4.1 FOTOS DE STOCK ──
 function abrirModalFotos(idProducto) {
@@ -1749,6 +1800,16 @@ function abrirModalConfirmarCarrito(){
       '<input type="text" id="carrito_obra_otro" placeholder="Escribí la obra" style="display:none;width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:14px;background:#0f172a;color:#f8fafc;">' +
       '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Observaciones generales <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
       '<input type="text" id="carrito_obs_general" placeholder="Aclaración sobre este envío" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:14px;background:#0f172a;color:#f8fafc;">' +
+      (carritoRapido.tipo === 'SALIDA'
+        ? '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Equipo / vehículo <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
+          '<input type="text" id="carrito_equipo" placeholder="Ej: Camión 03" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:10px;background:#0f172a;color:#f8fafc;">' +
+          '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Tipo de servicio <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
+          '<select id="carrito_servicio" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:10px;background:#0f172a;color:#f8fafc;">' +
+            '<option value="">— Sin especificar —</option><option>Preventivo</option><option>Correctivo</option>' +
+          '</select>' +
+          '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Kilometraje / horómetro <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
+          '<input type="text" id="carrito_km_hs" placeholder="Ej: 12500 km o 3400 hs" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:14px;background:#0f172a;color:#f8fafc;">'
+        : '') +
       '<button class="modal-btn primary" id="btn_confirmar_carrito">Registrar movimiento</button>' +
       '<button class="modal-btn cancel" id="btn_cancelar_carrito">Cancelar</button>' +
     '</div>';
@@ -1759,7 +1820,8 @@ function abrirModalConfirmarCarrito(){
   overlay.querySelector("#btn_confirmar_carrito").onclick=()=>enviarCarritoRapido(overlay);
   forzarMayusculas(document.getElementById('carrito_responsable_otro'));
   forzarMayusculas(document.getElementById('carrito_obra_otro'));
-}
+  const inpEquipo = document.getElementById('carrito_equipo');
+  if (inpEquipo) forzarMayusculas(inpEquipo);}
 async function enviarCarritoRapido(overlay){
   let responsable=document.getElementById("carrito_responsable").value;
   if(responsable==="OTRO")responsable=document.getElementById("carrito_responsable_otro").value.trim();
@@ -1779,6 +1841,9 @@ async function enviarCarritoRapido(overlay){
     tipo_movimiento:carritoRapido.tipo,
     responsable,obra,
     obs_general:obsGeneral,
+    equipo:((document.getElementById("carrito_equipo")||{}).value||"").trim(),
+    tipo_servicio:((document.getElementById("carrito_servicio")||{}).value||"").trim(),
+    km_hs:((document.getElementById("carrito_km_hs")||{}).value||"").trim(),
     fecha:new Date().toLocaleString("es-AR",{hour12:false}),
     items:carritoRapido.items.map(it=>({id:it.id,familia:it.familia,marca:it.marca,descripcion:it.descripcion,cantidad:it.cantidad,unidad:it.unidad}))
   };
@@ -1866,11 +1931,11 @@ const counters = {
 const FAMILIES = Object.keys(counters);
 
 const REQUIRED = {
-  aceites:       [['tipo_aceite','Tipo de aceite'],['cantidad','Cantidad'],['tipo_uso','Tipo de uso']],
-  grasas:        [['cantidad','Cantidad'],['tipo_uso','Tipo de uso']],
-  refrigerantes: [['cantidad','Cantidad'],['tipo_uso','Tipo de uso']],
-  liquido_freno: [['cantidad','Cantidad'],['tipo_uso','Tipo de uso']],
-  combustibles:  [['tipo_combustible','Tipo de combustible'],['cantidad','Cantidad'],['tipo_uso','Tipo de uso']],
+  aceites:       [['tipo_aceite','Tipo de aceite'],['cantidad','Cantidad']],
+  grasas:        [['cantidad','Cantidad']],
+  refrigerantes: [['cantidad','Cantidad']],
+  liquido_freno: [['cantidad','Cantidad']],
+  combustibles:  [['tipo_combustible','Tipo de combustible'],['cantidad','Cantidad']],
 };
 
 const UNITS = {
@@ -1903,6 +1968,23 @@ function kitHint(fam, n) {
 }
 
 const fotosPendientes = {};
+
+const CODIGO_PREFIJO_FAM = { grasas: 'GR', refrigerantes: 'LR', liquido_freno: 'LF' };
+const CODIGO_PREFIJO_ACEITE = {
+  'Aceite Motor': 'AC-M',
+  'Aceite Hidráulico': 'AC-H',
+  'Aceite Diferencial (Ejes)': 'AC-D',
+  'Aceite de Transmisión Hidráulica': 'AC-TH'
+};
+
+function bloqueCodigo(fam) {
+  const prefijo = CODIGO_PREFIJO_FAM[fam] || '';
+  return '<label>Código <span class="opc">(solo el número)</span></label>' +
+    '<div class="qty-unit">' +
+      '<input type="text" data-fam="' + fam + '" data-campo="codigo_prefijo" value="' + prefijo + '" readonly tabindex="-1" style="flex:0 0 86px;margin-bottom:0;text-align:center;font-weight:700;">' +
+      '<input type="number" data-fam="' + fam + '" data-campo="codigo_numero" min="1" step="1" inputmode="numeric" placeholder="Nº">' +
+    '</div>';
+}
 
 function bloqueFotoItem(fam, n) {
   return '' +
@@ -2064,7 +2146,7 @@ function armarDescripcionItemGenerico(fam, n) {
   bloque.querySelectorAll('[data-fam][data-campo]').forEach(el => {
     if (el.dataset.fam !== fam) return;
     const campo = el.dataset.campo;
-    if (['cantidad','deposito','estante','columna','fila','tipo_uso','equipo_destino'].includes(campo)) return;
+    if (['cantidad','deposito','estante','columna','fila','codigo_prefijo','codigo_numero'].includes(campo)) return;
     if (el.value && el.value !== 'Otro' && el.value !== 'OTRO') partes.push(el.value.trim());
   });
   return partes.join('|');
@@ -2174,39 +2256,27 @@ function addItem(fam) {
     aceites:
       lbl('aceites','tipo_aceite','Tipo de aceite') +
       '<select data-fam="aceites" data-campo="tipo_aceite">' +
-        '<option value="">— Seleccioná —</option>' + opts(['Aceite Motor','Aceite Hidráulico','Aceite Diferencial (Ejes)']) + '</select>' +
+        '<option value="">— Seleccioná —</option>' + opts(['Aceite Motor','Aceite Hidráulico','Aceite Diferencial (Ejes)','Aceite de Transmisión Hidráulica','Otro']) + '</select>' +
+      bloqueCodigo('aceites') +
       '<label>Marca <span class="opc">(opcional)</span></label>' +
       '<input type="text" data-fam="aceites" data-campo="marca" placeholder="Ej: YPF, Shell, Mobil, Total">' +
       lbl('aceites','cantidad','Cantidad') + qtyRow +
-      lbl('aceites','tipo_uso','Tipo de uso') +
-      '<select data-fam="aceites" data-campo="tipo_uso">' +
-        '<option value="">— Seleccioná —</option>' + opts(['Preventivo','Correctivo']) + '</select>' +
-      '<label>Equipo/Vehículo destino <span class="opc">(opcional)</span></label>' +
-      '<input type="text" data-fam="aceites" data-campo="equipo_destino" placeholder="Ej: Retroexcavadora 01">' +
       '<label>Observaciones</label>' +
       '<input type="text" name="aceites_observaciones_' + n + '" placeholder="Opcional">',
 
     grasas:
       '<label>Marca/Tipo <span class="opc">(opcional)</span></label>' +
       '<input type="text" data-fam="grasas" data-campo="marca_tipo" placeholder="Ej: Grasa de litio, Grasa EP2">' +
+      bloqueCodigo('grasas') +
       lbl('grasas','cantidad','Cantidad') + qtyRow +
-      lbl('grasas','tipo_uso','Tipo de uso') +
-      '<select data-fam="grasas" data-campo="tipo_uso">' +
-        '<option value="">— Seleccioná —</option>' + opts(['Preventivo','Correctivo']) + '</select>' +
-      '<label>Equipo/Vehículo destino <span class="opc">(opcional)</span></label>' +
-      '<input type="text" data-fam="grasas" data-campo="equipo_destino" placeholder="Ej: Camión 03">' +
       '<label>Observaciones</label>' +
       '<input type="text" name="grasas_observaciones_' + n + '" placeholder="Opcional">',
 
     refrigerantes:
       '<label>Marca/Tipo <span class="opc">(opcional)</span></label>' +
       '<input type="text" data-fam="refrigerantes" data-campo="marca_tipo" placeholder="Ej: Refrigerante verde, rosa">' +
+      bloqueCodigo('refrigerantes') +
       lbl('refrigerantes','cantidad','Cantidad') + qtyRow +
-      lbl('refrigerantes','tipo_uso','Tipo de uso') +
-      '<select data-fam="refrigerantes" data-campo="tipo_uso">' +
-        '<option value="">— Seleccioná —</option>' + opts(['Preventivo','Correctivo']) + '</select>' +
-      '<label>Equipo/Vehículo destino <span class="opc">(opcional)</span></label>' +
-      '<input type="text" data-fam="refrigerantes" data-campo="equipo_destino" placeholder="Ej: Camión 03">' +
       '<label>Observaciones</label>' +
       '<input type="text" name="refrigerantes_observaciones_' + n + '" placeholder="Opcional">',
 
@@ -2214,12 +2284,8 @@ function addItem(fam) {
       '<label>Tipo <span class="opc">(opcional)</span></label>' +
       '<select data-fam="liquido_freno" data-campo="tipo">' +
         '<option value="">— Seleccioná —</option>' + opts(['DOT 3','DOT 4','DOT 5']) + '</select>' +
+      bloqueCodigo('liquido_freno') +
       lbl('liquido_freno','cantidad','Cantidad') + qtyRow +
-      lbl('liquido_freno','tipo_uso','Tipo de uso') +
-      '<select data-fam="liquido_freno" data-campo="tipo_uso">' +
-        '<option value="">— Seleccioná —</option>' + opts(['Preventivo','Correctivo']) + '</select>' +
-      '<label>Equipo/Vehículo destino <span class="opc">(opcional)</span></label>' +
-      '<input type="text" data-fam="liquido_freno" data-campo="equipo_destino" placeholder="Ej: Camioneta 02">' +
       '<label>Observaciones</label>' +
       '<input type="text" name="liquido_freno_observaciones_' + n + '" placeholder="Opcional">',
 
@@ -2228,11 +2294,6 @@ function addItem(fam) {
       '<select data-fam="combustibles" data-campo="tipo_combustible">' +
         '<option value="">— Seleccioná —</option>' + opts(['Nafta Súper','Nafta Premium (Infinia)','Gasoil']) + '</select>' +
       lbl('combustibles','cantidad','Cantidad') + qtyRow +
-      lbl('combustibles','tipo_uso','Tipo de uso') +
-      '<select data-fam="combustibles" data-campo="tipo_uso">' +
-        '<option value="">— Seleccioná —</option>' + opts(['Preventivo','Correctivo']) + '</select>' +
-      '<label>Equipo/Vehículo destino <span class="opc">(opcional)</span></label>' +
-      '<input type="text" data-fam="combustibles" data-campo="equipo_destino" placeholder="Ej: Camión 05">' +
       '<label>Observaciones</label>' +
       '<input type="text" name="combustibles_observaciones_' + n + '" placeholder="Opcional">',
   };
@@ -2252,6 +2313,15 @@ function addItem(fam) {
   const bloque = document.getElementById('item_' + fam + '_' + n);
   if (bloque) {
     agregarCamposOtro(bloque, fam);
+    if (fam === 'aceites') {
+      const selTipo = bloque.querySelector('[data-campo="tipo_aceite"]');
+      const inpPref = bloque.querySelector('[data-campo="codigo_prefijo"]');
+      if (selTipo && inpPref) {
+        selTipo.addEventListener('change', () => {
+          inpPref.value = CODIGO_PREFIJO_ACEITE[selTipo.value] || '';
+        });
+      }
+    }
     bloque.insertAdjacentHTML('beforeend', bloqueUbicacionItem(fam, n));
     bloque.querySelectorAll('input[type="text"]').forEach(inp => forzarMayusculas(inp));
     bloque.querySelectorAll('[data-fam][data-campo]').forEach(el => {
@@ -2330,9 +2400,13 @@ function collectItems(fam) {
         data['observaciones'] = el.value;
       }
     });
+    if (data.codigo_numero) data.codigo = (data.codigo_prefijo ? data.codigo_prefijo + '-' : '') + data.codigo_numero;
     const fotosItem = fotosPendientes[fam + '_' + n];
     if (n && fotosItem && fotosItem.length) data.fotos_base64 = fotosItem;
-    return Object.values(data).some(v => v) ? data : null;
+    if (!Object.values(data).some(v => v)) return null;
+    const selUni = block.querySelector('select[name="' + fam + '_unidad_' + n + '"]');
+    if (selUni) data.unidad = selUni.value;
+    return data;
   }).filter(Boolean);
 }
 
