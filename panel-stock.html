@@ -1308,7 +1308,11 @@
         <div id="panel-mov" style="display:none;">
             <div class="toolbar">
                 <div class="search-box"><input type="text" id="movSearch"
-                        placeholder="Buscar por producto, marca, familia, ubicación, responsable u obra…"></div>
+                        placeholder="Buscar por producto, marca, familia, ubicación, responsable, obra u observación…"></div>
+                <select class="filter-select" id="filterProducto"
+                    style="order:5; flex:1 1 100%; width:100%; padding:11px 12px; font-size:13.5px;">
+                    <option value="">Todos los productos</option>
+                </select>
                 <select class="filter-select" id="filterTipo">
                     <option value="">Todos los tipos</option>
                     <option value="ENTRADA">Entrada</option>
@@ -1848,7 +1852,7 @@
             zona: '',           // '' = todas
             activeTab: 'stock',
             stockUi: { search: '', familia: '', estado: '', sortKey: 'familia', sortDir: 1 },
-            movUi: { search: '', tipo: '', sortKey: 'fecha', sortDir: -1, page: 0 },
+            movUi: { search: '', tipo: '', producto: '', sortKey: 'fecha', sortDir: -1, page: 0 },
             modalOpen: false,
             selectedIds: new Set(),
             batchDraftQtys: {},
@@ -2101,6 +2105,7 @@
             const ui = state.movUi;
             let list = zonaFiltrado(state.mov);
             if (ui.tipo) list = list.filter(m => m.tipo === ui.tipo);
+            if (ui.producto) list = list.filter(m => movProductoKey(m) === ui.producto);
             if (ui.search) {
                 list = list.filter(m => {
                     const info = getMovProductInfo(m);
@@ -2110,7 +2115,7 @@
                         marca: info.marca !== '—' ? info.marca : '',
                         ubicacion: info.ubicacion !== '—' ? info.ubicacion : ''
                     };
-                    return matchesSearch(itemConInfo, ui.search, ['descripcion', 'responsable', 'obra', 'familia', 'marca', 'ubicacion', 'factura']);
+                    return matchesSearch(itemConInfo, ui.search, ['descripcion', 'responsable', 'obra', 'familia', 'marca', 'ubicacion', 'factura', 'obs_item']);
                 });
             }
             list = list.slice().sort((a, b) => {
@@ -3313,6 +3318,45 @@
             return str;
         }
 
+        function movProductoKey(m) {
+            const info = getMovProductInfo(m);
+            return [m.zona || '', info.familia, info.marca, (m.descripcion || '').trim()].join('||');
+        }
+
+        function populateMovProductoFilter() {
+            const sel = document.getElementById('filterProducto');
+            if (!sel) return;
+            const grupos = new Map(); // familia -> Map(clave -> texto)
+            zonaFiltrado(state.mov).forEach(m => {
+                if (!m.descripcion) return;
+                const info = getMovProductInfo(m);
+                const key = movProductoKey(m);
+                const fam = info.familia !== '—' ? info.familia : 'Sin familia';
+                if (!grupos.has(fam)) grupos.set(fam, new Map());
+                if (!grupos.get(fam).has(key)) {
+                    let label = (m.descripcion || '').trim();
+                    if (info.marca && info.marca !== '—') label += ' — ' + info.marca;
+                    if (!state.zona && m.zona) label += ' · ' + m.zona;
+                    grupos.get(fam).set(key, label);
+                }
+            });
+            const coll = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+            let html = '<option value="">Todos los productos</option>';
+            Array.from(grupos.keys()).sort(coll).forEach(fam => {
+                html += `<optgroup label="${escapeAttr(fam)}">`;
+                Array.from(grupos.get(fam).entries())
+                    .sort((a, b) => coll(a[1], b[1]))
+                    .forEach(([key, label]) => {
+                        html += `<option value="${escapeAttr(key)}">${escapeHtml(label)}</option>`;
+                    });
+                html += '</optgroup>';
+            });
+            if (sel.dataset.sig !== html) { sel.innerHTML = html; sel.dataset.sig = html; }
+            const existe = state.movUi.producto && Array.from(sel.options).some(o => o.value === state.movUi.producto);
+            if (!existe) state.movUi.producto = '';
+            sel.value = state.movUi.producto;
+        }
+
         function renderMov() {
             const all = movFiltrado();
             const ps = CONFIG.MOV_PAGE_SIZE;
@@ -3333,7 +3377,7 @@
         <td class="id-tag">${escapeHtml(formatearFechaMov(m.fecha))}</td>
         <td><span class="mov-pill ${tipoClass}">${escapeHtml(m.tipo || '')}</span></td>
         <td>${info.familia && info.familia !== '—' ? `<span class="fam-badge">${escapeHtml(info.familia)}</span>` : '<span style="color:var(--txt-faint);">—</span>'}</td>
-        <td class="desc-cell">${escapeHtml(m.descripcion || '')}</td>
+        <td class="desc-cell">${escapeHtml(m.descripcion || '')}${m.obs_item ? `<div class="obs-tag" style="font-weight:400;">${escapeHtml(m.obs_item)}</div>` : ''}</td>
         <td class="marca-cell">${escapeHtml(info.marca)}</td>
         <td>${loc && loc !== '—' ? `<span class="loc-tag">${escapeHtml(loc)}</span>` : `<span class="loc-empty">—</span>`}</td>
         <td style="font-weight:700;">${m.cantidad ?? ''}</td>
@@ -3352,6 +3396,7 @@
 
         function renderAll() {
             renderStats();
+            populateMovProductoFilter();
             if (state.activeTab === 'stock') renderStock(); else renderMov();
             window.dispatchEvent(new Event('tableRendered'));
         }
@@ -3698,6 +3743,7 @@
 
         document.getElementById('movSearch').addEventListener('input', e => { state.movUi.search = e.target.value; state.movUi.page = 0; renderMov(); });
         document.getElementById('filterTipo').addEventListener('change', e => { state.movUi.tipo = e.target.value; state.movUi.page = 0; renderMov(); });
+        document.getElementById('filterProducto').addEventListener('change', e => { state.movUi.producto = e.target.value; state.movUi.page = 0; renderMov(); });
         document.getElementById('movPrev').addEventListener('click', () => { state.movUi.page--; renderMov(); });
         document.getElementById('movNext').addEventListener('click', () => { state.movUi.page++; renderMov(); });
 
