@@ -2366,13 +2366,17 @@ function validateBlock(fam, block) {
 
   const tipoMov = document.getElementById('tipo_movimiento').value;
   if (esMovimientoConUbicacion(tipoMov)) {
-    ['deposito','estante','columna','fila'].forEach(campo => {
-      const el = block.querySelector('[data-fam-ubic="' + fam + '"][name$="_' + campo + '_' + block.id.replace('item_' + fam + '_','') + '"]')
-              || block.querySelector('select[name^="' + fam + '_' + campo + '_"]');
-      if (!el) return;
+    const el = block.querySelector('[data-fam-ubic="' + fam + '"][name$="_deposito_' + block.id.replace('item_' + fam + '_','') + '"]')
+            || block.querySelector('select[name^="' + fam + '_deposito_"]');
+    if (el) {
       const val = el.value ? el.value.trim() : '';
-      if (!val) { el.classList.add('err'); errs.push('Ubicación → ' + campo); }
+      if (!val) { el.classList.add('err'); errs.push('Ubicación → Depósito'); }
       else { el.classList.remove('err'); }
+    }
+    ['estante','columna','fila'].forEach(campo => {
+      const opcEl = block.querySelector('[data-fam-ubic="' + fam + '"][name$="_' + campo + '_' + block.id.replace('item_' + fam + '_','') + '"]')
+                 || block.querySelector('select[name^="' + fam + '_' + campo + '_"]');
+      if (opcEl) opcEl.classList.remove('err');
     });
   }
 
@@ -2677,16 +2681,18 @@ async function submitForm() {
   }
 
   if (nuevoDesc && esMovimientoConUbicacion(tipo)) {
-    ['deposito','estante','columna','fila'].forEach(campo => {
-      const el = document.getElementById('nuevo_' + campo);
-      if (el && !String(el.value || '').trim()) {
-        hasError = true;
-        el.classList.add('err');
-        const li = document.createElement('li');
-        li.textContent = 'Producto no listado → Ubicación → ' + campo;
-        errList.appendChild(li);
-        famErrors.add('Producto no listado');
-      }
+    const elDep = document.getElementById('nuevo_deposito');
+    if (elDep && !String(elDep.value || '').trim()) {
+      hasError = true;
+      elDep.classList.add('err');
+      const li = document.createElement('li');
+      li.textContent = 'Producto no listado → Ubicación → Depósito';
+      errList.appendChild(li);
+      famErrors.add('Producto no listado');
+    }
+    ['estante','columna','fila'].forEach(campo => {
+      const opcEl = document.getElementById('nuevo_' + campo);
+      if (opcEl) opcEl.classList.remove('err');
     });
   }
 
