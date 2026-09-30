@@ -1788,7 +1788,7 @@ function abrirModalConfirmarCarrito(){
     '<div class="modal-box" style="max-width:360px;">' +
       '<p>Confirmar ' + carritoRapido.tipo + ' (' + carritoRapido.items.length + ' producto' + (carritoRapido.items.length!==1?"s":"") + ')</p>' +
       '<div style="max-height:160px;overflow-y:auto;margin-bottom:12px;">' + listaHtml + '</div>' +
-      '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">' + (carritoRapido.tipo === 'SALIDA' ? 'Solicitante' : 'Responsable') + '</label>' +
+      '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Responsable</label>' +
       '<select id="carrito_responsable" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:10px;background:#0f172a;color:#f8fafc;">' +
         '<option value="">— Seleccioná —</option>' + optsResp +
       '</select>' +
@@ -1801,7 +1801,11 @@ function abrirModalConfirmarCarrito(){
       '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Observaciones generales <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
       '<input type="text" id="carrito_obs_general" placeholder="Aclaración sobre este envío" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:14px;background:#0f172a;color:#f8fafc;">' +
       (carritoRapido.tipo === 'SALIDA'
-        ? '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Equipo / vehículo <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
+                ? '<div style="border-top:1.5px solid #334155;margin:4px 0 12px;"></div>' +
+          '<div style="text-align:left;font-size:11px;font-weight:800;color:#93c5fd;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Datos de la salida</div>' +
+          '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Solicitante <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
+          '<input type="text" id="carrito_solicitante" placeholder="Quién pide el material" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:10px;background:#0f172a;color:#f8fafc;">' +
+          '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Equipo / vehículo <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
           '<input type="text" id="carrito_equipo" placeholder="Ej: Camión 03" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:10px;background:#0f172a;color:#f8fafc;">' +
           '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Tipo de servicio <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
           '<select id="carrito_servicio" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:10px;background:#0f172a;color:#f8fafc;">' +
@@ -1821,7 +1825,9 @@ function abrirModalConfirmarCarrito(){
   forzarMayusculas(document.getElementById('carrito_responsable_otro'));
   forzarMayusculas(document.getElementById('carrito_obra_otro'));
   const inpEquipo = document.getElementById('carrito_equipo');
-  if (inpEquipo) forzarMayusculas(inpEquipo);}
+  if (inpEquipo) forzarMayusculas(inpEquipo);
+  const inpSolic = document.getElementById('carrito_solicitante');
+  if (inpSolic) forzarMayusculas(inpSolic);}
 async function enviarCarritoRapido(overlay){
   let responsable=document.getElementById("carrito_responsable").value;
   if(responsable==="OTRO")responsable=document.getElementById("carrito_responsable_otro").value.trim();
@@ -1832,7 +1838,7 @@ async function enviarCarritoRapido(overlay){
     return;
   }
   const obsGeneral=document.getElementById("carrito_obs_general").value.trim();
-  if(!responsable||!obra){toastDep("⚠ Completá " + (carritoRapido.tipo==="SALIDA"?"Solicitante":"Responsable") + " y Obra","error");}
+  if(!responsable||!obra){toastDep("⚠ Completá Responsable y Obra","error");}
   const btn=overlay.querySelector("#btn_confirmar_carrito");
   btn.disabled=true;btn.textContent="Enviando...";
   const payload={
@@ -1841,6 +1847,7 @@ async function enviarCarritoRapido(overlay){
     tipo_movimiento:carritoRapido.tipo,
     responsable,obra,
     obs_general:obsGeneral,
+    solicitante:((document.getElementById("carrito_solicitante")||{}).value||"").trim(),
     equipo:((document.getElementById("carrito_equipo")||{}).value||"").trim(),
     tipo_servicio:((document.getElementById("carrito_servicio")||{}).value||"").trim(),
     km_hs:((document.getElementById("carrito_km_hs")||{}).value||"").trim(),

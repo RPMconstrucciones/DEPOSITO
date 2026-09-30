@@ -1261,6 +1261,10 @@
                 <select class="filter-select" id="filterFamilia">
                     <option value="">Todas las familias</option>
                 </select>
+                <select class="filter-select" id="filterProductoStock"
+                    style="order:5; flex:1 1 100%; width:100%; padding:11px 12px; font-size:13.5px;">
+                    <option value="">Todos los productos</option>
+                </select>
                 <select class="filter-select" id="filterEstado">
                     <option value="">Todos los estados</option>
                     <option value="OK">OK</option>
@@ -1309,6 +1313,10 @@
             <div class="toolbar">
                 <div class="search-box"><input type="text" id="movSearch"
                         placeholder="Buscar por producto, marca, familia, ubicación, responsable, obra u observación…"></div>
+                <select class="filter-select" id="filterFamiliaMov"
+                    style="order:4; flex:1 1 100%; width:100%; padding:11px 12px; font-size:13.5px;">
+                    <option value="">Todas las familias</option>
+                </select>
                 <select class="filter-select" id="filterProducto"
                     style="order:5; flex:1 1 100%; width:100%; padding:11px 12px; font-size:13.5px;">
                     <option value="">Todos los productos</option>
@@ -1851,8 +1859,8 @@
             mov: [],
             zona: '',           // '' = todas
             activeTab: 'stock',
-            stockUi: { search: '', familia: '', estado: '', sortKey: 'familia', sortDir: 1 },
-            movUi: { search: '', tipo: '', producto: '', sortKey: 'fecha', sortDir: -1, page: 0 },
+            stockUi: { search: '', familia: '', estado: '', producto: '', sortKey: 'familia', sortDir: 1 },
+            movUi: { search: '', tipo: '', familia: '', producto: '', sortKey: 'fecha', sortDir: -1, page: 0 },
             modalOpen: false,
             selectedIds: new Set(),
             batchDraftQtys: {},
@@ -2037,6 +2045,7 @@
             let list = zonaFiltrado(state.stock);
             if (ui.familia) list = list.filter(p => p.familia === ui.familia);
             if (ui.estado) list = list.filter(p => p.estado === ui.estado);
+            if (ui.producto) list = list.filter(p => p.id === ui.producto);
             if (ui.search) {
                 list = list.filter(p => matchesSearch(p, ui.search, ['descripcion', 'marca', 'familia', 'id']));
             }
@@ -2105,6 +2114,7 @@
             const ui = state.movUi;
             let list = zonaFiltrado(state.mov);
             if (ui.tipo) list = list.filter(m => m.tipo === ui.tipo);
+            if (ui.familia) list = list.filter(m => getMovProductInfo(m).familia === ui.familia);
             if (ui.producto) list = list.filter(m => movProductoKey(m) === ui.producto);
             if (ui.search) {
                 list = list.filter(m => {
@@ -2235,6 +2245,36 @@
             tr.querySelectorAll('.thumb').forEach(img => {
                 img.addEventListener('click', () => openLightbox(img.dataset.full));
             });
+        }
+
+        function populateStockProductoFilter() {
+            const sel = document.getElementById('filterProductoStock');
+            if (!sel) return;
+            const ui = state.stockUi;
+            const grupos = new Map(); // familia -> [{ id, label }]
+            zonaFiltrado(state.stock)
+                .filter(p => !ui.familia || p.familia === ui.familia)
+                .forEach(p => {
+                    const fam = p.familia || 'Sin familia';
+                    if (!grupos.has(fam)) grupos.set(fam, []);
+                    let label = (p.descripcion || '').trim();
+                    if (p.marca && p.marca.trim() && p.marca.trim() !== '—') label += ' — ' + p.marca.trim();
+                    if (!state.zona && p.zona) label += ' · ' + p.zona;
+                    grupos.get(fam).push({ id: p.id, label });
+                });
+            const coll = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+            let html = '<option value="">Todos los productos</option>';
+            Array.from(grupos.keys()).sort(coll).forEach(fam => {
+                html += `<optgroup label="${escapeAttr(fam)}">`;
+                grupos.get(fam)
+                    .sort((a, b) => coll(a.label, b.label))
+                    .forEach(o => { html += `<option value="${escapeAttr(o.id)}">${escapeHtml(o.label)}</option>`; });
+                html += '</optgroup>';
+            });
+            if (sel.dataset.sig !== html) { sel.innerHTML = html; sel.dataset.sig = html; }
+            const existe = ui.producto && Array.from(sel.options).some(o => o.value === ui.producto);
+            if (!existe) ui.producto = '';
+            sel.value = ui.producto;
         }
 
         function renderStock() {
@@ -3323,11 +3363,25 @@
             return [m.zona || '', info.familia, info.marca, (m.descripcion || '').trim()].join('||');
         }
 
+        function populateMovFamiliaFilter() {
+            const sel = document.getElementById('filterFamiliaMov');
+            if (!sel) return;
+            const fams = Array.from(new Set(zonaFiltrado(state.mov)
+                .map(m => getMovProductInfo(m).familia)
+                .filter(f => f && f !== '—')))
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+            const html = '<option value="">Todas las familias</option>' +
+                fams.map(f => `<option value="${escapeAttr(f)}">${escapeHtml(f)}</option>`).join('');
+            if (sel.dataset.sig !== html) { sel.innerHTML = html; sel.dataset.sig = html; }
+            if (state.movUi.familia && !fams.includes(state.movUi.familia)) state.movUi.familia = '';
+            sel.value = state.movUi.familia;
+        }
+
         function populateMovProductoFilter() {
             const sel = document.getElementById('filterProducto');
             if (!sel) return;
             const grupos = new Map(); // familia -> Map(clave -> texto)
-            zonaFiltrado(state.mov).forEach(m => {
+            zonaFiltrado(state.mov).filter(m => !state.movUi.familia || getMovProductInfo(m).familia === state.movUi.familia).forEach(m => {
                 if (!m.descripcion) return;
                 const info = getMovProductInfo(m);
                 const key = movProductoKey(m);
@@ -3396,6 +3450,8 @@
 
         function renderAll() {
             renderStats();
+            populateStockProductoFilter();
+            populateMovFamiliaFilter();
             populateMovProductoFilter();
             if (state.activeTab === 'stock') renderStock(); else renderMov();
             window.dispatchEvent(new Event('tableRendered'));
@@ -3738,12 +3794,14 @@
         });
 
         document.getElementById('stockSearch').addEventListener('input', e => { state.stockUi.search = e.target.value; renderStock(); });
-        document.getElementById('filterFamilia').addEventListener('change', e => { state.stockUi.familia = e.target.value; renderStock(); });
+        document.getElementById('filterFamilia').addEventListener('change', e => { state.stockUi.familia = e.target.value; state.stockUi.producto = ''; populateStockProductoFilter(); renderStock(); });
+        document.getElementById('filterProductoStock').addEventListener('change', e => { state.stockUi.producto = e.target.value; renderStock(); });
         document.getElementById('filterEstado').addEventListener('change', e => { state.stockUi.estado = e.target.value; renderStock(); });
 
         document.getElementById('movSearch').addEventListener('input', e => { state.movUi.search = e.target.value; state.movUi.page = 0; renderMov(); });
         document.getElementById('filterTipo').addEventListener('change', e => { state.movUi.tipo = e.target.value; state.movUi.page = 0; renderMov(); });
         document.getElementById('filterProducto').addEventListener('change', e => { state.movUi.producto = e.target.value; state.movUi.page = 0; renderMov(); });
+        document.getElementById('filterFamiliaMov').addEventListener('change', e => { state.movUi.familia = e.target.value; state.movUi.producto = ''; state.movUi.page = 0; populateMovProductoFilter(); renderMov(); });
         document.getElementById('movPrev').addEventListener('click', () => { state.movUi.page--; renderMov(); });
         document.getElementById('movNext').addEventListener('click', () => { state.movUi.page++; renderMov(); });
 
