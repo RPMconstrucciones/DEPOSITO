@@ -34,6 +34,10 @@ const ORDEN_DESCRIPCION = {
   cajas:     ['tipo', 'maxmodulos', 'dimensiones', 'ip'],
   filtros:              ['maquina', 'tipo'],
   aceites:              ['tipo', 'viscosidad', 'marca', 'presentacion'],
+  grasas:               ['codigo'],
+  refrigerantes:        ['codigo'],
+  liquido_freno:        ['tipo', 'codigo'],
+  combustibles:         ['tipo_combustible'],
   pinturas:             ['tipo', 'color', 'presentacion', 'marca'],
   selladores:           ['tipo', 'variante', 'marca'],
   aerosoles:            ['tipo', 'marca', 'tamano'],
@@ -151,6 +155,10 @@ const FAMILIAS = {
   terminales:    'Terminal / Conector',
   filtros:       'Filtro',
   aceites:       'Aceite / Lubricante',
+  grasas:        'Grasa',
+  refrigerantes: 'Líquido Refrigerante',
+  liquido_freno: 'Líquido de Freno',
+  combustibles:  'Combustible',
   pinturas:      'Pintura / Recubrimiento',
   selladores:    'Sellador / Adhesivo',
   aerosoles:     'Aerosol Técnico',
@@ -591,6 +599,58 @@ function doGet(e) {
     }
   }
 
+  if (params.action === 'historial') {
+    try {
+      const ss        = SpreadsheetApp.getActiveSpreadsheet();
+      const hojaStock = ss.getSheetByName('Stock');
+      const hojaMov   = ss.getSheetByName('Movimientos');
+      if (!hojaStock) return jsonResp({ ok: false, error: 'Hoja Stock no encontrada.' });
+      if (!hojaMov || hojaMov.getLastRow() <= 1) return jsonResp({ ok: true, movimientos: [] });
+
+      const norm = v => String(v || '').trim();
+      const idBuscado = norm(params.id).toUpperCase();
+      const datosStock = hojaStock.getRange(2, 1, hojaStock.getLastRow() - 1, DEP_COL_STOCK.TOTAL).getValues();
+      const filaStock = datosStock.find(r => norm(r[DEP_COL_STOCK.ID - 1]).toUpperCase() === idBuscado);
+      if (!filaStock) return jsonResp({ ok: false, error: 'Producto no encontrado.' });
+
+      const zona    = norm(filaStock[DEP_COL_STOCK.ZONA        - 1]);
+      const familia = norm(filaStock[DEP_COL_STOCK.FAMILIA     - 1]);
+      const marca   = norm(filaStock[DEP_COL_STOCK.MARCA       - 1]);
+      const desc    = norm(filaStock[DEP_COL_STOCK.DESCRIPCION - 1]);
+
+      const tz = Session.getScriptTimeZone();
+      const datosMov = hojaMov.getRange(2, 1, hojaMov.getLastRow() - 1, DEP_COL_MOV.TOTAL).getValues();
+      const movimientos = datosMov
+        .filter(r =>
+          norm(r[DEP_COL_MOV.ZONA        - 1]) === zona    &&
+          norm(r[DEP_COL_MOV.FAMILIA     - 1]) === familia &&
+          norm(r[DEP_COL_MOV.MARCA       - 1]) === marca   &&
+          norm(r[DEP_COL_MOV.DESCRIPCION - 1]) === desc
+        )
+        .map(r => {
+          const f = r[DEP_COL_MOV.FECHA - 1];
+          return {
+            fecha:       (f instanceof Date) ? Utilities.formatDate(f, tz, 'dd/MM/yyyy HH:mm') : String(f || ''),
+            tipo:        String(r[DEP_COL_MOV.TIPO        - 1] || ''),
+            cantidad:    Number(r[DEP_COL_MOV.CANTIDAD    - 1]) || 0,
+            unidad:      String(r[DEP_COL_MOV.UNIDAD      - 1] || ''),
+            responsable: String(r[DEP_COL_MOV.RESPONSABLE - 1] || ''),
+            obra:        String(r[DEP_COL_MOV.OBRA        - 1] || ''),
+            obs_item:    String(r[DEP_COL_MOV.OBS_ITEM    - 1] || ''),
+            obs_general: String(r[DEP_COL_MOV.OBS_GENERAL - 1] || '')
+          };
+        })
+        .reverse()
+        .slice(0, 50);
+
+      return jsonResp({ ok: true, movimientos });
+
+    } catch (err) {
+      Logger.log('ERROR doGet historial: ' + err.message);
+      return jsonResp({ ok: false, error: err.message });
+    }
+  }
+
 if (params.action === 'movimientos') {
   try {
     const ss      = SpreadsheetApp.getActiveSpreadsheet();
@@ -617,6 +677,9 @@ if (params.action === 'movimientos') {
       responsable:  String(r[DEP_COL_MOV.RESPONSABLE - 1] || ''),
       obra:         String(r[DEP_COL_MOV.OBRA - 1] || ''),
       factura:      String(r[DEP_COL_MOV.NRO_FACTURA - 1] || ''),
+      familia:      String(r[DEP_COL_MOV.FAMILIA - 1] || ''),
+      marca:        String(r[DEP_COL_MOV.MARCA - 1] || ''),
+      obs_item:     String(r[DEP_COL_MOV.OBS_ITEM - 1] || ''),
     }));
 
     return jsonResp({ ok: true, movimientos });
@@ -699,21 +762,15 @@ function doPost(e) {
     // el navegador reintenta porque no le llegó la respuesta la primera
     // vez), devolvemos la MISMA respuesta guardada sin volver a escribir
     // nada en Movimientos/Stock.
-    const txid = data._txid;
-    let hojaLog = null;
+    const txid  = data._txid;
+    const cache = CacheService.getScriptCache();
     if (txid) {
-      hojaLog = ss.getSheetByName('_txlog') || ss.insertSheet('_txlog');
-      const ultimaFilaLog = hojaLog.getLastRow();
-      if (ultimaFilaLog > 0) {
-        const filas = hojaLog.getRange(1, 1, ultimaFilaLog, 2).getValues();
-        for (let i = 0; i < filas.length; i++) {
-          if (filas[i][0] === txid) {
-            Logger.log('Txid repetido, devolviendo respuesta guardada: ' + txid);
-            return ContentService
-              .createTextOutput(filas[i][1])
-              .setMimeType(ContentService.MimeType.JSON);
-          }
-        }
+      const guardada = cache.get('tx_' + txid);
+      if (guardada) {
+        Logger.log('Txid repetido, devolviendo respuesta guardada: ' + txid);
+        return ContentService
+          .createTextOutput(guardada)
+          .setMimeType(ContentService.MimeType.JSON);
       }
     }
 
@@ -722,6 +779,16 @@ function doPost(e) {
       respuesta = actualizarImagenProducto(data, ss);
     } else if (data.accion === 'eliminar-imagen') {
       respuesta = eliminarImagenProducto(data, ss);
+    } else if (data.accion === 'ajuste-rapido') {
+      respuesta = ajusteRapidoStockOpcionB(data, ss);
+    } else if (data.accion === 'actualizar-observacion') {
+      respuesta = actualizarObservacionProducto(data, ss);
+    } else if (data.accion === 'actualizar-ubicacion') {
+      respuesta = actualizarUbicacionProducto(data, ss);
+    } else if (data.accion === 'actualizar-datos') {
+      respuesta = actualizarDatosProducto(data, ss);
+    } else if (data.accion === 'crear-producto') {
+      respuesta = crearProductoNuevo(data, ss);
     } else if (data.tipo === 'Traslado') {
       respuesta = procesarTraslado(data, ss);
     } else {
@@ -730,8 +797,11 @@ function doPost(e) {
 
     // Guardar el txid junto con la respuesta, para poder devolverla
     // igual si este mismo pedido se reintenta más adelante.
-    if (txid && hojaLog) {
-      hojaLog.appendRow([txid, respuesta.getContent(), new Date()]);
+    if (txid) {
+      try {
+        const contenido = respuesta.getContent();
+        if (JSON.parse(contenido).ok) cache.put('tx_' + txid, contenido, 21600);
+      } catch (_) {}
     }
 
     return respuesta;
@@ -787,6 +857,9 @@ function procesarDeposito(data, ss) {
       }
       if (item.marca_sel) {
         item.marca = item.marca_sel;
+      }
+      if (item.marca_tipo && !item.marca) {
+        item.marca = item.marca_tipo;
       }
       if (item.soporte === 'RIEL_DIN') {
         item.soporte = 'RIEL DIN';
@@ -919,6 +992,11 @@ function procesarDeposito(data, ss) {
 
 function armarDescripcion(familiaKey, item) {
   const camposOrden = ORDEN_DESCRIPCION[familiaKey] || [];
+
+  // Formulario de Aceites y Combustibles: tipo de aceite + código
+  if (familiaKey === 'aceites' && item.tipo_aceite) {
+    return [item.tipo_aceite, item.codigo].filter(v => v && String(v).trim() !== '').join(' | ');
+  }
 
   if (camposOrden.length === 0) {
     return Object.keys(item).sort()
@@ -1168,6 +1246,13 @@ function ajusteRapidoStockOpcionB(data, ss) {
 
   const noEncontrados = [];
 
+  const partesObsMov = [];
+  if (data.solicitante)   partesObsMov.push('Solicitante: ' + String(data.solicitante).trim());
+  if (data.equipo)        partesObsMov.push('Equipo: ' + String(data.equipo).trim());
+  if (data.tipo_servicio) partesObsMov.push('Servicio: ' + String(data.tipo_servicio).trim());
+  if (data.km_hs)         partesObsMov.push('Km/Hs: ' + String(data.km_hs).trim());
+  const obsMov = partesObsMov.join(' | ');
+
   (data.items || []).forEach(item => {
     const idBuscado = String(item.id || '').trim().toUpperCase();
     const fila = datos.find(r => String(r[DEP_COL_STOCK.ID - 1]).trim().toUpperCase() === idBuscado);
@@ -1193,7 +1278,7 @@ function ajusteRapidoStockOpcionB(data, ss) {
     hojaMov.appendRow([
       idPedido, dep_normalizarFecha(data.fecha, timezone), tipo, data.responsable || '', data.obra || '', zonaItem,
       familia, marca, descripcion,
-      item.cantidad, unidad, '', data.obs_general || '', nroEnvio,
+      item.cantidad, unidad, obsMov, data.obs_general || '', nroEnvio,
       ubicacion.deposito, ubicacion.estante, ubicacion.columna, ubicacion.fila,
       ''   // N° Factura — no aplica a este tipo de movimiento
     ]);
@@ -1254,6 +1339,68 @@ function crearProductoNuevo(data, ss) {
   if (!esRetiro && aclaracionUbi) obsItemParts.push(aclaracionUbi);
   if (obsUsuario) obsItemParts.push(obsUsuario);
   const obsItem = obsItemParts.join(' | ');
+
+  // ── EVITAR DUPLICADOS: si el producto ya existe en Stock, NO se crea otra fila.
+  // Solo se registra la ENTRADA (con su factura) sobre el producto existente. ──
+  const normK = v => String(v || '').trim().toUpperCase();
+  const ultFilaStockChk = hojaStock.getLastRow();
+  if (ultFilaStockChk > 1) {
+    const datosStockChk = hojaStock.getRange(2, 1, ultFilaStockChk - 1, DEP_COL_STOCK.TOTAL).getValues();
+    const filaExistente = datosStockChk.find(r =>
+      normK(r[DEP_COL_STOCK.ZONA        - 1]) === normK(zona)        &&
+      normK(r[DEP_COL_STOCK.FAMILIA     - 1]) === normK(familia)     &&
+      normK(r[DEP_COL_STOCK.MARCA       - 1]) === normK(marca)       &&
+      normK(r[DEP_COL_STOCK.DESCRIPCION - 1]) === normK(descripcion)
+    );
+
+    if (filaExistente) {
+      const tzE      = Session.getScriptTimeZone();
+      const ahoraE   = new Date();
+      const fechaE   = Utilities.formatDate(ahoraE, tzE, 'dd/MM/yyyy');
+      const horaE    = Utilities.formatDate(ahoraE, tzE, 'HH:mm');
+      const idExist  = String(filaExistente[DEP_COL_STOCK.ID - 1] || '');
+      const unidadE  = String(filaExistente[DEP_COL_STOCK.UNIDAD - 1] || '') || unidad;
+      const ubicE = {
+        deposito: String(filaExistente[DEP_COL_STOCK.UBIC_DEPOSITO - 1] || ''),
+        estante:  String(filaExistente[DEP_COL_STOCK.UBIC_ESTANTE  - 1] || ''),
+        columna:  String(filaExistente[DEP_COL_STOCK.UBIC_COLUMNA  - 1] || ''),
+        fila:     String(filaExistente[DEP_COL_STOCK.UBIC_FILA     - 1] || '')
+      };
+
+      if (stockInicial > 0) {
+        const idPedidoE = dep_generarIdPedido(hojaMov, 'ENTRADA');
+        const nroEnvioE = dep_generarNroEnvio();
+        hojaMov.appendRow([
+          idPedidoE, dep_normalizarFecha(null, tzE), 'ENTRADA', responsable, obraLabel,
+          filaExistente[DEP_COL_STOCK.ZONA        - 1],
+          filaExistente[DEP_COL_STOCK.FAMILIA     - 1],
+          filaExistente[DEP_COL_STOCK.MARCA       - 1],
+          filaExistente[DEP_COL_STOCK.DESCRIPCION - 1],
+          stockInicial, unidadE, obsItem, (data.obs_general || '').trim(), nroEnvioE,
+          ubicE.deposito, ubicE.estante, ubicE.columna, ubicE.fila,
+          factura
+        ]);
+
+        if (factura) {
+          const celdaFacturaE = hojaMov.getRange(hojaMov.getLastRow(), DEP_COL_MOV.NRO_FACTURA);
+          celdaFacturaE.setNumberFormat('@');
+          celdaFacturaE.setValue(factura);
+        }
+
+        dep_actualizarStock(
+          hojaStock,
+          filaExistente[DEP_COL_STOCK.ZONA        - 1],
+          filaExistente[DEP_COL_STOCK.FAMILIA     - 1],
+          filaExistente[DEP_COL_STOCK.MARCA       - 1],
+          filaExistente[DEP_COL_STOCK.DESCRIPCION - 1],
+          'ENTRADA', stockInicial, fechaE, horaE,
+          ubicE, unidadE, '', (data.obs_general || '').trim(), ''
+        );
+      }
+
+      return jsonResp({ ok: true, id: idExist, zona: zona, imagen: '', existente: true, error_fotos: null });
+    }
+  }
 
   let imagenUrl = '';
   let errorFotos = '';
@@ -1412,6 +1559,14 @@ function actualizarDatosProducto(data, ss) {
   }
   if (filaNum === -1) return jsonResp({ ok: false, error: 'Producto no encontrado.' });
 
+  const norm = v => String(v || '').trim();
+  const viejo = {
+    zona:    norm(datos[filaNum - 2][DEP_COL_STOCK.ZONA        - 1]),
+    familia: norm(datos[filaNum - 2][DEP_COL_STOCK.FAMILIA     - 1]),
+    marca:   norm(datos[filaNum - 2][DEP_COL_STOCK.MARCA       - 1]),
+    desc:    norm(datos[filaNum - 2][DEP_COL_STOCK.DESCRIPCION - 1])
+  };
+
   if (data.descripcion !== undefined) {
     hojaStock.getRange(filaNum, DEP_COL_STOCK.DESCRIPCION).setValue(String(data.descripcion || '').trim());
   }
@@ -1425,6 +1580,32 @@ function actualizarDatosProducto(data, ss) {
     const nuevoMinimo = Number(data.stock_minimo);
     if (!isNaN(nuevoMinimo) && nuevoMinimo >= 0) {
       hojaStock.getRange(filaNum, DEP_COL_STOCK.STOCK_MINIMO).setValue(nuevoMinimo);
+    }
+  }
+
+  const nuevo = {
+    familia: norm(hojaStock.getRange(filaNum, DEP_COL_STOCK.FAMILIA).getValue()),
+    marca:   norm(hojaStock.getRange(filaNum, DEP_COL_STOCK.MARCA).getValue()),
+    desc:    norm(hojaStock.getRange(filaNum, DEP_COL_STOCK.DESCRIPCION).getValue())
+  };
+
+  if (nuevo.familia !== viejo.familia || nuevo.marca !== viejo.marca || nuevo.desc !== viejo.desc) {
+    const hojaMov = ss.getSheetByName('Movimientos');
+    if (hojaMov && hojaMov.getLastRow() > 1) {
+      // Columnas contiguas: ZONA, FAMILIA, MARCA, DESCRIPCION
+      const rango = hojaMov.getRange(2, DEP_COL_MOV.ZONA, hojaMov.getLastRow() - 1, 4);
+      const vals = rango.getValues();
+      let cambios = 0;
+      vals.forEach(r => {
+        if (norm(r[0]) === viejo.zona && norm(r[1]) === viejo.familia &&
+            norm(r[2]) === viejo.marca && norm(r[3]) === viejo.desc) {
+          r[1] = nuevo.familia;
+          r[2] = nuevo.marca;
+          r[3] = nuevo.desc;
+          cambios++;
+        }
+      });
+      if (cambios > 0) rango.setValues(vals);
     }
   }
 
