@@ -1775,6 +1775,12 @@
                         placeholder="Transporte, motivo o aclaración del envío…" style="text-transform:uppercase;">
                 </div>
 
+                <div class="field" id="adjustBatchFacturaWrap" style="display:none;">
+                    <label>N.º de factura (opcional)</label>
+                    <input type="text" id="adjustBatchFactura" placeholder="Ej: FC-0001-00012345"
+                        style="text-transform:uppercase;">
+                </div>
+
                 <div class="modal-err" id="adjustBatchErr"></div>
             </div>
 
@@ -3245,6 +3251,7 @@
             document.getElementById('adjustBatchResponsable').value = '';
             document.getElementById('adjustBatchObra').value = '';
             document.getElementById('adjustBatchObsGeneral').value = '';
+            document.getElementById('adjustBatchFactura').value = '';
             document.getElementById('adjustBatchErr').style.display = 'none';
 
             // Rellenar lista de ítems con inputs individuales pre-cargados
@@ -3263,6 +3270,8 @@
 
         function selectBatchTipo(tipo) {
             adjustBatchTipo = tipo;
+            const facturaWrap = document.getElementById('adjustBatchFacturaWrap');
+            if (facturaWrap) facturaWrap.style.display = (tipo === 'ENTRADA') ? 'block' : 'none';
             document.querySelectorAll('#batchTipoSeg button').forEach(b => {
                 const isMatch = b.dataset.tipo === tipo;
                 b.classList.toggle('sel', isMatch);
@@ -3284,6 +3293,9 @@
             const responsable = document.getElementById('adjustBatchResponsable').value.trim().toUpperCase();
             const obra = document.getElementById('adjustBatchObra').value.trim().toUpperCase();
             const obsGeneral = document.getElementById('adjustBatchObsGeneral').value.trim().toUpperCase();
+            const factura = adjustBatchTipo === 'ENTRADA'
+                ? document.getElementById('adjustBatchFactura').value.trim().toUpperCase()
+                : '';
             const errBox = document.getElementById('adjustBatchErr');
             errBox.style.display = 'none';
 
@@ -3321,6 +3333,7 @@
                     responsable,
                     obra,
                     obs_general: obsGeneral,
+                    factura,
                     items
                 };
 
