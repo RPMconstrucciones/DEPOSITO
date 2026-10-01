@@ -1864,6 +1864,7 @@
             modalOpen: false,
             selectedIds: new Set(),
             batchDraftQtys: {},
+            txPending: { adjust: null, batch: null, nuevo: null },
         };
 
         // ============================================================
@@ -2715,6 +2716,7 @@
 
         function openNewProductModal() {
             state.modalOpen = true;
+            state.txPending.nuevo = null;
             newProductCurrentImages = [];
 
             // Limpiar campos
@@ -3055,9 +3057,11 @@
                         lugar_retiro: lugarRetiro,
                         ubicacion_aclaracion: aclaracionUbi, // ← nuevo nombre de campo, va suelto
                         factura: factura,                    // ← va a su propia columna, sin prefijo
-                        fotos_base64: fotosParaEnviar.map(x => x.base64)
+                        fotos_base64: fotosParaEnviar.map(x => x.base64),
+                        _txid: (state.txPending.nuevo = state.txPending.nuevo || generarTxid())
                     };
                     const res = await apiPost(payload);
+                    if (res && res.ok) state.txPending.nuevo = null;
                     if (res && res.ok && res.id) {
                         nuevoProducto.id = res.id;
                         // Reemplazamos el preview local (base64) por el link real de Drive
@@ -3235,6 +3239,7 @@
             if (list.length === 0) return;
 
             state.modalOpen = true;
+            state.txPending.batch = null;
             document.getElementById('adjustBatchResponsable').value = '';
             document.getElementById('adjustBatchObra').value = '';
             document.getElementById('adjustBatchObsGeneral').value = '';
@@ -3314,11 +3319,13 @@
                     responsable,
                     obra,
                     obs_general: obsGeneral,
-                    items
+                    items,
+                    _txid: (state.txPending.batch = state.txPending.batch || generarTxid())
                 };
 
                 const resp = await apiPost(payload);
                 if (!resp.ok) throw new Error(resp.error || 'Error al guardar');
+                state.txPending.batch = null;
 
                 if (isDemo) {
                     items.forEach(item => {
@@ -3507,6 +3514,7 @@
             const p = state.stock.find(x => x.id === id);
             if (!p) return;
             state.modalOpen = true;
+            state.txPending.adjust = null;
             document.getElementById('adjustTitle').textContent = p.descripcion;
             document.getElementById('adjustSub').textContent = `${p.familia} · ${p.marca || '—'} · stock actual: ${p.stock_actual} ${p.unidad || 'un'}`;
             document.getElementById('adjustCantidad').value = '';
@@ -3559,9 +3567,11 @@
                     responsable, obra,
                     obs_general: obsGeneral,
                     items: [{ id: p.id, cantidad }],
+                    _txid: (state.txPending.adjust = state.txPending.adjust || generarTxid()),
                 };
                 const resp = await apiPost(payload);
                 if (!resp.ok) throw new Error(resp.error || 'Error al guardar');
+                state.txPending.adjust = null;
 
                 if (isDemo) {
                     if (adjustTipo === 'ENTRADA') p.entradas += cantidad, p.stock_actual += cantidad;
