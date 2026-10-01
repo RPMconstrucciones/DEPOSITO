@@ -3058,13 +3058,6 @@
                         fotos_base64: fotosParaEnviar.map(x => x.base64)
                     };
                     const res = await apiPost(payload);
-                    if (res && res.ok && res.existente) {
-                        // El producto ya existía: se quita el duplicado local y se recarga el real
-                        state.stock = state.stock.filter(p => p !== nuevoProducto);
-                        showToast(`Ya existía (ID ${res.id}): la entrada se sumó al stock existente ✓`);
-                        await cargarTodo(true);
-                        return;
-                    }
                     if (res && res.ok && res.id) {
                         nuevoProducto.id = res.id;
                         // Reemplazamos el preview local (base64) por el link real de Drive
