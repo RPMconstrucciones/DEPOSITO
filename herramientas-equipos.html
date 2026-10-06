@@ -624,7 +624,6 @@
                 h = acc('b_her', '🔧 Herramientas y equipos', '<div id="dev_her"></div>');
             } else {
                 h = acc('b_her', '🔧 Herramientas y equipos', itemsC('her', 'Agregar herramienta o equipo'));
-                if (m === 'ENTRADA') h += acc('b_nuevo', '➕ Herramienta/equipo no listado', '<div class="badge-new">⚠ Alta de un tipo nuevo</div>' + itemsC('nuevo', 'Agregar no listado'));
             }
             box.innerHTML = h;
             if (m === 'DEVOLUCION') renderDevolucion();
@@ -658,30 +657,44 @@
                 `<div class="sel-res" id="${id}_res"></div>` +
                 `<select id="${id}" ${attrs}></select><div class="aviso-sin" id="${id}_aviso"></div>`;
         }
-                function selFiltrar(id) {
+        function selBase(id) { const o = SELOPTS[id]; return typeof o === 'function' ? o() : (o || []); }
+        function selFiltrar(id) {
             const sel = $(id), qEl = $(id + '_q'); if (!sel) return;
             const q = nrm(qEl.value), cur = sel.value;
-            const lista = (SELOPTS[id] || []).filter(o => !q || nrm(o.l).includes(q));
-            sel.innerHTML = '<option value="">— Seleccioná —</option>' + lista.map(o => `<option value="${esc(o.v)}">${esc(o.l)}</option>`).join('');
-            if (lista.some(o => o.v === cur)) sel.value = cur;
+            const base = selBase(id);
+            const palabras = q.split(/\s+/).filter(Boolean);
+            const lista = base.filter(o => { const t = nrm(o.l); return palabras.every(p => t.includes(p)); });
+            const nuevoOk = !!q && tipoMov() === 'ENTRADA' && id.endsWith('_tipo') && !base.some(o => nrm(o.l) === q);
+            const nuevoOpt = { v: 'NUEVO', l: '➕ Agregar como nuevo: “' + qEl.value.trim() + '”' };
+            const paraSelect = nuevoOk ? lista.concat([nuevoOpt]) : lista;
+            sel.innerHTML = '<option value="">— Seleccioná —</option>' + paraSelect.map(o => `<option value="${esc(o.v)}">${esc(o.l)}</option>`).join('');
+            if (paraSelect.some(o => o.v === cur)) sel.value = cur;
             const av = $(id + '_aviso');
-            const sinRes = !!q && lista.length === 0;
+            const sinRes = !!q && !nuevoOk && lista.length === 0;
             av.style.display = sinRes ? 'block' : 'none';
-            if (sinRes) {
-                av.innerHTML = tipoMov() === 'ENTRADA'
-                    ? `No hay coincidencias con “${esc(qEl.value)}”. <a href="#" onclick="irNoListado(event)">Herramienta/equipo no listado →</a>`
-                    : `No hay coincidencias con “${esc(qEl.value)}” entre lo disponible.`;
-            }
+            if (sinRes) av.innerHTML = `No hay coincidencias con “${esc(qEl.value)}” entre lo disponible.`;
             const res = $(id + '_res');
             if (res) {
                 if (!q) { res.innerHTML = ''; res.style.display = 'none'; }
                 else {
-                    res.innerHTML = lista.slice(0, 30).map(o =>
-                        `<div class="sel-res-item" data-v="${esc(o.v)}" onclick="selElegir('${id}', this.dataset.v)">${esc(o.l)}</div>`).join('');
-                    res.style.display = lista.length ? 'block' : 'none';
+                    const visibles = lista.slice(0, 30).concat(nuevoOk ? [nuevoOpt] : []);
+                    res.innerHTML = visibles.map(o =>
+                        `<div class="sel-res-item${o.v === 'NUEVO' ? ' sel-res-nuevo' : ''}" data-v="${esc(o.v)}" onclick="selElegir('${id}', this.dataset.v)">${esc(o.l)}</div>`).join('');
+                    res.style.display = visibles.length ? 'block' : 'none';
                 }
             }
             if (sel.value !== cur && typeof sel.onchange === 'function') sel.onchange();
+        }
+        function selElegir(id, valor) {
+            const sel = $(id); if (!sel) return;
+            sel.value = valor;
+            sel.classList.remove('err');
+            const res = $(id + '_res'); if (res) { res.innerHTML = ''; res.style.display = 'none'; }
+            if (valor !== 'NUEVO') {
+                const o = selBase(id).find(x => x.v === valor);
+                if (o) $(id + '_q').value = o.l;
+            }
+            if (typeof sel.onchange === 'function') sel.onchange();
         }
         function selElegir(id, valor) {
             const sel = $(id); if (!sel) return;
@@ -758,7 +771,8 @@
         function entradaHtml(kind, id) {
             let h = '';
             if (kind === 'her') {
-                h += lbl('Herramienta o equipo', 1) + selBuild(id + '_tipo', tiposEntrada(), `data-f="tipo" onchange="onTipoHer('${id}')"`);
+                h += lbl('Herramienta o equipo', 1) + selBuild(id + '_tipo', tiposEntrada, `data-f="tipo" onchange="onTipoHer('${id}')"`);
+                h += `<div data-w="nuevo_w" style="display:none"><div class="badge-new">⚠ Tipo nuevo: se agrega al catálogo</div>${lbl('Familia', 1)}<select data-f="familia_n" onchange="onTipoHer('${id}')"></select></div>`;
                 h += `<div data-w="medida_w">${lbl('Medida / característica', 0, 'opcional')}<input type="text" data-f="medida" list="dl_${id}" placeholder="Ej: 300 MM"><datalist id="dl_${id}"></datalist></div>`;
                 h += `<div data-w="equipo_w" style="display:none">${lbl('Descripción', 1)}<input type="text" data-f="detalle" placeholder="Ej: AMOLADORA ANGULAR 115 MM 1020 W">${lbl('Modelo', 0, 'opcional')}<input type="text" data-f="modelo"></div>`;
             } else {
@@ -780,16 +794,25 @@
         }
         function siglaDe(b) {
             const k = b.dataset.kind;
-            if (k === 'her') return (selValor(b.id + '_tipo').split('|')[0]) || '';
+            if (k === 'her') { const v = selValor(b.id + '_tipo'); return v === 'NUEVO' ? q(b, 'familia_n').value : (v.split('|')[0] || ''); }
             return selValor(b.id + '_fam');
         }
         function onTipoHer(id) {
             const b = $(id), v = selValor(id + '_tipo');
             const dl = $('dl_' + id);
-            const esEq = !!v && !ES_MANUAL(v.split('|')[0]);
+            const esNuevo = v === 'NUEVO';
+            const fs = q(b, 'familia_n');
+            if (esNuevo && !fs.options.length) {
+                fs.innerHTML = famOpts(false).map(o => `<option value="${esc(o.v)}">${esc(o.l)}</option>`).join('');
+                fs.value = 'HER';
+            }
+            b.querySelector('[data-w="nuevo_w"]').style.display = esNuevo ? 'block' : 'none';
+            const sig = esNuevo ? fs.value : (v ? v.split('|')[0] : '');
+            const esEq = !!sig && !ES_MANUAL(sig);
             b.querySelector('[data-w="medida_w"]').style.display = esEq ? 'none' : 'block';
             b.querySelector('[data-w="equipo_w"]').style.display = esEq ? 'block' : 'none';
-            if (v && !esEq) { const [s, t] = v.split('|'); dl.innerHTML = medidasConocidas(s, t).map(m => `<option value="${esc(m)}">`).join(''); }
+            if (esEq && esNuevo) { const d = q(b, 'detalle'); if (!d.value) d.value = $(id + '_q').value.trim().toUpperCase(); }
+            if (v && !esNuevo && !esEq) { const [s, t] = v.split('|'); dl.innerHTML = medidasConocidas(s, t).map(m => `<option value="${esc(m)}">`).join(''); }
             else dl.innerHTML = '';
             renderDin(id);
         }
@@ -830,7 +853,7 @@
 
         // ── 3.6.2 SALIDA ──
         function salidaHtml(kind, id) {
-            const opts = DATA.stock.filter(s => s.deposito > 0).map(s => ({
+            const opts = () => DATA.stock.filter(s => s.deposito > 0).map(s => ({
                 v: s.sigla + '|' + s.tipo + '|' + (s.medida || ''),
                 l: s.tipo + (s.medida ? ' — ' + s.medida : '') + ' (' + s.deposito + ' disp.)'
             }));
@@ -895,7 +918,11 @@
                         let sigla = siglaDe(b), tipo = '', medida = '', detalle = '', modelo = '';
                         if (kind === 'her') {
                             const v = selValor(b.id + '_tipo');
-                            if (!v) { errs.push(pref + ' → Tipo'); $(b.id + '_tipo').classList.add('err'); } else tipo = v.split('|').slice(1).join('|');
+                            if (!v) { errs.push(pref + ' → Tipo'); $(b.id + '_tipo').classList.add('err'); }
+                            else if (v === 'NUEVO') {
+                                const txt = $(b.id + '_q').value.trim();
+                                tipo = (sigla && !ES_MANUAL(sigla)) ? ((famMap[sigla] || {}).n || sigla) : txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase();
+                            } else tipo = v.split('|').slice(1).join('|');
                             if (sigla && !ES_MANUAL(sigla)) {
                                 detalle = q(b, 'detalle').value.trim();
                                 if (!detalle) { errs.push(pref + ' → Descripción'); q(b, 'detalle').classList.add('err'); }
