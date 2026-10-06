@@ -369,6 +369,7 @@
     <!-- ============================================================
      2.4 OVERLAYS GLOBALES
      ============================================================ -->
+    <datalist id="dl_personas"></datalist>
     <div class="form-overlay form-overlay-ok" id="ov-ok">
         <div class="ov-icon">✅</div>
         <div class="ov-title-ok">¡Movimiento registrado!</div>
@@ -401,6 +402,7 @@
             },
             responsables: ['Fernando', 'Pamela'], // TODO: completar
             obras: ['Depósito', 'SUETRA', 'XIBI'], // TODO: completar
+            lugares: ['DEPÓSITO ARISMENDI', 'DEPÓSITO PALPALÁ'], // deben empezar con "DEPÓSITO"
         };
         const APPS_SCRIPT_URL = CONFIG.appsScriptUrl;
         const ZONA_FIJA = CONFIG.zona;
@@ -440,7 +442,7 @@
             });
         }
         function mayusculasEn(cont) {
-            cont.querySelectorAll('input[type="text"]:not(.sel-search)').forEach(forzarMayusculas);
+            cont.querySelectorAll('input[type="text"]:not(.sel-search):not([data-f="detalle"])').forEach(forzarMayusculas);
         }
 
         function toastDep(mensaje, tipo = 'info') {
@@ -487,7 +489,7 @@
                 if (silencioso && dataLoaded && !cambio) return;
                 DATA = d; dataLoaded = true;
                 famMap = {}; d.catalogo.familias.forEach(f => famMap[f.s] = f);
-                buildFamiliaSelect(); applyFilters();
+                buildFamiliaSelect(); llenarPersonas(); applyFilters();
                 if (silencioso && cambio) toastDep('🔄 Se detectaron cambios en el stock');
             } catch (err) {
                 if (!silencioso) {
@@ -503,6 +505,10 @@
             const fams = [...new Set(DATA.stock.map(s => s.familia))].sort();
             sel.innerHTML = '<option value="">— Todas las familias —</option>' + fams.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
             if (fams.includes(cur)) sel.value = cur;
+        }
+        function llenarPersonas() {
+            const set = new Set(DATA.unidades.map(u => u.poder).filter(Boolean));
+            $('dl_personas').innerHTML = [...set].sort().map(p => `<option value="${esc(p)}">`).join('');
         }
         function clearFilters() { $('filter-familia').value = ''; $('search-input').value = ''; applyFilters(); }
 
@@ -563,7 +569,7 @@
             const s = DATA.stock[i]; if (!s) return;
             const us = unidadesDe(s);
             const filas = us.map(u => {
-                const ub = [u.ub.deposito, u.ub.estante, u.ub.columna, u.ub.fila].filter(Boolean).join(' / ');
+                const ub = [u.poder ? '' : u.lugar, u.ub.deposito, u.ub.estante, u.ub.columna, u.ub.fila].filter(Boolean).join(' / ');
                 const badge = u.baja ? '<span class="unit-badge no">DADO DE BAJA</span>'
                     : u.poder ? '<span class="unit-badge pod">' + esc(u.poder) + '</span>'
                         : '<span class="unit-badge ' + (u.disp ? 'ok' : 'no') + '">' + esc(u.estado) + '</span>';
@@ -607,9 +613,9 @@
             const m = tipoMov();
             $('lbl-resp').innerHTML = (m === 'SALIDA' ? 'Responsable (quién se lleva)' : m === 'DEVOLUCION' ? 'Responsable (quién devuelve)' : 'Responsable') + ' <span class="req">*</span>';
             $('ayuda-prod').textContent = !m ? 'Elegí primero el tipo de movimiento.' :
-                m === 'ENTRADA' ? 'Tocá para desplegar. La ubicación es obligatoria en ENTRADA.' :
+                m === 'ENTRADA' ? 'Tocá para desplegar. Indicá dónde queda cada ítem (depósito o a cargo de alguien).' :
                     m === 'SALIDA' ? 'Elegí el tipo y marcá las unidades que salen. La ubicación no hace falta.' :
-                        'Elegí el responsable arriba: se muestra lo que tiene en su poder. La ubicación es obligatoria.';
+                        'Elegí el responsable arriba: se muestra lo que tiene en su poder. Elegí a qué depósito vuelve.';
             renderBloques();
         }
 
@@ -736,10 +742,10 @@
                 '<option value="">— Seleccioná —</option>' + ms.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('') + '<option value="OTRO">Otra marca…</option></select>' +
                 '<input type="text" class="campo-otro" data-f="marca_otro" placeholder="Escribí la marca">';
         }
-        function ubicHtml() {
+        function ubicHtml(opcional) {
             const U = CONFIG.ubicacion;
             const g = (k, lbl, arr) => `<div><label>${lbl}</label><select data-u="${k}"><option value="">— —</option>${arr.map(v => `<option>${esc(v)}</option>`).join('')}</select></div>`;
-            return `<div class="ubic-bloque"><div class="f-section-title">Ubicación <span style="color:#dc2626">*</span></div><div class="ubic-grid">` +
+            return `<div class="ubic-bloque"><div class="f-section-title">Ubicación ${opcional ? '<span style="font-weight:400;text-transform:none;color:#9ca3af">(opcional)</span>' : '<span style="color:#dc2626">*</span>'}</div><div class="ubic-grid">` +
                 g('deposito', 'Depósito', U.depositos) + g('estante', 'Estante', U.estantes) + g('columna', 'Columna', U.columnas) + g('fila', 'Fila', U.filas) + '</div></div>';
         }
         function readUbic(cont) {
@@ -747,6 +753,24 @@
             cont.querySelectorAll('select[data-u]').forEach(s => { u[s.dataset.u] = s.value; });
             return u;
         }
+
+        function lugarHtml(id, sinCargo) {
+            return lbl(sinCargo ? 'Vuelve a' : 'Dónde queda', 1) +
+                '<select data-f="lugar" onchange="onLugarChange(this)"><option value="">— Seleccioná —</option>' +
+                CONFIG.lugares.map(l => `<option>${esc(l)}</option>`).join('') +
+                (sinCargo ? '' : '<option value="A CARGO">A CARGO DE UNA PERSONA…</option>') + '</select>' +
+                '<div data-w="persona_w" style="display:none">' + lbl('A cargo de', 1) +
+                '<input type="text" data-f="persona" list="dl_personas" placeholder="Ej: JOSÉ CANO" autocomplete="off"></div>' +
+                '<div data-w="ubic_w" style="display:none">' + ubicHtml(true) + '</div>';
+        }
+        function onLugarChange(sel) {
+            const b = sel.closest('.item-block') || sel.closest('.acordeon-body');
+            const v = sel.value;
+            const p = b.querySelector('[data-w="persona_w"]'), u = b.querySelector('[data-w="ubic_w"]');
+            if (p) p.style.display = v === 'A CARGO' ? 'block' : 'none';
+            if (u) u.style.display = v.indexOf('DEPÓSITO') === 0 ? 'block' : 'none';
+        }
+
         const q = (b, f) => b.querySelector('[data-f="' + f + '"]');
         const lbl = (t, req, opc) => `<label>${t}${req ? ' <span class="req">*</span>' : ''}${opc ? ` <span class="opc">(${opc})</span>` : ''}</label>`;
 
@@ -778,7 +802,7 @@
                 ${lbl('Nombre de la familia', 1)}<input type="text" data-f="fam_nombre" placeholder="Ej: LIJADORA" oninput="onFamNuevaChange('${id}')">
                 ${lbl('Se maneja como', 1)}<select data-f="fam_modo" onchange="onFamNuevaChange('${id}')"><option value="EQUIPO">EQUIPO (por código individual)</option><option value="HERRAMIENTA">HERRAMIENTA MANUAL (por tipo y cantidad)</option></select></div></div>`;
                 h += `<div data-w="medida_w">${lbl('Medida / característica', 0, 'opcional')}<input type="text" data-f="medida" list="dl_${id}" placeholder="Ej: 300 MM"><datalist id="dl_${id}"></datalist></div>`;
-                h += `<div data-w="equipo_w" style="display:none">${lbl('Descripción', 1)}<input type="text" data-f="detalle" placeholder="Ej: AMOLADORA ANGULAR 115 MM 1020 W">${lbl('Modelo', 0, 'opcional')}<input type="text" data-f="modelo"></div>`;
+                h += `<div data-w="equipo_w" style="display:none">${lbl('Descripción', 1)}<input type="text" data-f="detalle" placeholder="Ej: Amoladora angular inalambrica">${lbl('Características', 0, 'opcional')}<input type="text" data-f="caract" placeholder="Ej: 115 MM / 6,5 HP 8700 W">${lbl('Modelo', 0, 'opcional')}<input type="text" data-f="modelo"></div>`;
             } else {
                 h += lbl('Familia', 1) + selBuild(id + '_fam', famOpts(kind === 'eq'), `data-f="familia" onchange="onFamNuevo('${id}')"`);
                 if (kind === 'nuevo') {
@@ -798,7 +822,7 @@
             else h += lbl('Cantidad', 1) + `<input type="number" data-f="cantidad" min="1" max="200" placeholder="0" oninput="renderDin('${id}')">`;
             h += `<div data-w="series"></div>`;
             h += `<label class="chk"><input type="checkbox" data-f="auto" checked onchange="renderDin('${id}')"> Código automático</label><div data-w="codigos"></div>`;
-            h += ubicHtml();
+            h += lugarHtml(id);
             return h;
         }
         function siglaDe(b) {
@@ -838,7 +862,7 @@
             const esEq = !!sig && !ES_MANUAL(sig);
             b.querySelector('[data-w="medida_w"]').style.display = esEq ? 'none' : 'block';
             b.querySelector('[data-w="equipo_w"]').style.display = esEq ? 'block' : 'none';
-            if (esEq && esNuevo) { const d = q(b, 'detalle'); if (!d.value) d.value = $(id + '_q').value.trim().toUpperCase(); }
+            if (esEq && esNuevo) { const d = q(b, 'detalle'); if (!d.value) d.value = $(id + '_q').value.trim(); }
             if (v && !esNuevo && !esEq) { const [s, t] = v.split('|'); dl.innerHTML = medidasConocidas(s, t).map(m => `<option value="${esc(m)}">`).join(''); }
             else dl.innerHTML = '';
             renderDin(id);
@@ -916,7 +940,7 @@
                 cont.innerHTML = `<p class="hint">En poder de ${esc(r)} — tildá lo que devuelve y en qué estado vuelve:</p>` +
                     us.map(u => `<label class="u-check"><input type="checkbox" data-cod="${esc(u.codigo)}" onchange="this.parentElement.classList.toggle('sel',this.checked)">` +
                         `<span class="u-txt"><b>${esc(u.codigo)}</b> · ${esc(u.tipo)}${u.medida ? ' ' + esc(u.medida) : ''}${u.marca ? ' · ' + esc(u.marca) : ''}</span>` +
-                        `<select data-est="${esc(u.codigo)}">${(DATA.catalogo.estadosDevolucion || ['APTO', 'NO APTO']).map(e => `<option>${e}</option>`).join('')}</select></label>`).join('') + ubicHtml();
+                        `<select data-est="${esc(u.codigo)}">${(DATA.catalogo.estadosDevolucion || ['APTO', 'NO APTO']).map(e => `<option>${e}</option>`).join('')}</select></label>`).join('') + lugarHtml(null, true);
             });
         }
 
@@ -936,8 +960,10 @@
                     const cont = $('dev_' + k); if (!cont) return;
                     const checks = [...cont.querySelectorAll('input[data-cod]:checked')];
                     if (!checks.length) return;
-                    const ub = readUbic(cont); faltaUbic(ub, nom + ' (devolución)');
-                    items.push({ codigos: checks.map(c => ({ codigo: c.dataset.cod, estado: cont.querySelector(`select[data-est="${c.dataset.cod}"]`).value })), ubic: ub });
+                    const lg = cont.querySelector('select[data-f="lugar"]').value;
+                    if (!lg) errs.push(nom + ' (devolución) → A qué depósito vuelve');
+                    const ub = readUbic(cont);
+                    items.push({ codigos: checks.map(c => ({ codigo: c.dataset.cod, estado: cont.querySelector(`select[data-est="${c.dataset.cod}"]`).value })), lugar: lg, ubic: ub });
                 });
             } else if (m) {
                 const vistos = {};
@@ -947,7 +973,6 @@
                         let sigla = siglaDe(b), tipo = '', medida = '', detalle = '', modelo = '', familia_nueva = null;
                         if (kind === 'her') {
                             const v = selValor(b.id + '_tipo');
-                            let familia_nueva = null;
                             if (v === 'NUEVO' && q(b, 'familia_n').value === '__NUEVA__') {
                                 const fs_ = q(b, 'fam_sigla').value.trim().toUpperCase(), fn_ = q(b, 'fam_nombre').value.trim().toUpperCase();
                                 if (!/^[A-Z]{2,5}$/.test(fs_)) { errs.push(pref + ' → Sigla nueva (2 a 5 letras)'); q(b, 'fam_sigla').classList.add('err'); }
@@ -964,6 +989,7 @@
                                 detalle = q(b, 'detalle').value.trim();
                                 if (!detalle) { errs.push(pref + ' → Descripción'); q(b, 'detalle').classList.add('err'); }
                                 const mo = q(b, 'modelo'); modelo = mo ? mo.value.trim() : '';
+                                medida = q(b, 'caract').value.trim();
                             } else {
                                 medida = q(b, 'medida').value.trim();
                             }
@@ -991,13 +1017,20 @@
                         }
                         const nu = q(b, 'nuevo_usado').value;
                         if (!nu) { errs.push(pref + ' → Nuevo / Usado'); q(b, 'nuevo_usado').classList.add('err'); }
-                        const ub = readUbic(b); faltaUbic(ub, pref);
+                        const lugarSel = q(b, 'lugar').value;
+                        if (!lugarSel) { errs.push(pref + ' → Dónde queda'); q(b, 'lugar').classList.add('err'); }
+                        let persona = '';
+                        if (lugarSel === 'A CARGO') {
+                            persona = q(b, 'persona').value.trim().toUpperCase();
+                            if (!persona) { errs.push(pref + ' → A cargo de (nombre)'); q(b, 'persona').classList.add('err'); }
+                        }
+                        const ub = lugarSel.indexOf('DEPÓSITO') === 0 ? readUbic(b) : {};
                         items.push({ sigla, tipo, medida, detalle, modelo, marca, cantidad: cant, auto, codigos,
                             series: [...b.querySelectorAll('[data-f="serie"]')].map(i => i.value.trim()),
                             cod_anterior: [...b.querySelectorAll('[data-f="codant"]')].map(i => i.value.trim()),
                             nuevo_usado: nu, estado: q(b, 'estado').value, critico: q(b, 'critico').value,
                             fecha_mto: q(b, 'fecha_mto').value, obs: q(b, 'obs').value.trim(),
-                            familia_nueva, ubic: ub });
+                            familia_nueva, lugar: lugarSel, persona, ubic: ub });
                     } else { // SALIDA
                         const v = selValor(b.id + '_tipo');
                         if (!v) { errs.push(pref + ' → Tipo'); $(b.id + '_tipo').classList.add('err'); return; }

@@ -2684,9 +2684,13 @@ function herr_norm(s) {
   return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
 }
 function herr_nombreFamilia(sigla) { return HERR_NOMBRES_FAMILIA[sigla] || sigla; }
+function herr_medidaTxt(m) {
+  return String(m || '').replace(/(\d)\s*(MM|CM|KG|MTS|GR)\b/g, (x, n, u) => n + ' ' + u.toLowerCase());
+}
 function herr_poder(lugar) {
   const l = String(lugar || '').trim().toUpperCase();
-  return l.indexOf(HERR_PREFIJO_PODER) === 0 ? l.substring(HERR_PREFIJO_PODER.length).trim() : '';
+  const m = l.match(/^A CARGO(?: DE)?\s+(.+)$/);
+  return m ? m[1].trim() : '';
 }
 function herr_infoEstado(e) {
   return HERR_ESTADOS[String(e || '').trim().toUpperCase()] || { disponible: false, baja: false };
@@ -2887,9 +2891,9 @@ function herr_procesarMovimiento(data, ss) {
   const maxSig = {};
   function maxDe(sigla) {
     if (maxSig[sigla] === undefined) {
-      let m = HERR_CODIGO_MAX_EXCEL[sigla] || 0;
+      let m = 0;
       filas.concat(nuevas).forEach(r => {
-        const mt = String(r[HERR_U.CODIGO] || '').trim().toUpperCase().match(/^([A-Z]+)-(\d+)$/);
+        const mt = String(r[HERR_U.CODIGO] || '').trim().toUpperCase().match(/^([A-Z]+)\s*-\s*(\d+)$/);
         if (mt && mt[1] === sigla) m = Math.max(m, parseInt(mt[2], 10));
       });
       maxSig[sigla] = m;
@@ -2934,13 +2938,22 @@ function herr_procesarMovimiento(data, ss) {
       if (!HERR_NOMBRES_FAMILIA[sigla]) { errs.push(rot + 'familia desconocida (' + sigla + ').'); return; }
       const cant = parseInt(it.cantidad, 10);
       if (!(cant >= 1 && cant <= 200)) { errs.push(rot + 'cantidad inválida.'); return; }
-      const ub = it.ubic || {};
-      if (!ub.deposito || !ub.estante || !ub.columna || !ub.fila) { errs.push(rot + 'la ubicación es obligatoria en ENTRADA.'); return; }
+      const lugarSel = String(it.lugar || '').trim().toUpperCase();
+      let lugarTxt = '', ub = {};
+      if (lugarSel === 'A CARGO') {
+        const persona = String(it.persona || '').trim().toUpperCase();
+        if (!persona) { errs.push(rot + 'falta el nombre de la persona a cargo.'); return; }
+        lugarTxt = HERR_PREFIJO_PODER + persona;
+      } else if (herr_norm(lugarSel).indexOf('DEPOSITO') === 0) {
+        lugarTxt = lugarSel;
+        const u0 = it.ubic || {};
+        ub = { deposito: u0.deposito || '', estante: u0.estante || '', columna: u0.columna || '', fila: u0.fila || '' };
+      } else { errs.push(rot + 'falta indicar dónde queda (depósito o a cargo de).'); return; }
       const tipoU = herr_canonTipo(sigla, it.tipo, objs());
       if (!tipoU) { errs.push(rot + 'falta el tipo.'); return; }
       const modo = herr_modo(sigla);
       const medida = String(it.medida || '').trim().toUpperCase();
-      const detalle = String(it.detalle || '').trim().toUpperCase() || (tipoU + (medida ? ' ' + medida : ''));
+      const detalle = String(it.detalle || '').trim() || (tipoU + (medida ? ' ' + herr_medidaTxt(medida) : ''));
       const marca = String(it.marca || '').trim().toUpperCase();
       const modelo = String(it.modelo || '').trim().toUpperCase();
       const series = it.series || [];
@@ -2975,7 +2988,7 @@ function herr_procesarMovimiento(data, ss) {
         fila[HERR_U.NUM] = String(num).padStart(3, '0');
         fila[HERR_U.CODIGO] = codigo;
         fila[HERR_U.DETALLE] = detalle;
-        fila[HERR_U.CARACT] = modo === 'HERRAMIENTA' ? medida : '';
+        fila[HERR_U.CARACT] = medida;
         fila[HERR_U.MARCA] = marca;
         fila[HERR_U.MODELO] = modelo;
         fila[HERR_U.SERIE] = String(series[i] || '').trim().toUpperCase();
@@ -2984,7 +2997,7 @@ function herr_procesarMovimiento(data, ss) {
         fila[HERR_U.CRITICO] = critico;
         fila[HERR_U.ESTADO] = estadoAlta;
         fila[HERR_U.MTO] = fechaMto;
-        fila[HERR_U.LUGAR] = HERR_LUGAR_DEPOSITO;
+        fila[HERR_U.LUGAR] = lugarTxt;
         fila[HERR_U.OBS] = obsItem;
         fila[HERR_U.TIPO] = tipoU;
         fila[HERR_U.UB_DEP] = ub.deposito; fila[HERR_U.UB_EST] = ub.estante;
@@ -3017,8 +3030,9 @@ function herr_procesarMovimiento(data, ss) {
     }
 
     // ---------------- DEVOLUCIÓN ----------------
+    const lugarSel = String(it.lugar || '').trim().toUpperCase();
+    if (herr_norm(lugarSel).indexOf('DEPOSITO') !== 0) { errs.push(rot + 'elegí a qué depósito vuelve.'); return; }
     const ub = it.ubic || {};
-    if (!ub.deposito || !ub.estante || !ub.columna || !ub.fila) { errs.push(rot + 'la ubicación es obligatoria en DEVOLUCIÓN.'); return; }
     const lista = it.codigos || [];
     if (!lista.length) { errs.push(rot + 'no elegiste unidades a devolver.'); return; }
     lista.forEach(x => {
@@ -3028,9 +3042,9 @@ function herr_procesarMovimiento(data, ss) {
       if (i === undefined) { errs.push(rot + cod + ' no existe en Unidades Herramientas.'); return; }
       if (HERR_ESTADOS_DEVOLUCION.indexOf(est) === -1) { errs.push(rot + cod + ': el estado de devolución debe ser ' + HERR_ESTADOS_DEVOLUCION.join(' o ') + '.'); return; }
       const o = herr_filaAObjeto(filas[i]);
-      if (o.poder !== responsable) { errs.push(rot + cod + ' no está en poder de ' + responsable + '.'); return; }
+      if (herr_norm(o.poder) !== herr_norm(responsable)) { errs.push(rot + cod + ' no está en poder de ' + responsable + '.'); return; }
       filas[i][HERR_U.ESTADO] = est;
-      filas[i][HERR_U.LUGAR] = HERR_LUGAR_DEPOSITO;
+      filas[i][HERR_U.LUGAR] = lugarSel;
       filas[i][HERR_U.UB_DEP] = ub.deposito; filas[i][HERR_U.UB_EST] = ub.estante;
       filas[i][HERR_U.UB_COL] = ub.columna;  filas[i][HERR_U.UB_FIL] = ub.fila;
       modificoExistentes = true;
