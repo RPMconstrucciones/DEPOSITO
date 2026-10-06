@@ -2369,6 +2369,8 @@ const HERR_SS_ID = '1PWCKGAQgZfBEWPwqWppsbylLdJLxJe3I6XWrEAhBwQk';
 const HERR_HOJA_UNIDADES = 'Unidades Herramientas';
 const HERR_HOJA_MOVS     = 'Movimientos Herramientas';
 const HERR_HOJA_STOCK    = 'Stock Herramientas';
+const HERR_HOJA_REF = 'REF Herramientas';
+const HERR_COLS_REF = ['CODIGO', 'HERRAMIENTA', 'MODO', 'ESTADO', 'DETALLE', 'FRECUENCIA DE MANTENIMIENTO (DÍAS)', 'FRECUENCIA'];
 
 // ── MODO DE CADA FAMILIA ──────────────────────────────────────
 // HERRAMIENTA MANUAL → se mueve por TIPO + CANTIDAD; al sacar se eligen los códigos exactos.
@@ -2647,6 +2649,7 @@ const HERR_ESTADOS = {
   'DADO DE BAJA':           { disponible: false, baja: true  }   // final: no cuenta en el total
 };
 const HERR_ESTADO_ALTA = 'APTO';                 // estado con el que entra una unidad nueva
+const HERR_ESTADOS_ALTA = ['APTO', 'APTO CON OBSERVACIONES', 'NO APTO'];  // estados permitidos al dar de alta
 const HERR_ESTADOS_DEVOLUCION = ['APTO', 'NO APTO'];
 const HERR_LUGAR_DEPOSITO = 'DEPÓSITO';          // valor de LUGAR / PERSONA cuando está en depósito
 const HERR_PREFIJO_PODER  = 'A CARGO DE ';       // mismo formato que ya usa el Excel ("A CARGO DE JOSÉ CANO")
@@ -2689,6 +2692,42 @@ function herr_infoEstado(e) {
   return HERR_ESTADOS[String(e || '').trim().toUpperCase()] || { disponible: false, baja: false };
 }
 function herr_abrirSS() { return SpreadsheetApp.openById(HERR_SS_ID); }
+
+// Lee REF Herramientas y suma/pisa siglas en las constantes (la lista hardcodeada queda como base)
+function herr_cargarRef(ss) {
+  const hoja = ss.getSheetByName(HERR_HOJA_REF);
+  if (!hoja || hoja.getLastRow() < 2) return;
+  hoja.getRange(2, 1, hoja.getLastRow() - 1, 3).getValues().forEach(r => {
+    const sigla  = String(r[0] || '').trim().toUpperCase();
+    const nombre = String(r[1] || '').trim();
+    const modo   = String(r[2] || '').trim().toUpperCase();
+    if (!sigla || !nombre) return;
+    HERR_NOMBRES_FAMILIA[sigla] = nombre;
+    const i = HERR_FAMILIAS_MANUALES.indexOf(sigla);
+    if (modo === 'HERRAMIENTA' && i === -1) HERR_FAMILIAS_MANUALES.push(sigla);
+    if (modo === 'EQUIPO' && i !== -1) HERR_FAMILIAS_MANUALES.splice(i, 1);
+  });
+}
+
+// EJECUTAR UNA SOLA VEZ desde el editor: crea REF Herramientas con la lista actual
+function herr_sembrarRef() {
+  const ss = herr_abrirSS();
+  const h = ss.getSheetByName(HERR_HOJA_REF) || ss.insertSheet(HERR_HOJA_REF);
+  if (h.getLastRow() > 0) { Logger.log('REF Herramientas ya tiene datos: no se pisa.'); return; }
+  h.getRange(1, 1, 1, HERR_COLS_REF.length).setValues([HERR_COLS_REF])
+    .setFontWeight('bold').setBackground('#1a1a2e').setFontColor('#ffffff');
+  h.setFrozenRows(1);
+  const sig = Object.keys(HERR_NOMBRES_FAMILIA).map(s => [s, HERR_NOMBRES_FAMILIA[s], herr_modo(s)]);
+  h.getRange(2, 1, sig.length, 3).setValues(sig);
+  h.getRange(2, 4, 4, 2).setValues([
+    ['APTO', 'DISPONIBLE PARA EL USO'],
+    ['APTO CON OBSERVACIONES', 'DISPONIBLE PARA EL USO, CON OBSERVACIONES QUE NO AFECTAN LA SEGURIDAD DEL OPERADOR'],
+    ['NO APTO', 'EQUIPO EN PROCESO DE REPARACIÓN'],
+    ['DADO DE BAJA', 'CON SOLICITUD DE BAJA']
+  ]);
+  h.getRange(2, 6, 4, 2).setValues([[30, 'Mensual'], [90, 'Trimestral'], [120, 'Semestral'], [360, 'Anual']]);
+  [90, 280, 110, 190, 320, 130, 110].forEach((w, i) => h.setColumnWidth(i + 1, w));
+}
 
 function herr_leerUnidades(hoja) {
   const ult = hoja.getLastRow();
@@ -2762,7 +2801,8 @@ function herr_catalogo() {
     familias: Object.keys(HERR_NOMBRES_FAMILIA).map(s => ({ s: s, n: HERR_NOMBRES_FAMILIA[s], modo: herr_modo(s) })),
     manuales: HERR_TIPOS_MANUALES,
     marcas: HERR_MARCAS_CATALOGO,
-    estadosDevolucion: HERR_ESTADOS_DEVOLUCION
+    estadosDevolucion: HERR_ESTADOS_DEVOLUCION,
+    estadosAlta: HERR_ESTADOS_ALTA
   };
 }
 
@@ -2799,6 +2839,7 @@ function herr_generarIdMov(hojaM, prefijo) {
 function herr_doGet(params) {
   try {
     const ss = herr_abrirSS();
+    herr_cargarRef(ss);
     const hojaU = ss.getSheetByName(HERR_HOJA_UNIDADES);
     if (!hojaU) return jsonResp({ ok: false, error: 'Falta la hoja "' + HERR_HOJA_UNIDADES + '". Ejecutá herr_prepararHojas() una vez.' });
     const unidades = herr_leerUnidades(hojaU).filter(r => String(r[HERR_U.CODIGO] || '').trim() !== '').map(herr_filaAObjeto);
@@ -2817,7 +2858,10 @@ function herr_doGet(params) {
 function herr_procesarMovimiento(data, ss) {
   const hojaU = ss.getSheetByName(HERR_HOJA_UNIDADES);
   const hojaM = ss.getSheetByName(HERR_HOJA_MOVS);
-  if (!hojaU || !hojaM) return jsonResp({ ok: false, error: 'Faltan las hojas de herramientas. Ejecutá herr_prepararHojas() una vez.' });
+  const hojaR = ss.getSheetByName(HERR_HOJA_REF);
+  if (!hojaU || !hojaM || !hojaR) return jsonResp({ ok: false, error: 'Faltan hojas de herramientas. Ejecutá herr_prepararHojas() y herr_sembrarRef() una vez.' });
+  herr_cargarRef(ss);
+  const refNuevas = [];   // siglas nuevas a agregar a REF si todo valida
 
   let tipo = String(data.tipo_movimiento || '').trim().toUpperCase();
   if (tipo === 'DEVOLUCION') tipo = 'DEVOLUCIÓN';
@@ -2870,6 +2914,22 @@ function herr_procesarMovimiento(data, ss) {
 
     // ---------------- ENTRADA ----------------
     if (tipo === 'ENTRADA') {
+      const fn = it.familia_nueva;
+      if (fn && fn.sigla) {
+        const sg = String(fn.sigla).trim().toUpperCase();
+        const nm = String(fn.nombre || '').trim().toUpperCase();
+        const md = String(fn.modo || '').trim().toUpperCase();
+        const yaNueva = refNuevas.some(x => x[0] === sg);
+        if (!/^[A-Z]{2,5}$/.test(sg)) { errs.push(rot + 'la sigla nueva debe tener de 2 a 5 letras.'); return; }
+        if (!nm) { errs.push(rot + 'falta el nombre de la familia nueva.'); return; }
+        if (['EQUIPO', 'HERRAMIENTA'].indexOf(md) === -1) { errs.push(rot + 'el modo de la familia nueva es inválido.'); return; }
+        if (HERR_NOMBRES_FAMILIA[sg] && !yaNueva) { errs.push(rot + 'la sigla ' + sg + ' ya existe en REF.'); return; }
+        if (!yaNueva) {
+          HERR_NOMBRES_FAMILIA[sg] = nm;
+          if (md === 'HERRAMIENTA') HERR_FAMILIAS_MANUALES.push(sg);
+          refNuevas.push([sg, nm, md]);
+        }
+      }
       const sigla = String(it.sigla || '').trim().toUpperCase();
       if (!HERR_NOMBRES_FAMILIA[sigla]) { errs.push(rot + 'familia desconocida (' + sigla + ').'); return; }
       const cant = parseInt(it.cantidad, 10);
@@ -2886,6 +2946,14 @@ function herr_procesarMovimiento(data, ss) {
       const series = it.series || [];
       const manuales = it.codigos || [];
       if (!it.auto && manuales.length !== cant) { errs.push(rot + 'faltan códigos manuales (' + manuales.length + ' de ' + cant + ').'); return; }
+      const nuevoUsado = String(it.nuevo_usado || '').trim().toUpperCase();
+      if (['NUEVO', 'USADO'].indexOf(nuevoUsado) === -1) { errs.push(rot + 'falta indicar si es NUEVO o USADO.'); return; }
+      const estadoAlta = String(it.estado || HERR_ESTADO_ALTA).trim().toUpperCase();
+      if (HERR_ESTADOS_ALTA.indexOf(estadoAlta) === -1) { errs.push(rot + 'estado inválido (' + estadoAlta + ').'); return; }
+      const critico = String(it.critico || 'NO').trim().toUpperCase() === 'SI' ? 'SI' : 'NO';
+      const fechaMto = it.fecha_mto ? new Date(it.fecha_mto + 'T00:00:00') : '';
+      const codAnt = it.cod_anterior || [];
+      const obsItem = (String(it.obs || '').trim() || String(data.observaciones || '').trim()).toUpperCase();
 
       for (let i = 0; i < cant; i++) {
         let codigo, num;
@@ -2911,9 +2979,13 @@ function herr_procesarMovimiento(data, ss) {
         fila[HERR_U.MARCA] = marca;
         fila[HERR_U.MODELO] = modelo;
         fila[HERR_U.SERIE] = String(series[i] || '').trim().toUpperCase();
-        fila[HERR_U.ESTADO] = HERR_ESTADO_ALTA;
+        fila[HERR_U.NUEVO] = nuevoUsado;
+        fila[HERR_U.CODANT] = String(codAnt[i] || '').trim().toUpperCase();
+        fila[HERR_U.CRITICO] = critico;
+        fila[HERR_U.ESTADO] = estadoAlta;
+        fila[HERR_U.MTO] = fechaMto;
         fila[HERR_U.LUGAR] = HERR_LUGAR_DEPOSITO;
-        fila[HERR_U.OBS] = String(data.observaciones || '').trim().toUpperCase();
+        fila[HERR_U.OBS] = obsItem;
         fila[HERR_U.TIPO] = tipoU;
         fila[HERR_U.UB_DEP] = ub.deposito; fila[HERR_U.UB_EST] = ub.estante;
         fila[HERR_U.UB_COL] = ub.columna;  fila[HERR_U.UB_FIL] = ub.fila;
@@ -2977,6 +3049,10 @@ function herr_procesarMovimiento(data, ss) {
     hojaU.getRange(primera, HERR_U.NUM + 1, nuevas.length, 1).setNumberFormat('@');
     hojaU.getRange(primera, HERR_U.CODIGO + 1, nuevas.length, 1).setNumberFormat('@');
     hojaU.getRange(primera, 1, nuevas.length, HERR_U.TOTAL).setValues(nuevas);
+  }
+    if (refNuevas.length) {
+    const filaRef = hojaR.getLastRow() + 1;
+    hojaR.getRange(filaRef, 1, refNuevas.length, 3).setValues(refNuevas);
   }
 
   const prefijo = tipo === 'ENTRADA' ? 'HING' : (tipo === 'SALIDA' ? 'HSAL' : 'HDEV');

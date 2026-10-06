@@ -138,7 +138,7 @@
         label { display: block; font-size: 12px; font-weight: 700; color: #555; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
         label .req { color: #dc2626; margin-left: 2px; }
         label .opc { color: #9ca3af; font-weight: 400; text-transform: none; margin-left: 4px; }
-        select, input[type="text"], input[type="number"], textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 15px; color: #1f2937; background: #f9fafb; margin-bottom: 14px; appearance: none; -webkit-appearance: none; font-family: inherit; }
+        select, input[type="text"], input[type="number"], input[type="date"], textarea { width: 100%; padding: 10px 12px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 15px; color: #1f2937; background: #f9fafb; margin-bottom: 14px; appearance: none; -webkit-appearance: none; font-family: inherit; }
         option { color: #1f2937; background: #fff; }
         select:focus, input:focus, textarea:focus { outline: none; border-color: #3b82f6; background: #fff; }
         select.err, input.err { border-color: #dc2626; background: #fff5f5; }
@@ -772,7 +772,11 @@
             let h = '';
             if (kind === 'her') {
                 h += lbl('Herramienta o equipo', 1) + selBuild(id + '_tipo', tiposEntrada, `data-f="tipo" onchange="onTipoHer('${id}')"`);
-                h += `<div data-w="nuevo_w" style="display:none"><div class="badge-new">⚠ Tipo nuevo: se agrega al catálogo</div>${lbl('Familia', 1)}<select data-f="familia_n" onchange="onTipoHer('${id}')"></select></div>`;
+                h += `<div data-w="nuevo_w" style="display:none"><div class="badge-new">⚠ Tipo nuevo: se agrega al catálogo</div>${lbl('Familia', 1)}<select data-f="familia_n" onchange="onTipoHer('${id}')"></select>
+                <div data-w="famnueva_w" style="display:none"><div class="badge-new">⚠ Familia nueva: se agrega a REF</div>
+                ${lbl('Sigla nueva', 1, '2 a 5 letras')}<input type="text" data-f="fam_sigla" maxlength="5" placeholder="Ej: LIJ" oninput="onFamNuevaChange('${id}')">
+                ${lbl('Nombre de la familia', 1)}<input type="text" data-f="fam_nombre" placeholder="Ej: LIJADORA" oninput="onFamNuevaChange('${id}')">
+                ${lbl('Se maneja como', 1)}<select data-f="fam_modo" onchange="onFamNuevaChange('${id}')"><option value="EQUIPO">EQUIPO (por código individual)</option><option value="HERRAMIENTA">HERRAMIENTA MANUAL (por tipo y cantidad)</option></select></div></div>`;
                 h += `<div data-w="medida_w">${lbl('Medida / característica', 0, 'opcional')}<input type="text" data-f="medida" list="dl_${id}" placeholder="Ej: 300 MM"><datalist id="dl_${id}"></datalist></div>`;
                 h += `<div data-w="equipo_w" style="display:none">${lbl('Descripción', 1)}<input type="text" data-f="detalle" placeholder="Ej: AMOLADORA ANGULAR 115 MM 1020 W">${lbl('Modelo', 0, 'opcional')}<input type="text" data-f="modelo"></div>`;
             } else {
@@ -785,6 +789,11 @@
                 h += `<div data-w="modelo_w">${lbl('Modelo', 0, 'opcional')}<input type="text" data-f="modelo"></div>`;
             }
             h += marcaHtml();
+            h += lbl('Nuevo / Usado', 1) + '<select data-f="nuevo_usado"><option value="">— Seleccioná —</option><option>NUEVO</option><option>USADO</option></select>';
+            h += lbl('Estado', 1) + '<select data-f="estado">' + (DATA.catalogo.estadosAlta || ['APTO', 'APTO CON OBSERVACIONES', 'NO APTO']).map(e => `<option>${esc(e)}</option>`).join('') + '</select>';
+            h += lbl('¿Crítico?', 1) + '<select data-f="critico"><option>NO</option><option>SI</option></select>';
+            h += lbl('Fecha de inicio de mantenimiento preventivo', 0, 'opcional') + '<input type="date" data-f="fecha_mto">';
+            h += lbl('Observaciones del ítem', 0, 'opcional') + '<input type="text" data-f="obs">';
             if (kind === 'eq') h += '<input type="hidden" data-f="cantidad" value="1">';
             else h += lbl('Cantidad', 1) + `<input type="number" data-f="cantidad" min="1" max="200" placeholder="0" oninput="renderDin('${id}')">`;
             h += `<div data-w="series"></div>`;
@@ -794,8 +803,24 @@
         }
         function siglaDe(b) {
             const k = b.dataset.kind;
-            if (k === 'her') { const v = selValor(b.id + '_tipo'); return v === 'NUEVO' ? q(b, 'familia_n').value : (v.split('|')[0] || ''); }
+            if (k === 'her') {
+                const v = selValor(b.id + '_tipo');
+                if (v === 'NUEVO') {
+                    const f = q(b, 'familia_n').value;
+                    return f === '__NUEVA__' ? q(b, 'fam_sigla').value.trim().toUpperCase() : f;
+                }
+                return v.split('|')[0] || '';
+            }
             return selValor(b.id + '_fam');
+        }
+        // Registra temporalmente la familia nueva para que ES_MANUAL() sepa su modo
+        function onFamNuevaChange(id) {
+            const b = $(id);
+            if (b._tempSigla && famMap[b._tempSigla] && famMap[b._tempSigla].temp) delete famMap[b._tempSigla];
+            const s = q(b, 'fam_sigla').value.trim().toUpperCase();
+            b._tempSigla = s;
+            if (s && !famMap[s]) famMap[s] = { s: s, n: q(b, 'fam_nombre').value.trim().toUpperCase(), modo: q(b, 'fam_modo').value, temp: true };
+            onTipoHer(id);
         }
         function onTipoHer(id) {
             const b = $(id), v = selValor(id + '_tipo');
@@ -803,11 +828,13 @@
             const esNuevo = v === 'NUEVO';
             const fs = q(b, 'familia_n');
             if (esNuevo && !fs.options.length) {
-                fs.innerHTML = famOpts(false).map(o => `<option value="${esc(o.v)}">${esc(o.l)}</option>`).join('');
+                fs.innerHTML = famOpts(false).map(o => `<option value="${esc(o.v)}">${esc(o.l)}</option>`).join('') + '<option value="__NUEVA__">➕ Crear familia nueva (sigla nueva)…</option>';
                 fs.value = 'HER';
             }
             b.querySelector('[data-w="nuevo_w"]').style.display = esNuevo ? 'block' : 'none';
-            const sig = esNuevo ? fs.value : (v ? v.split('|')[0] : '');
+            const nueva = esNuevo && fs.value === '__NUEVA__';
+            b.querySelector('[data-w="famnueva_w"]').style.display = nueva ? 'block' : 'none';
+            const sig = esNuevo ? (nueva ? q(b, 'fam_sigla').value.trim().toUpperCase() : fs.value) : (v ? v.split('|')[0] : '');
             const esEq = !!sig && !ES_MANUAL(sig);
             b.querySelector('[data-w="medida_w"]').style.display = esEq ? 'none' : 'block';
             b.querySelector('[data-w="equipo_w"]').style.display = esEq ? 'block' : 'none';
@@ -834,7 +861,8 @@
             const auto = q(b, 'auto').checked;
             const wC = b.querySelector('[data-w="codigos"]'), wS = b.querySelector('[data-w="series"]');
             const viejosC = [...wC.querySelectorAll('input')].map(i => i.value);
-            const viejosS = [...wS.querySelectorAll('input')].map(i => i.value);
+            const viejosS = [...wS.querySelectorAll('[data-f="serie"]')].map(i => i.value);
+            const viejosA = [...wS.querySelectorAll('[data-f="codant"]')].map(i => i.value);
             if (auto) wC.innerHTML = `<p class="hint">Se asigna al guardar: el siguiente número libre de ${esc(sigla || 'la familia')}.</p>`;
             else if (!cant) wC.innerHTML = '<p class="hint">Indicá la cantidad para escribir los códigos.</p>';
             else {
@@ -845,7 +873,8 @@
             const esEq = sigla && !ES_MANUAL(sigla);
             if (esEq && cant) {
                 let h = '';
-                for (let i = 0; i < cant; i++) h += `${lbl('N° de serie ' + (cant > 1 ? (i + 1) : ''), 0, 'opcional')}<input type="text" data-f="serie" value="${esc(viejosS[i] || '')}">`;
+                for (let i = 0; i < cant; i++) h += `${lbl('N° de serie ' + (cant > 1 ? (i + 1) : ''), 0, 'opcional')}<input type="text" data-f="serie" value="${esc(viejosS[i] || '')}">` +
+                    `${lbl('Código anterior ' + (cant > 1 ? (i + 1) : ''), 0, 'opcional')}<input type="text" data-f="codant" value="${esc(viejosA[i] || '')}">`;
                 wS.innerHTML = h;
             } else wS.innerHTML = '';
             mayusculasEn(b);
@@ -915,9 +944,17 @@
                 document.querySelectorAll('#bloques .item-block').forEach((b, n) => {
                     const kind = b.dataset.kind, pref = TITULOS[kind] + ' #' + (n + 1);
                     if (m === 'ENTRADA') {
-                        let sigla = siglaDe(b), tipo = '', medida = '', detalle = '', modelo = '';
+                        let sigla = siglaDe(b), tipo = '', medida = '', detalle = '', modelo = '', familia_nueva = null;
                         if (kind === 'her') {
                             const v = selValor(b.id + '_tipo');
+                            let familia_nueva = null;
+                            if (v === 'NUEVO' && q(b, 'familia_n').value === '__NUEVA__') {
+                                const fs_ = q(b, 'fam_sigla').value.trim().toUpperCase(), fn_ = q(b, 'fam_nombre').value.trim().toUpperCase();
+                                if (!/^[A-Z]{2,5}$/.test(fs_)) { errs.push(pref + ' → Sigla nueva (2 a 5 letras)'); q(b, 'fam_sigla').classList.add('err'); }
+                                else if (famMap[fs_] && !famMap[fs_].temp) { errs.push(pref + ' → La sigla ' + fs_ + ' ya existe'); q(b, 'fam_sigla').classList.add('err'); }
+                                if (!fn_) { errs.push(pref + ' → Nombre de la familia nueva'); q(b, 'fam_nombre').classList.add('err'); }
+                                familia_nueva = { sigla: fs_, nombre: fn_, modo: q(b, 'fam_modo').value };
+                        }
                             if (!v) { errs.push(pref + ' → Tipo'); $(b.id + '_tipo').classList.add('err'); }
                             else if (v === 'NUEVO') {
                                 const txt = $(b.id + '_q').value.trim();
@@ -952,8 +989,15 @@
                                 if (!/^[A-Z]+-\d+$/.test(v) || (sigla && v.split('-')[0] !== sigla)) { i.classList.add('err'); errs.push(pref + ' → Código manual (formato ' + (sigla || 'HER') + '-123)'); }
                             });
                         }
+                        const nu = q(b, 'nuevo_usado').value;
+                        if (!nu) { errs.push(pref + ' → Nuevo / Usado'); q(b, 'nuevo_usado').classList.add('err'); }
                         const ub = readUbic(b); faltaUbic(ub, pref);
-                        items.push({ sigla, tipo, medida, detalle, modelo, marca, cantidad: cant, auto, codigos, series: [...b.querySelectorAll('[data-f="serie"]')].map(i => i.value.trim()), ubic: ub });
+                        items.push({ sigla, tipo, medida, detalle, modelo, marca, cantidad: cant, auto, codigos,
+                            series: [...b.querySelectorAll('[data-f="serie"]')].map(i => i.value.trim()),
+                            cod_anterior: [...b.querySelectorAll('[data-f="codant"]')].map(i => i.value.trim()),
+                            nuevo_usado: nu, estado: q(b, 'estado').value, critico: q(b, 'critico').value,
+                            fecha_mto: q(b, 'fecha_mto').value, obs: q(b, 'obs').value.trim(),
+                            familia_nueva, ubic: ub });
                     } else { // SALIDA
                         const v = selValor(b.id + '_tipo');
                         if (!v) { errs.push(pref + ' → Tipo'); $(b.id + '_tipo').classList.add('err'); return; }
