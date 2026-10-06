@@ -514,6 +514,8 @@ function limpiarImagenesVencidas() {
 function doGet(e) {
   const params = e.parameter || {};
 
+  if (params.action === 'herr-datos') return herr_doGet(params);
+
   if (params.action === 'json') {
     try {
       const ss        = SpreadsheetApp.getActiveSpreadsheet();
@@ -789,6 +791,8 @@ function doPost(e) {
       respuesta = actualizarDatosProducto(data, ss);
     } else if (data.accion === 'crear-producto') {
       respuesta = crearProductoNuevo(data, ss);
+    } else if (data.accion === 'herr-movimiento') {
+      respuesta = herr_procesarMovimiento(data, ss);
     } else if (data.tipo === 'Traslado') {
       respuesta = procesarTraslado(data, ss);
     } else {
@@ -1252,6 +1256,8 @@ function ajusteRapidoStockOpcionB(data, ss) {
   if (data.tipo_servicio) partesObsMov.push('Servicio: ' + String(data.tipo_servicio).trim());
   if (data.km_hs)         partesObsMov.push('Km/Hs: ' + String(data.km_hs).trim());
   const obsMov = partesObsMov.join(' | ');
+  // La factura aplica a ENTRADA, SALIDA y DEVOLUCIÓN, y solo se guarda en Movimientos (nunca en Stock)
+  const factura = String(data.factura || '').trim();
 
   (data.items || []).forEach(item => {
     const idBuscado = String(item.id || '').trim().toUpperCase();
@@ -1280,8 +1286,14 @@ function ajusteRapidoStockOpcionB(data, ss) {
       familia, marca, descripcion,
       item.cantidad, unidad, obsMov, data.obs_general || '', nroEnvio,
       ubicacion.deposito, ubicacion.estante, ubicacion.columna, ubicacion.fila,
-      ''   // N° Factura — no aplica a este tipo de movimiento
+      factura
     ]);
+
+    if (factura) {
+      const celdaFacturaR = hojaMov.getRange(hojaMov.getLastRow(), DEP_COL_MOV.NRO_FACTURA);
+      celdaFacturaR.setNumberFormat('@');
+      celdaFacturaR.setValue(factura);
+    }
 
     dep_actualizarStock(
       hojaStock, zonaItem, familia, marca, descripcion,
@@ -2339,3 +2351,683 @@ function instalarTriggerLimpiezaDiaria() {
     .atHour(3) 
     .create();
 }
+
+// ============================================================
+// HERRAMIENTAS Y EQUIPOS — BLOQUE NUEVO (pegar AL FINAL de Codigo.gs)
+// No modifica nada existente. Funciones herr_*, constantes HERR_*.
+// Además hay que aplicar 2 cambios mínimos de enrutamiento (ver instrucciones):
+//   doGet  → action=herr-datos
+//   doPost → accion=herr-movimiento
+// Después de pegar: ejecutar UNA vez herr_prepararHojas() desde el editor.
+// ============================================================
+
+// ===== INICIO HERRAMIENTAS (NUEVO) =====
+// ============================================================
+// H.1 CATÁLOGO Y CONFIGURACIÓN (EDITABLE)
+// ============================================================
+const HERR_SS_ID = '1PWCKGAQgZfBEWPwqWppsbylLdJLxJe3I6XWrEAhBwQk';
+const HERR_HOJA_UNIDADES = 'Unidades Herramientas';
+const HERR_HOJA_MOVS     = 'Movimientos Herramientas';
+const HERR_HOJA_STOCK    = 'Stock Herramientas';
+
+// ── MODO DE CADA FAMILIA ──────────────────────────────────────
+// HERRAMIENTA MANUAL → se mueve por TIPO + CANTIDAD; al sacar se eligen los códigos exactos.
+// EQUIPO             → se mueve por CÓDIGO INDIVIDUAL, sin cantidad.
+// Para pasar una familia de un lado al otro: agregá o sacá su sigla de HERR_FAMILIAS_MANUALES.
+// Cualquier sigla que NO esté en HERR_FAMILIAS_MANUALES se trata como EQUIPO. La lista
+// HERR_FAMILIAS_EQUIPO es solo informativa (para que se vea qué se toma como equipo); lo que manda es la de manuales.
+const HERR_FAMILIAS_MANUALES = ['HER'];
+const HERR_FAMILIAS_EQUIPO = ["ALA", "AMO", "AGU", "APA", "ARR", "ATA", "ATO", "BGM", "BOM", "CAL", "CAN", "CAR", "CCO", "COM", "CPA", "CRI", "DEM", "DOB", "EST", "ELF", "GRA", "GRAA", "GRE", "GUI", "HAN", "HID", "HOR", "MAN", "MOR", "MOT", "MUL", "NIV", "NLA", "OXI", "PAL", "PER", "PIS", "PLAT", "REF", "ROT", "SEN", "SIC", "SOL", "TAB", "TAL", "TALE", "TEO", "TORI", "UPS", "VIB", "PLE", "ODO", "PRI", "ESI", "ETI"];
+
+// Sigla → nombre de familia (hoja REF. del Excel). Es lo que se ve en el desplegable "Familia".
+const HERR_NOMBRES_FAMILIA = {
+  "ALA": "ALARGADOR",
+  "AMO": "AMOLADORA",
+  "AGU": "AGUJEREADORA DE PIE",
+  "APA": "APAREJO ELECTRICO",
+  "ARR": "CARGADOR ARRANCADOR",
+  "ATA": "ATADORA DE HIERRO",
+  "ATO": "ATORNILLADORA",
+  "BGM": "BOMBA DE GASOIL",
+  "BOM": "BOMBA DE AGUA / VACIO",
+  "CAL": "SIERRA CALADORA",
+  "CAN": "COMPACTADORA TIPO CANGURO",
+  "CAR": "CARRETILLA",
+  "CCO": "CORTADORA DE CONCRETO",
+  "COM": "COMPRESOR",
+  "CPA": "CORTADORA DE PASTO",
+  "CRI": "CRIQUE CARRITO",
+  "DEM": "MARTILLO DEMOLEDOR",
+  "DOB": "DOBLADORA DE CAÑO",
+  "EST": "ESTACIÓN TOTAL",
+  "ELF": "MAQUINA DE ELECTROFUSION",
+  "GRA": "GRASERA",
+  "GRAA": "GRASERA DE AIRE",
+  "GRE": "GRUPO ELECTRÓGENO",
+  "GUI": "GUILLOTINA SOMAR",
+  "HER": "HERRAMIENTAS DE MANO",
+  "HAN": "HANDY RADIO",
+  "HID": "HIDROLAVADORA",
+  "HOR": "OLLA HORMIGONERA",
+  "MAN": "MANOMETRO DE PRESIÓN DE AIRE PARA NEUMÁTICO",
+  "MOR": "MORSA",
+  "MOT": "MOTOSIERRA",
+  "MUL": "SIERRA MULTICORTADORA",
+  "NIV": "NIVEL OPTICO",
+  "NLA": "NIVEL LASER",
+  "OXI": "CILINDRO DE OXIGENO",
+  "PAL": "PALA REVOCADORA",
+  "PER": "PERCUTOR",
+  "PIS": "PISTOLA DE CALOR",
+  "PLAT": "COMPACTADORA TIPO PLATO",
+  "REF": "REFLECTOR DE LUZ",
+  "ROT": "ROTOMARTILLO",
+  "SEN": "SIERRA SENSITIVA PROFESIONAL",
+  "SIC": "SIERRA CIRCULAR",
+  "SOL": "SOLDADORA",
+  "TAB": "TABLERO ELECTRICO PORTATIL",
+  "TAL": "TALADRO PERCUTOR",
+  "TALE": "TALADRO ELECTRICO",
+  "TEO": "TEODOLITO",
+  "TORI": "TORRE DE ILUMINACION",
+  "UPS": "EQUIPO UPS",
+  "VIB": "VIBRADOR DE HORMIGON",
+  "PLE": "PLEGADORA DE CHAPA",
+  "ODO": "ODÓMETRO CON RUEDAS",
+  "PRI": "PORTAPRISMA CON TARJETA",
+  "ESI": "ESCALERA SIMPLE",
+  "ETI": "ESCALERA TIJERA"
+};
+
+// Mayor número ya usado por sigla en el Excel original. El código automático continúa desde acá
+// (o desde el máximo de la hoja, el que sea mayor), así no se pisan las etiquetas físicas existentes.
+const HERR_CODIGO_MAX_EXCEL = {"AGU": 2, "AMO": 12, "ARR": 1, "BGM": 1, "BOM": 2, "CAN": 6, "CAR": 2, "CCO": 2, "COM": 4, "CRI": 1, "DEM": 1, "DOB": 1, "ESI": 8, "EST": 1, "ETI": 7, "GRA": 10, "GRAA": 2, "GRE": 12, "GUI": 1, "HAN": 5, "HER": 628, "HID": 1, "HOR": 3, "MAN": 1, "MOR": 3, "MOT": 7, "MUL": 1, "NIV": 1, "ODO": 1, "OXI": 1, "PAL": 1, "PIS": 1, "PLAT": 2, "PLE": 1, "PRI": 1, "REF": 3, "ROT": 3, "SEN": 2, "SIC": 1, "SOL": 4, "TAB": 3, "TAL": 3, "TALE": 3, "TEO": 1, "TORI": 1};
+
+// Marcas sugeridas en el desplegable (siempre queda "Otro" para escribir una nueva).
+const HERR_MARCAS_CATALOGO = ["ASAKI", "BAHCO", "BIASSONI", "BLACK JACK", "BLACK PANTHER", "BOSCH", "BREMEN", "BTA TOOLS", "BULIT", "CONER", "COVIAT", "DEWALT", "DIAMON BRAND", "DONG CHENG", "DORF", "EFAC", "EINHELL", "EL ROBLE", "EVEL", "GERARDI", "GLADIATOR", "GRUNDFOS", "HAMILTON", "HONDA", "HUSQVARNA", "KONA", "LUSQTOFF", "MACROLED", "METABO", "NIWA", "REIN", "SALKOR", "SANTA JUANA", "SENSEI", "SKILL", "STANLEY", "STIHL", "TAMIG", "TOTAL", "TOTH", "TOYAMA", "TRAMONTINA", "UYUSTOOLS", "VANDIUM", "VULCANO", "WACKER"];
+
+// Tipos de herramienta manual (familia HER) con sus medidas conocidas. Derivados del DETALLE del Excel
+// quitando marca y medida: revisá/unificá a mano (ej. "Maza" y "Masa"). Los tipos que cargues
+// desde el formulario se suman solos a los desplegables.
+const HERR_TIPOS_MANUALES = {
+  "Alargador metros": ["31"],
+  "Alicate": [],
+  "Apisodor manual metalico": [],
+  "Arco de sierra": ["300 MM", "CON HOJA DE SIERRA"],
+  "Azada mango de madera": [],
+  "Barreta de hierro torsionado": ["2 30 MTS", "2 MTS"],
+  "Barreta de hierro torsionado metro": ["1"],
+  "Barreta sacaclavos": ["48 CM", "58 CM", "61 CM", "79 CM"],
+  "Buscapolo": ["190 MM", "AC 100 - 500 V"],
+  "Buscapolo 3x140": ["AC 100 - 500 V", "MM"],
+  "Buscapolo pvc": ["418"],
+  "Caballete trípode mecánico": ["2 TN"],
+  "Calibre metálico essex": ["7\""],
+  "Cinta métrica": ["10 M", "10 MTS", "5 M", "5 MTS"],
+  "Cinta métrica evelt": ["10 M", "5 MTS"],
+  "Cinta métrica flexo": ["10 M", "FLG1025"],
+  "Cinta métrica giant": ["10 M"],
+  "Cinta métrica premium japan": ["5 M"],
+  "Corta fierro": [],
+  "Cortadora de ceramico": [],
+  "Cuchara albañil": ["N°7", "N°8"],
+  "Cucharin albañil": ["5\"", "6\""],
+  "Destornillador electricista philips": ["140 MM", "65 MM", "90 MM", "92 MM"],
+  "Destornillador electricista punta plana": ["100 MM", "140 MM", "150 MM"],
+  "Destornillador perillero": ["THT26PH2038"],
+  "Destornillador philips": ["150 MM"],
+  "Destornillador philips chico": [],
+  "Destornillador philips deg604 ph3x6\"": [],
+  "Destornillador philips grande": [],
+  "Destornillador philips mediana": [],
+  "Destornillador philips mediano": [],
+  "Destornillador philips pretul": [],
+  "Destornillador plano": [],
+  "Destornillador plano chico": [],
+  "Destornillador plano deg604 x6\"": ["8 MM"],
+  "Destornillador plano grande": [],
+  "Destornillador plano mediano": [],
+  "Destornillador plano perillero": [],
+  "Destornillador plano y philips": [],
+  "Destornillador punta plana": ["100 MM", "150 MM", "95 MM"],
+  "Destornillador punta plana chica": [],
+  "Destornillador punta plana grande": [],
+  "Destornillador punta plana mediana": [],
+  "Escuadra metálica": ["30 CM"],
+  "Escuadra metálica truper": ["30 CM"],
+  "Espátula": ["75 MM"],
+  "Espátula albañil de acero mango plástico": ["2\""],
+  "Espátula chica": [],
+  "Espátula dentada mango de madera": ["110 MM", "135 MM", "180 MM", "185 MM"],
+  "Espátula enduir cabo de madera": ["120"],
+  "Espátula enduir cabo plástico": ["100"],
+  "Espátula esquinera externa acero inoxidable": [],
+  "Espátula esquinero mango de goma": ["150 MM"],
+  "Espátula grande": [],
+  "Espátula mango de madera": ["100 MM", "125 MM", "145 MM", "195 MM", "210 MM", "95 MM"],
+  "Espátula mediana": [],
+  "Espátula para unión con punta philips acero inoxidable": ["N°6 N°2"],
+  "Fratacho de goma espuma": ["12 x 20 CM", "12 x 25 CM"],
+  "Fratacho de madera de pino": ["11 x 25 CM", "12 x 30 CM", "12 x 35 CM", "7 x 18 5 CM"],
+  "Grifa larga mango metalico": [],
+  "Grinfas": ["10 MM", "12 MM", "8 MM"],
+  "Guia p/ mecha copa nº22 jadever": [],
+  "Hacha de mano": [],
+  "Hachuela albañil": [],
+  "Juego de destornillador": ["PHILIPS 4, PUNTA PLANA 2 (3X75, 4X100, 6,5X150, PH2X100, PH1X80, PH0X60)"],
+  "Juego de llave allen bison piezas": ["10"],
+  "Juego de llave allen estriada ingco piezas": ["9"],
+  "Juego de llave allen estriada piezas": ["8", "FALTA UNA LLAVE"],
+  "Juego de llave allen inco piezas": ["10", "9"],
+  "Juego de llave allen piezas": ["9"],
+  "Juego de llave tork": ["9 PIEZAS"],
+  "Juego de llave tork inco piezas": ["9"],
+  "Juego de llave tork piezas": ["4 PIEZAS", "8", "9"],
+  "Juego de llave tubo - piezas": ["38"],
+  "Juego de sondas milimetricas": [],
+  "Juego llave allen piezas ingco": ["X 9"],
+  "Lima plana threefiles grande": [],
+  "Lima redonda grande": [],
+  "Lima redonda plena grande": [],
+  "Lima threefiles grande": [],
+  "Lima triangular grande": [],
+  "Linterna de mano seis av5813": ["SEIS AV5813 NARANJA C/2 BATERIAS"],
+  "Llana dentada mango de plástico": ["13 x 25 CM"],
+  "Llana lisa acero inoxidable": ["280 x 130 MM"],
+  "Llana lisa mango de madera": ["12 x 25 CM", "12 x 30 CM"],
+  "Llana lisa mango de plástico": ["12 x 25CM", "12 x 30 CM", "13 x 30 CM"],
+  "Llave acodada doble boca": ["6\"", "SET DE LLAVE ACODADA DOBLE BOCA THT102486"],
+  "Llave acodada doble boca tht102486": ["10\"", "12\"", "15\"", "17\"", "19\"", "22\"", "8\""],
+  "Llave allen croos master": ["9942978 3/8 x 112 MM"],
+  "Llave boca y ojo": ["10", "18", "8", "N°1 1/4", "N°10", "N°11", "N°12", "N°13", "N°15", "N°16", "N°17", "N°18", "N°19", "N°20", "N°21", "N°22", "N°24", "N°25", "N°29", "N°32", "N°7", "N°8"],
+  "Llave boca y ojo crossmaster": ["N°22"],
+  "Llave boca y ojo drop borged": ["11"],
+  "Llave boca y ojo eastman": ["13"],
+  "Llave boca y ojo master": ["N° 6", "N°14", "N°17", "N°22"],
+  "Llave boca y ojo pegasus": ["12"],
+  "Llave boca y ojo yeii": ["N° 14"],
+  "Llave boca y ojo zhonggong": ["9"],
+  "Llave combinada boca y ojo": ["N°18"],
+  "Llave combinada boca y ojo - drop forged": ["N°21"],
+  "Llave combinada boca y ojo - zhonggong": ["N°19"],
+  "Llave criquet": [],
+  "Llave filtros de aceite hogar": ["APERTURA MÍNIMA DE ANILLO 5CM, APERTURA MÁXIMA DE ANILLO 13 CM, DIAMETRO DEL PERNO 12 MM, LONGITUD TOTAL DEL PERNO 14 CM , LOGITUD TOTAL 48 MM"],
+  "Llave francesa": ["10\"", "12\" 300 MM", "15\" 375 MM", "18\" 50 MM"],
+  "Llave francesa crossmaster": ["10\" 250 MM"],
+  "Llave francesa extra": ["15\""],
+  "Llave stilson grande": [],
+  "Llave stilson kamasa": ["10\""],
+  "Llave t": ["N°10", "N°12"],
+  "Llave tubo": ["1\"", "10 MM", "15", "17", "19", "20", "21", "24", "28", "30", "32", "7/8"],
+  "Llave tubo allen hamilton": ["5", "8 MM"],
+  "Llave tubo ccc": ["10"],
+  "Llave tubo crosman": ["18 MM"],
+  "Llave tubo cross master": ["17 MM"],
+  "Llave tubo cuerpo largo cross master": ["13 MM"],
+  "Llave tubo extension corta hamilton": ["13 MM 1/2 \""],
+  "Llave tubo extension flexible corta": ["1/2\""],
+  "Llave tubo hamilton": ["8"],
+  "Llave tubo irimo": [],
+  "Llave tubo sx": ["1/2 \""],
+  "Llave tubo tork t-40": ["4 MM"],
+  "Llave tubo vanadium": ["11", "11 MM", "13 MM", "14 MM", "15 MM", "16 MM", "17 MM", "19 MM", "24 MM"],
+  "Machete ciriari": [],
+  "Mango de fuerza de largo": ["1/2\""],
+  "Marcador de polvo profesional": ["30 M", "CHOCLA"],
+  "Martillo carpintero": [],
+  "Martillo carpintero con mango metálico": [],
+  "Martillo de goma": [],
+  "Masa mango de madera": [],
+  "Maza": ["1 5 KG", "2 KG", "3 KG", "CON MANGO DE MADERA"],
+  "Maza de goma panther bp-mg120z": ["340 GR"],
+  "Mecha copa nº22 jadever": [],
+  "Minisierra arco": [],
+  "Multimétro digital dt-830b": [],
+  "Nivel de mano": ["18\" 450 MM", "20\" 500 MM", "400 MM 16\""],
+  "Nivel de mano de madera s/identificación": [],
+  "Nivel de mano fmt": ["900 MM"],
+  "Pala cuadrada con mango de madera": [],
+  "Pala pocera mango metalico": [],
+  "Pala pocera sin mango": [],
+  "Pala punta corazon mango de madera": [],
+  "Pala punta corazon sin mango": [],
+  "Pala punta cuadrada mango de madera": [],
+  "Pala punta cuadrada mango metálico": [],
+  "Pala punta cuadrada sin mango": [],
+  "Pico mango de madera": [],
+  "Pico para inflar": [],
+  "Pico sin mango": [],
+  "Pico sin mango paleta fina": [],
+  "Pinza de fuerza perro": [],
+  "Pinza de punta": [],
+  "Pinza picoloro boca curva": ["10\""],
+  "Pinza picoloro boca curva chrome vanadium": ["10\""],
+  "Pinza saca seguro curva": [],
+  "Pinza saca seguro curva grande": [],
+  "Pinza saca seguro recta": [],
+  "Pinza universal": [],
+  "Pistola de silicona makawa": ["15 W"],
+  "Pistola para silicona": [],
+  "Pistola para silicona abrasol": [],
+  "Plato mezclador durklero de aluminio": ["300 x 300 x 1 8 MM", "BANDEJA DURKLERA"],
+  "Plomada": [],
+  "Plomada de albañil": ["500 GR"],
+  "Prensa para caño": [],
+  "Prensa sargento tipo experto": ["G"],
+  "Prensa sargento tipo f": ["50 x 150 MM"],
+  "Prolongador para trifásico": ["10 MTS", "30 MTS"],
+  "Pulverizador mochila": ["20L"],
+  "Regla de esquina metálica": [],
+  "Remachadora manual": ["10,5\""],
+  "Remachadora pop makawa": [],
+  "Saca bujias": [],
+  "Saca filtro a cadena": [],
+  "Saca filtro de cinta chico": [],
+  "Saca filtro de cinta grande": [],
+  "Soldadora de estaño": [],
+  "Soldadora de estaño ferrawy": ["60 W"],
+  "Tarraja de mano tipo destronillador": [],
+  "Tenaza": ["200 MM 8\"", "250 MM 10 \"", "250 MM 10\"", "300 MM", "300 MM 12 \"", "41054 010"],
+  "Tenaza alemania": ["250 MM 10\""],
+  "Tenaza gherardi": ["300 MM 12 \""],
+  "Tijera aviación corta chapa mota": ["300 MM", "CORTE RECTO Y CURVO"],
+  "Tijera hojalatera": ["250 MM", "300 MM", "CORTE RECTO"],
+  "Trazador de líneas": ["CHOCLA"]
+};
+
+// ============================================================
+// H.2 ESTADOS, COLUMNAS Y TEXTOS FIJOS
+// ============================================================
+// Estados tomados del Excel (hoja principal + REF.). "disponible" = puede salir del depósito.
+const HERR_ESTADOS = {
+  'APTO':                   { disponible: true,  baja: false },
+  'APTO CON OBSERVACIONES': { disponible: true,  baja: false },
+  'NO APTO':                { disponible: false, baja: false },  // pendiente de reparación
+  'VENCIDO':                { disponible: false, baja: false },  // 1 caso en el Excel (cilindro de oxígeno)
+  'DADO DE BAJA':           { disponible: false, baja: true  }   // final: no cuenta en el total
+};
+const HERR_ESTADO_ALTA = 'APTO';                 // estado con el que entra una unidad nueva
+const HERR_ESTADOS_DEVOLUCION = ['APTO', 'NO APTO'];
+const HERR_LUGAR_DEPOSITO = 'DEPÓSITO';          // valor de LUGAR / PERSONA cuando está en depósito
+const HERR_PREFIJO_PODER  = 'A CARGO DE ';       // mismo formato que ya usa el Excel ("A CARGO DE JOSÉ CANO")
+
+// Hoja "Unidades Herramientas": 16 columnas del Excel (mismo orden) + 5 nuevas al final.
+const HERR_COLS_UNIDADES = [
+  'FECHA DE ALTA', 'SIGLA', 'NUM.', 'CODIGO', 'DETALLE', 'CARACTERISTICAS', 'MARCA', 'MODELO', 'N° SERIE',
+  'NUEVO / USADO', 'CODIGO ANTERIOR', 'CRÍTICO?', 'ESTADO', 'FECHA DE INICIO DE MTO PREV.', 'LUGAR / PERSONA', 'OBSERVACIONES',
+  'TIPO', 'UBIC. DEPÓSITO', 'UBIC. ESTANTE', 'UBIC. COLUMNA', 'UBIC. FILA'
+];
+const HERR_U = {
+  FECHA: 0, SIGLA: 1, NUM: 2, CODIGO: 3, DETALLE: 4, CARACT: 5, MARCA: 6, MODELO: 7, SERIE: 8,
+  NUEVO: 9, CODANT: 10, CRITICO: 11, ESTADO: 12, MTO: 13, LUGAR: 14, OBS: 15,
+  TIPO: 16, UB_DEP: 17, UB_EST: 18, UB_COL: 19, UB_FIL: 20, TOTAL: 21
+};
+const HERR_COLS_MOVS = [
+  'ID Mov.', 'Fecha', 'Tipo', 'Responsable', 'Obra / destino', 'Familia', 'Tipo herramienta', 'Medida',
+  'Cantidad', 'Códigos', 'Estado devolución', 'Depósito', 'Estante', 'Columna', 'Fila', 'Obs. generales'
+];
+const HERR_COLS_STOCK = [
+  'Familia', 'Tipo', 'Medida', 'Modo', 'Total (sin bajas)', 'En depósito', 'En poder (total)',
+  'En poder de', 'No disponibles', 'Bajas'
+];
+
+// ============================================================
+// H.3 UTILIDADES (todas con prefijo herr_)
+// ============================================================
+function herr_modo(sigla) {
+  return HERR_FAMILIAS_MANUALES.indexOf(sigla) !== -1 ? 'HERRAMIENTA' : 'EQUIPO';
+}
+function herr_norm(s) {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().trim();
+}
+function herr_nombreFamilia(sigla) { return HERR_NOMBRES_FAMILIA[sigla] || sigla; }
+function herr_poder(lugar) {
+  const l = String(lugar || '').trim().toUpperCase();
+  return l.indexOf(HERR_PREFIJO_PODER) === 0 ? l.substring(HERR_PREFIJO_PODER.length).trim() : '';
+}
+function herr_infoEstado(e) {
+  return HERR_ESTADOS[String(e || '').trim().toUpperCase()] || { disponible: false, baja: false };
+}
+function herr_abrirSS() { return SpreadsheetApp.openById(HERR_SS_ID); }
+
+function herr_leerUnidades(hoja) {
+  const ult = hoja.getLastRow();
+  if (ult <= 1) return [];
+  return hoja.getRange(2, 1, ult - 1, HERR_U.TOTAL).getValues();
+}
+
+function herr_filaAObjeto(r) {
+  const estado = String(r[HERR_U.ESTADO] || '').trim().toUpperCase();
+  const lugar  = String(r[HERR_U.LUGAR] || '').trim();
+  const info   = herr_infoEstado(estado);
+  const sigla  = String(r[HERR_U.SIGLA] || '').trim().toUpperCase();
+  return {
+    codigo:  String(r[HERR_U.CODIGO] || '').trim().toUpperCase(),
+    sigla:   sigla,
+    detalle: String(r[HERR_U.DETALLE] || ''),
+    medida:  String(r[HERR_U.CARACT] || ''),
+    marca:   String(r[HERR_U.MARCA] || ''),
+    modelo:  String(r[HERR_U.MODELO] || ''),
+    serie:   String(r[HERR_U.SERIE] || ''),
+    estado:  estado,
+    lugar:   lugar,
+    poder:   herr_poder(lugar),
+    tipo:    String(r[HERR_U.TIPO] || '') || String(r[HERR_U.DETALLE] || ''),
+    ub: {
+      deposito: String(r[HERR_U.UB_DEP] || ''), estante: String(r[HERR_U.UB_EST] || ''),
+      columna:  String(r[HERR_U.UB_COL] || ''), fila:    String(r[HERR_U.UB_FIL] || '')
+    },
+    disp: info.disponible,
+    baja: info.baja
+  };
+}
+
+// Stock por TIPO (la marca no suma). Herramientas manuales: tipo + medida. Equipos: un renglón por familia.
+function herr_calcularStock(objs) {
+  const mapa = {};
+  objs.forEach(u => {
+    const modo = herr_modo(u.sigla);
+    const medida = modo === 'HERRAMIENTA' ? u.medida : '';
+    const k = u.sigla + '|' + u.tipo + '|' + medida;
+    if (!mapa[k]) mapa[k] = {
+      sigla: u.sigla, familia: herr_nombreFamilia(u.sigla), tipo: u.tipo, medida: medida, modo: modo,
+      total: 0, deposito: 0, poder: 0, poderDetalle: {}, nodisp: 0, bajas: 0
+    };
+    const s = mapa[k];
+    if (u.baja) { s.bajas++; return; }
+    s.total++;
+    if (u.poder) { s.poder++; s.poderDetalle[u.poder] = (s.poderDetalle[u.poder] || 0) + 1; }
+    else if (u.disp) s.deposito++;
+    else s.nodisp++;
+  });
+  return Object.keys(mapa).map(k => mapa[k]).sort((a, b) =>
+    (a.familia + a.tipo + a.medida).localeCompare(b.familia + b.tipo + b.medida));
+}
+
+function herr_escribirStock(ss, objs) {
+  let hoja = ss.getSheetByName(HERR_HOJA_STOCK);
+  if (!hoja) return;
+  const filas = herr_calcularStock(objs).map(s => [
+    s.familia, s.tipo, s.medida, s.modo, s.total, s.deposito, s.poder,
+    Object.keys(s.poderDetalle).map(n => n + ': ' + s.poderDetalle[n]).join(' | '),
+    s.nodisp, s.bajas
+  ]);
+  const maxF = hoja.getMaxRows();
+  if (maxF > 1) hoja.getRange(2, 1, maxF - 1, HERR_COLS_STOCK.length).clearContent();
+  if (filas.length) hoja.getRange(2, 1, filas.length, HERR_COLS_STOCK.length).setValues(filas);
+}
+
+function herr_catalogo() {
+  return {
+    familias: Object.keys(HERR_NOMBRES_FAMILIA).map(s => ({ s: s, n: HERR_NOMBRES_FAMILIA[s], modo: herr_modo(s) })),
+    manuales: HERR_TIPOS_MANUALES,
+    marcas: HERR_MARCAS_CATALOGO,
+    estadosDevolucion: HERR_ESTADOS_DEVOLUCION
+  };
+}
+
+// Respeta mayúsculas/acentos de un tipo ya existente (en unidades o en el catálogo).
+function herr_canonTipo(sigla, tipoTxt, objs) {
+  if (herr_modo(sigla) === 'EQUIPO') return herr_nombreFamilia(sigla);
+  const n = herr_norm(tipoTxt);
+  for (let i = 0; i < objs.length; i++) {
+    if (objs[i].sigla === sigla && herr_norm(objs[i].tipo) === n) return objs[i].tipo;
+  }
+  const keys = Object.keys(HERR_TIPOS_MANUALES);
+  for (let j = 0; j < keys.length; j++) { if (herr_norm(keys[j]) === n) return keys[j]; }
+  return String(tipoTxt).trim();
+}
+
+function herr_generarIdMov(hojaM, prefijo) {
+  const ult = hojaM.getLastRow();
+  let max = 0;
+  if (ult > 1) {
+    hojaM.getRange(2, 1, ult - 1, 1).getValues().forEach(([id]) => {
+      const s = String(id || '');
+      if (s.indexOf(prefijo + '-') === 0) {
+        const n = parseInt(s.replace(prefijo + '-', ''), 10);
+        if (!isNaN(n) && n > max) max = n;
+      }
+    });
+  }
+  return prefijo + '-' + String(max + 1).padStart(3, '0');
+}
+
+// ============================================================
+// H.4 ENDPOINT GET: action=herr-datos
+// ============================================================
+function herr_doGet(params) {
+  try {
+    const ss = herr_abrirSS();
+    const hojaU = ss.getSheetByName(HERR_HOJA_UNIDADES);
+    if (!hojaU) return jsonResp({ ok: false, error: 'Falta la hoja "' + HERR_HOJA_UNIDADES + '". Ejecutá herr_prepararHojas() una vez.' });
+    const unidades = herr_leerUnidades(hojaU).filter(r => String(r[HERR_U.CODIGO] || '').trim() !== '').map(herr_filaAObjeto);
+    return jsonResp({ ok: true, catalogo: herr_catalogo(), unidades: unidades, stock: herr_calcularStock(unidades) });
+  } catch (err) {
+    Logger.log('ERROR herr_doGet: ' + err.message);
+    return jsonResp({ ok: false, error: err.message });
+  }
+}
+
+// ============================================================
+// H.5 ENDPOINT POST: accion=herr-movimiento
+// ============================================================
+// Se ejecuta dentro del LockService que ya toma doPost: la asignación de códigos consecutivos no puede duplicarse.
+// Todo se valida en memoria primero; si hay un solo error NO se escribe nada.
+function herr_procesarMovimiento(data, ss) {
+  const hojaU = ss.getSheetByName(HERR_HOJA_UNIDADES);
+  const hojaM = ss.getSheetByName(HERR_HOJA_MOVS);
+  if (!hojaU || !hojaM) return jsonResp({ ok: false, error: 'Faltan las hojas de herramientas. Ejecutá herr_prepararHojas() una vez.' });
+
+  let tipo = String(data.tipo_movimiento || '').trim().toUpperCase();
+  if (tipo === 'DEVOLUCION') tipo = 'DEVOLUCIÓN';
+  if (['ENTRADA', 'SALIDA', 'DEVOLUCIÓN'].indexOf(tipo) === -1) return jsonResp({ ok: false, error: 'Tipo de movimiento inválido.' });
+
+  const responsable = String(data.responsable || '').trim().toUpperCase();
+  const obra = String(data.obra || '').trim();
+  const items = data.items || [];
+  const errs = [];
+  if (!responsable) errs.push('Falta el responsable.');
+  if (!obra) errs.push('Falta la obra o destino.');
+  if (!items.length) errs.push('No hay productos para registrar.');
+
+  const filas = herr_leerUnidades(hojaU);
+  const nuevas = [];
+  const objs = () => filas.concat(nuevas).map(herr_filaAObjeto);
+  const idxCodigo = {};
+  filas.forEach((r, i) => { idxCodigo[String(r[HERR_U.CODIGO]).trim().toUpperCase()] = i; });
+  const usados = {};
+  filas.forEach(r => { usados[String(r[HERR_U.CODIGO]).trim().toUpperCase()] = true; });
+
+  // máximo numérico por sigla = máx(hoja, Excel original); se actualiza al asignar
+  const maxSig = {};
+  function maxDe(sigla) {
+    if (maxSig[sigla] === undefined) {
+      let m = HERR_CODIGO_MAX_EXCEL[sigla] || 0;
+      filas.concat(nuevas).forEach(r => {
+        const mt = String(r[HERR_U.CODIGO] || '').trim().toUpperCase().match(/^([A-Z]+)-(\d+)$/);
+        if (mt && mt[1] === sigla) m = Math.max(m, parseInt(mt[2], 10));
+      });
+      maxSig[sigla] = m;
+    }
+    return maxSig[sigla];
+  }
+
+  const regs = {};   // movimientos agrupados por familia|tipo|medida
+  function registrar(sigla, tipoU, medida, codigo, estado, ub) {
+    const k = sigla + '|' + tipoU + '|' + medida;
+    if (!regs[k]) regs[k] = { sigla: sigla, tipo: tipoU, medida: medida, codigos: [], estados: [], ub: ub || {} };
+    regs[k].codigos.push(codigo);
+    if (estado) regs[k].estados.push(codigo + ':' + estado);
+  }
+
+  const ahora = new Date();
+  const asignados = [];
+  let modificoExistentes = false;
+
+  items.forEach((it, n) => {
+    const rot = 'Ítem ' + (n + 1) + ': ';
+
+    // ---------------- ENTRADA ----------------
+    if (tipo === 'ENTRADA') {
+      const sigla = String(it.sigla || '').trim().toUpperCase();
+      if (!HERR_NOMBRES_FAMILIA[sigla]) { errs.push(rot + 'familia desconocida (' + sigla + ').'); return; }
+      const cant = parseInt(it.cantidad, 10);
+      if (!(cant >= 1 && cant <= 200)) { errs.push(rot + 'cantidad inválida.'); return; }
+      const ub = it.ubic || {};
+      if (!ub.deposito || !ub.estante || !ub.columna || !ub.fila) { errs.push(rot + 'la ubicación es obligatoria en ENTRADA.'); return; }
+      const tipoU = herr_canonTipo(sigla, it.tipo, objs());
+      if (!tipoU) { errs.push(rot + 'falta el tipo.'); return; }
+      const modo = herr_modo(sigla);
+      const medida = String(it.medida || '').trim().toUpperCase();
+      const detalle = String(it.detalle || '').trim().toUpperCase() || (tipoU + (medida ? ' ' + medida : ''));
+      const marca = String(it.marca || '').trim().toUpperCase();
+      const modelo = String(it.modelo || '').trim().toUpperCase();
+      const series = it.series || [];
+      const manuales = it.codigos || [];
+      if (!it.auto && manuales.length !== cant) { errs.push(rot + 'faltan códigos manuales (' + manuales.length + ' de ' + cant + ').'); return; }
+
+      for (let i = 0; i < cant; i++) {
+        let codigo, num;
+        if (it.auto) {
+          num = maxDe(sigla) + 1;
+          codigo = sigla + '-' + String(num).padStart(3, '0');
+        } else {
+          codigo = String(manuales[i] || '').trim().toUpperCase();
+          const mt = codigo.match(/^([A-Z]+)-(\d+)$/);
+          if (!mt || mt[1] !== sigla) { errs.push(rot + 'el código "' + codigo + '" debe tener el formato ' + sigla + '-123.'); continue; }
+          num = parseInt(mt[2], 10);
+        }
+        if (usados[codigo]) { errs.push(rot + 'el código ' + codigo + ' ya existe (o está repetido en este envío).'); continue; }
+        usados[codigo] = true;
+        maxSig[sigla] = Math.max(maxDe(sigla), num);
+        const fila = new Array(HERR_U.TOTAL).fill('');
+        fila[HERR_U.FECHA] = ahora;
+        fila[HERR_U.SIGLA] = sigla;
+        fila[HERR_U.NUM] = String(num).padStart(3, '0');
+        fila[HERR_U.CODIGO] = codigo;
+        fila[HERR_U.DETALLE] = detalle;
+        fila[HERR_U.CARACT] = modo === 'HERRAMIENTA' ? medida : '';
+        fila[HERR_U.MARCA] = marca;
+        fila[HERR_U.MODELO] = modelo;
+        fila[HERR_U.SERIE] = String(series[i] || '').trim().toUpperCase();
+        fila[HERR_U.ESTADO] = HERR_ESTADO_ALTA;
+        fila[HERR_U.LUGAR] = HERR_LUGAR_DEPOSITO;
+        fila[HERR_U.OBS] = String(data.observaciones || '').trim().toUpperCase();
+        fila[HERR_U.TIPO] = tipoU;
+        fila[HERR_U.UB_DEP] = ub.deposito; fila[HERR_U.UB_EST] = ub.estante;
+        fila[HERR_U.UB_COL] = ub.columna;  fila[HERR_U.UB_FIL] = ub.fila;
+        nuevas.push(fila);
+        asignados.push(codigo);
+        registrar(sigla, tipoU, modo === 'HERRAMIENTA' ? medida : '', codigo, '', ub);
+      }
+      return;
+    }
+
+    // ---------------- SALIDA ----------------
+    if (tipo === 'SALIDA') {
+      const codigos = it.codigos || [];
+      if (!codigos.length) { errs.push(rot + 'no elegiste unidades.'); return; }
+      if (it.cantidad && parseInt(it.cantidad, 10) !== codigos.length) { errs.push(rot + 'la cantidad no coincide con las unidades elegidas.'); return; }
+      codigos.forEach(c => {
+        const cod = String(c).trim().toUpperCase();
+        const i = idxCodigo[cod];
+        if (i === undefined) { errs.push(rot + cod + ' no existe en Unidades Herramientas.'); return; }
+        const o = herr_filaAObjeto(filas[i]);
+        if (o.poder) { errs.push(rot + cod + ' ya está en poder de ' + o.poder + '.'); return; }
+        if (!o.disp) { errs.push(rot + cod + ' no está disponible (estado ' + o.estado + ').'); return; }
+        filas[i][HERR_U.LUGAR] = HERR_PREFIJO_PODER + responsable;
+        filas[i][HERR_U.UB_DEP] = ''; filas[i][HERR_U.UB_EST] = ''; filas[i][HERR_U.UB_COL] = ''; filas[i][HERR_U.UB_FIL] = '';
+        modificoExistentes = true;
+        registrar(o.sigla, o.tipo, herr_modo(o.sigla) === 'HERRAMIENTA' ? o.medida : '', cod, '', {});
+      });
+      return;
+    }
+
+    // ---------------- DEVOLUCIÓN ----------------
+    const ub = it.ubic || {};
+    if (!ub.deposito || !ub.estante || !ub.columna || !ub.fila) { errs.push(rot + 'la ubicación es obligatoria en DEVOLUCIÓN.'); return; }
+    const lista = it.codigos || [];
+    if (!lista.length) { errs.push(rot + 'no elegiste unidades a devolver.'); return; }
+    lista.forEach(x => {
+      const cod = String(x.codigo || '').trim().toUpperCase();
+      const est = String(x.estado || '').trim().toUpperCase();
+      const i = idxCodigo[cod];
+      if (i === undefined) { errs.push(rot + cod + ' no existe en Unidades Herramientas.'); return; }
+      if (HERR_ESTADOS_DEVOLUCION.indexOf(est) === -1) { errs.push(rot + cod + ': el estado de devolución debe ser ' + HERR_ESTADOS_DEVOLUCION.join(' o ') + '.'); return; }
+      const o = herr_filaAObjeto(filas[i]);
+      if (o.poder !== responsable) { errs.push(rot + cod + ' no está en poder de ' + responsable + '.'); return; }
+      filas[i][HERR_U.ESTADO] = est;
+      filas[i][HERR_U.LUGAR] = HERR_LUGAR_DEPOSITO;
+      filas[i][HERR_U.UB_DEP] = ub.deposito; filas[i][HERR_U.UB_EST] = ub.estante;
+      filas[i][HERR_U.UB_COL] = ub.columna;  filas[i][HERR_U.UB_FIL] = ub.fila;
+      modificoExistentes = true;
+      registrar(o.sigla, o.tipo, herr_modo(o.sigla) === 'HERRAMIENTA' ? o.medida : '', cod, est, ub);
+    });
+  });
+
+  if (errs.length) return jsonResp({ ok: false, error: errs.join(' • '), errores: errs });
+
+  // ---- Escritura (solo si todo validó) ----
+  if (modificoExistentes) hojaU.getRange(2, 1, filas.length, HERR_U.TOTAL).setValues(filas);
+  if (nuevas.length) {
+    const primera = hojaU.getLastRow() + 1;
+    const faltan = primera + nuevas.length - 1 - hojaU.getMaxRows();
+    if (faltan > 0) hojaU.insertRowsAfter(hojaU.getMaxRows(), faltan + 200);
+    hojaU.getRange(primera, HERR_U.NUM + 1, nuevas.length, 1).setNumberFormat('@');
+    hojaU.getRange(primera, HERR_U.CODIGO + 1, nuevas.length, 1).setNumberFormat('@');
+    hojaU.getRange(primera, 1, nuevas.length, HERR_U.TOTAL).setValues(nuevas);
+  }
+
+  const prefijo = tipo === 'ENTRADA' ? 'HING' : (tipo === 'SALIDA' ? 'HSAL' : 'HDEV');
+  const idMov = herr_generarIdMov(hojaM, prefijo);
+  const tz = Session.getScriptTimeZone();
+  const fechaTxt = Utilities.formatDate(ahora, tz, 'dd/MM/yyyy HH:mm:ss');
+  Object.keys(regs).forEach(k => {
+    const r = regs[k];
+    hojaM.appendRow([
+      idMov, fechaTxt, tipo, responsable, obra, herr_nombreFamilia(r.sigla), r.tipo, r.medida,
+      r.codigos.length, r.codigos.join(', '), r.estados.join(', '),
+      r.ub.deposito || '', r.ub.estante || '', r.ub.columna || '', r.ub.fila || '',
+      String(data.observaciones || '').trim().toUpperCase()
+    ]);
+  });
+
+  herr_escribirStock(ss, filas.concat(nuevas).map(herr_filaAObjeto));
+  return jsonResp({ ok: true, id: idMov, codigos: asignados });
+}
+
+// ============================================================
+// H.6 PREPARAR HOJAS (ejecutar UNA vez desde el editor)
+// ============================================================
+// Crea las 3 hojas nuevas con sus encabezados y VACÍAS. No toca "Movimientos" ni "Stock".
+// Los datos se cargan después desde el formulario.
+function herr_prepararHojas() {
+  const ss = herr_abrirSS();
+  const defs = [
+    { nombre: HERR_HOJA_UNIDADES, cols: HERR_COLS_UNIDADES, color: '#1a1a2e',
+      anchos: [100, 60, 60, 90, 300, 160, 120, 110, 110, 100, 110, 80, 130, 130, 200, 220, 220, 90, 90, 90, 80] },
+    { nombre: HERR_HOJA_MOVS, cols: HERR_COLS_MOVS, color: '#1a1a2e',
+      anchos: [90, 150, 100, 130, 150, 190, 260, 130, 80, 300, 220, 80, 80, 80, 60, 220] },
+    { nombre: HERR_HOJA_STOCK, cols: HERR_COLS_STOCK, color: '#2563eb',
+      anchos: [190, 280, 130, 110, 110, 100, 110, 260, 110, 70] }
+  ];
+  defs.forEach(d => {
+    let h = ss.getSheetByName(d.nombre);
+    if (!h) h = ss.insertSheet(d.nombre);
+    if (h.getLastRow() === 0) {
+      h.getRange(1, 1, 1, d.cols.length).setValues([d.cols])
+        .setFontWeight('bold').setBackground(d.color).setFontColor('#ffffff');
+      h.setFrozenRows(1);
+      d.anchos.forEach((w, i) => h.setColumnWidth(i + 1, w));
+    }
+  });
+  const hu = ss.getSheetByName(HERR_HOJA_UNIDADES);
+  // NUM. y CODIGO como texto (para conservar "002"); fechas en dd/MM/yyyy
+  hu.getRange(1, HERR_U.NUM + 1, hu.getMaxRows(), 1).setNumberFormat('@');
+  hu.getRange(1, HERR_U.CODIGO + 1, hu.getMaxRows(), 1).setNumberFormat('@');
+  hu.getRange(2, HERR_U.FECHA + 1, hu.getMaxRows() - 1, 1).setNumberFormat('dd/MM/yyyy');
+  hu.getRange(2, HERR_U.MTO + 1, hu.getMaxRows() - 1, 1).setNumberFormat('dd/MM/yyyy');
+  Logger.log('Hojas de herramientas listas (vacías). Movimientos y Stock actuales: sin tocar.');
+}
+// ===== FIN HERRAMIENTAS =====

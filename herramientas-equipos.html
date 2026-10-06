@@ -605,7 +605,7 @@
             $('lbl-resp').innerHTML = (m === 'SALIDA' ? 'Responsable (quién se lleva)' : m === 'DEVOLUCION' ? 'Responsable (quién devuelve)' : 'Responsable') + ' <span class="req">*</span>';
             $('ayuda-prod').textContent = !m ? 'Elegí primero el tipo de movimiento.' :
                 m === 'ENTRADA' ? 'Tocá para desplegar. La ubicación es obligatoria en ENTRADA.' :
-                    m === 'SALIDA' ? 'Elegí herramientas por tipo y cantidad (después marcás los códigos) o equipos por código. La ubicación no hace falta.' :
+                    m === 'SALIDA' ? 'Elegí el tipo y marcá las unidades que salen. La ubicación no hace falta.' :
                         'Elegí el responsable arriba: se muestra lo que tiene en su poder. La ubicación es obligatoria.';
             renderBloques();
         }
@@ -618,10 +618,9 @@
             const itemsC = (k, lbl) => `<div id="items_${k}"></div><button class="btn-add" onclick="addItem('${k}')">+ ${lbl}</button>`;
             let h = '';
             if (m === 'DEVOLUCION') {
-                h = acc('b_her', '🔨 Herramientas manuales', '<div id="dev_her"></div>') + acc('b_eq', '⚙️ Equipos', '<div id="dev_eq"></div>');
+                h = acc('b_her', '🔧 Herramientas y equipos', '<div id="dev_her"></div>');
             } else {
-                h = acc('b_her', '🔨 Herramientas manuales (tipo + cantidad)', itemsC('her', 'Agregar herramienta')) +
-                    acc('b_eq', '⚙️ Equipos (por código)', itemsC('eq', 'Agregar equipo'));
+                h = acc('b_her', '🔧 Herramientas y equipos', itemsC('her', 'Agregar herramienta o equipo'));
                 if (m === 'ENTRADA') h += acc('b_nuevo', '➕ Herramienta/equipo no listado', '<div class="badge-new">⚠ Alta de un tipo nuevo</div>' + itemsC('nuevo', 'Agregar no listado'));
             }
             box.innerHTML = h;
@@ -641,9 +640,9 @@
         }
         function irNoListado(ev) {
             if (ev) ev.preventDefault();
-            // saca los bloques de herramientas/equipos en los que no se eligió nada
-            document.querySelectorAll('#items_her .item-block, #items_eq .item-block').forEach(b => {
-                if (!selValor(b.id + '_tipo') && !selValor(b.id + '_fam') && !selValor(b.id + '_eqs')) b.remove();
+            // saca los bloques de herramienta/equipo donde no se eligió nada
+            document.querySelectorAll('#items_her .item-block').forEach(b => {
+                if (!selValor(b.id + '_tipo')) b.remove();
             });
             const btn = document.querySelector('#bloques .acordeon-btn[onclick*="b_nuevo"]');
             if (btn) { if (!$('b_nuevo').classList.contains('open')) btn.click(); btn.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
@@ -682,6 +681,12 @@
             DATA.stock.filter(s => s.modo === 'HERRAMIENTA').forEach(s => { m[s.sigla + '|' + s.tipo] = s.tipo; });
             return Object.keys(m).sort((a, b) => nrm(m[a]).localeCompare(nrm(m[b]))).map(v => ({ v, l: m[v] }));
         }
+        function tiposEntrada() {
+            const eq = DATA.catalogo.familias.filter(f => f.modo === 'EQUIPO')
+                .map(f => ({ v: f.s + '|' + f.n, l: f.n + ' — equipo' }))
+                .sort((a, b) => nrm(a.l).localeCompare(nrm(b.l)));
+            return tiposManualesEntrada().concat(eq);
+        }
         function medidasConocidas(sigla, tipo) {
             const set = new Set((DATA.catalogo.manuales && DATA.catalogo.manuales[tipo]) || []);
             DATA.stock.filter(s => s.sigla === sigla && s.tipo === tipo && s.medida).forEach(s => set.add(s.medida));
@@ -713,7 +718,7 @@
         // ============================================================
         // 3.6 MÓDULO: FORMULARIO — ÍTEMS
         // ============================================================
-        const TITULOS = { her: 'Herramienta', eq: 'Equipo', nuevo: 'No listado' };
+        const TITULOS = { her: 'Herramienta o equipo', eq: 'Equipo', nuevo: 'No listado' };
 
         function addItem(kind) {
             const id = 'it' + (++seq), m = tipoMov();
@@ -731,8 +736,9 @@
         function entradaHtml(kind, id) {
             let h = '';
             if (kind === 'her') {
-                h += lbl('Tipo de herramienta', 1) + selBuild(id + '_tipo', tiposManualesEntrada(), `data-f="tipo" onchange="onTipoHer('${id}')"`);
-                h += lbl('Medida / característica', 0, 'opcional') + `<input type="text" data-f="medida" list="dl_${id}" placeholder="Ej: 300 MM"><datalist id="dl_${id}"></datalist>`;
+                h += lbl('Herramienta o equipo', 1) + selBuild(id + '_tipo', tiposEntrada(), `data-f="tipo" onchange="onTipoHer('${id}')"`);
+                h += `<div data-w="medida_w">${lbl('Medida / característica', 0, 'opcional')}<input type="text" data-f="medida" list="dl_${id}" placeholder="Ej: 300 MM"><datalist id="dl_${id}"></datalist></div>`;
+                h += `<div data-w="equipo_w" style="display:none">${lbl('Descripción', 1)}<input type="text" data-f="detalle" placeholder="Ej: AMOLADORA ANGULAR 115 MM 1020 W">${lbl('Modelo', 0, 'opcional')}<input type="text" data-f="modelo"></div>`;
             } else {
                 h += lbl('Familia', 1) + selBuild(id + '_fam', famOpts(kind === 'eq'), `data-f="familia" onchange="onFamNuevo('${id}')"`);
                 if (kind === 'nuevo') {
@@ -758,7 +764,10 @@
         function onTipoHer(id) {
             const b = $(id), v = selValor(id + '_tipo');
             const dl = $('dl_' + id);
-            if (v) { const [s, t] = v.split('|'); dl.innerHTML = medidasConocidas(s, t).map(m => `<option value="${esc(m)}">`).join(''); }
+            const esEq = !!v && !ES_MANUAL(v.split('|')[0]);
+            b.querySelector('[data-w="medida_w"]').style.display = esEq ? 'none' : 'block';
+            b.querySelector('[data-w="equipo_w"]').style.display = esEq ? 'block' : 'none';
+            if (v && !esEq) { const [s, t] = v.split('|'); dl.innerHTML = medidasConocidas(s, t).map(m => `<option value="${esc(m)}">`).join(''); }
             else dl.innerHTML = '';
             renderDin(id);
         }
@@ -799,28 +808,22 @@
 
         // ── 3.6.2 SALIDA ──
         function salidaHtml(kind, id) {
-            if (kind === 'her') {
-                const opts = DATA.stock.filter(s => s.modo === 'HERRAMIENTA' && s.deposito > 0).map(s => ({
-                    v: s.sigla + '|' + s.tipo + '|' + (s.medida || ''), l: s.tipo + (s.medida ? ' — ' + s.medida : '') + ' (' + s.deposito + ' disp.)'
-                }));
-                return lbl('Tipo de herramienta', 1) + selBuild(id + '_tipo', opts, `data-f="tipo" onchange="salidaHerRefrescar('${id}')"`) +
-                    lbl('Cantidad', 1) + `<input type="number" data-f="cantidad" min="1" placeholder="0" oninput="salidaHerRefrescar('${id}')">` +
-                    '<div class="lista-unidades" data-w="unidades"></div>';
-            }
-            const opts = DATA.unidades.filter(u => !ES_MANUAL(u.sigla) && u.disp && !u.poder).map(u => ({
-                v: u.codigo, l: u.codigo + ' — ' + u.detalle + (u.marca ? ' (' + u.marca + ')' : '')
+            const opts = DATA.stock.filter(s => s.deposito > 0).map(s => ({
+                v: s.sigla + '|' + s.tipo + '|' + (s.medida || ''),
+                l: s.tipo + (s.medida ? ' — ' + s.medida : '') + ' (' + s.deposito + ' disp.)'
             }));
-            return lbl('Equipo disponible (código)', 1) + selBuild(id + '_eqs', opts, 'data-f="codigo_eq"');
+            return lbl('Herramienta o equipo', 1) + selBuild(id + '_tipo', opts, `data-f="tipo" onchange="salidaHerRefrescar('${id}')"`) +
+                '<div class="lista-unidades" data-w="unidades"></div>';
         }
         function salidaHerRefrescar(id) {
-            const b = $(id), v = selValor(id + '_tipo'), cant = parseInt(q(b, 'cantidad').value, 10) || 0;
+            const b = $(id), v = selValor(id + '_tipo');
             const cont = b.querySelector('[data-w="unidades"]');
-            if (!v || cant < 1) { cont.innerHTML = ''; return; }
+            if (!v) { cont.innerHTML = ''; return; }
             const [s, t, m] = v.split('|');
-            const us = DATA.unidades.filter(u => u.sigla === s && u.tipo === t && (u.medida || '') === m && u.disp && !u.poder);
-            if (cant > us.length) { cont.innerHTML = `<p class="hint" style="color:#dc2626">Solo hay ${us.length} disponibles.</p>`; return; }
-            cont.innerHTML = `<p class="hint">Marcá ${cant} unidad${cant !== 1 ? 'es' : ''} (${cant} requerida${cant !== 1 ? 's' : ''}):</p>` +
-                us.map(u => `<label class="u-check"><input type="checkbox" data-cod="${esc(u.codigo)}" onchange="limitarChecks('${id}',${cant})"><span class="u-txt"><b>${esc(u.codigo)}</b> · ${esc(u.marca || 'Sin marca')}${u.medida ? ' · ' + esc(u.medida) : ''}</span></label>`).join('');
+            const us = DATA.unidades.filter(u => u.sigla === s && u.tipo === t && (!ES_MANUAL(s) || (u.medida || '') === m) && u.disp && !u.poder);
+            if (!us.length) { cont.innerHTML = '<p class="hint" style="color:#dc2626">No hay unidades disponibles.</p>'; return; }
+            cont.innerHTML = '<p class="hint">Marcá las unidades que salen:</p>' +
+                us.map(u => `<label class="u-check"><input type="checkbox" data-cod="${esc(u.codigo)}" onchange="this.parentElement.classList.toggle('sel',this.checked)"><span class="u-txt"><b>${esc(u.codigo)}</b> · ${esc(u.marca || 'Sin marca')}${u.medida ? ' · ' + esc(u.medida) : ''}${(!ES_MANUAL(s) && u.detalle) ? ' · ' + esc(u.detalle) : ''}</span></label>`).join('');
         }
         function limitarChecks(id, cant) {
             const cs = [...$(id).querySelectorAll('input[data-cod]')];
@@ -831,11 +834,11 @@
         // ── 3.6.3 DEVOLUCIÓN ──
         function renderDevolucion() {
             const r = responsableActual();
-            [['her', true], ['eq', false]].forEach(([k, manual]) => {
+            [['her', true]].forEach(([k]) => {
                 const cont = $('dev_' + k); if (!cont) return;
                 if (!r) { cont.innerHTML = '<p class="hint">Elegí el responsable arriba.</p>'; return; }
-                const us = DATA.unidades.filter(u => u.poder === r && ES_MANUAL(u.sigla) === manual);
-                if (!us.length) { cont.innerHTML = `<p class="hint">${esc(r)} no tiene ${manual ? 'herramientas' : 'equipos'} en su poder.</p>`; return; }
+                const us = DATA.unidades.filter(u => u.poder === r);
+                if (!us.length) { cont.innerHTML = `<p class="hint">${esc(r)} no tiene nada en su poder.</p>`; return; }
                 cont.innerHTML = `<p class="hint">En poder de ${esc(r)} — tildá lo que devuelve y en qué estado vuelve:</p>` +
                     us.map(u => `<label class="u-check"><input type="checkbox" data-cod="${esc(u.codigo)}" onchange="this.parentElement.classList.toggle('sel',this.checked)">` +
                         `<span class="u-txt"><b>${esc(u.codigo)}</b> · ${esc(u.tipo)}${u.medida ? ' ' + esc(u.medida) : ''}${u.marca ? ' · ' + esc(u.marca) : ''}</span>` +
@@ -855,7 +858,7 @@
             const faltaUbic = (u, pref) => ['deposito', 'estante', 'columna', 'fila'].forEach(c => { if (!u[c]) errs.push(pref + ' → Ubicación → ' + c); });
 
             if (m === 'DEVOLUCION') {
-                [['her', 'Herramientas'], ['eq', 'Equipos']].forEach(([k, nom]) => {
+                [['her', 'Herramientas y equipos']].forEach(([k, nom]) => {
                     const cont = $('dev_' + k); if (!cont) return;
                     const checks = [...cont.querySelectorAll('input[data-cod]:checked')];
                     if (!checks.length) return;
@@ -871,7 +874,13 @@
                         if (kind === 'her') {
                             const v = selValor(b.id + '_tipo');
                             if (!v) { errs.push(pref + ' → Tipo'); $(b.id + '_tipo').classList.add('err'); } else tipo = v.split('|').slice(1).join('|');
-                            medida = q(b, 'medida').value.trim();
+                            if (sigla && !ES_MANUAL(sigla)) {
+                                detalle = q(b, 'detalle').value.trim();
+                                if (!detalle) { errs.push(pref + ' → Descripción'); q(b, 'detalle').classList.add('err'); }
+                                const mo = q(b, 'modelo'); modelo = mo ? mo.value.trim() : '';
+                            } else {
+                                medida = q(b, 'medida').value.trim();
+                            }
                         } else {
                             if (!sigla) { errs.push(pref + ' → Familia'); $(b.id + '_fam').classList.add('err'); }
                             detalle = q(b, 'detalle').value.trim();
@@ -897,21 +906,13 @@
                         const ub = readUbic(b); faltaUbic(ub, pref);
                         items.push({ sigla, tipo, medida, detalle, modelo, marca, cantidad: cant, auto, codigos, series: [...b.querySelectorAll('[data-f="serie"]')].map(i => i.value.trim()), ubic: ub });
                     } else { // SALIDA
-                        if (kind === 'her') {
-                            const v = selValor(b.id + '_tipo'), cant = parseInt(q(b, 'cantidad').value, 10);
-                            if (!v) { errs.push(pref + ' → Tipo'); $(b.id + '_tipo').classList.add('err'); return; }
-                            if (!(cant >= 1)) { errs.push(pref + ' → Cantidad'); q(b, 'cantidad').classList.add('err'); return; }
-                            const marcados = [...b.querySelectorAll('input[data-cod]:checked')].map(c => c.dataset.cod);
-                            if (marcados.length !== cant) { errs.push(pref + ' → Marcá exactamente ' + cant + ' unidad(es) (marcaste ' + marcados.length + ')'); return; }
-                            marcados.forEach(c => { if (vistos[c]) errs.push(pref + ' → ' + c + ' repetido en otro ítem'); vistos[c] = 1; });
-                            const [s, t, med] = v.split('|');
-                            items.push({ sigla: s, tipo: t, medida: med, cantidad: cant, codigos: marcados });
-                        } else {
-                            const c = selValor(b.id + '_eqs');
-                            if (!c) { errs.push(pref + ' → Equipo'); $(b.id + '_eqs').classList.add('err'); return; }
-                            if (vistos[c]) errs.push(pref + ' → ' + c + ' repetido en otro ítem'); vistos[c] = 1;
-                            items.push({ codigos: [c] });
-                        }
+                        const v = selValor(b.id + '_tipo');
+                        if (!v) { errs.push(pref + ' → Tipo'); $(b.id + '_tipo').classList.add('err'); return; }
+                        const marcados = [...b.querySelectorAll('input[data-cod]:checked')].map(c => c.dataset.cod);
+                        if (!marcados.length) { errs.push(pref + ' → Marcá al menos una unidad'); return; }
+                        marcados.forEach(c => { if (vistos[c]) errs.push(pref + ' → ' + c + ' repetido en otro ítem'); vistos[c] = 1; });
+                        const [s, t, med] = v.split('|');
+                        items.push({ sigla: s, tipo: t, medida: med, cantidad: marcados.length, codigos: marcados });
                     }
                 });
             }
