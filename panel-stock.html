@@ -1888,27 +1888,92 @@
             return res.json();
         }
 
+        function mostrarCartelFallaConexion(msg) {
+            let el = document.getElementById('cartelFalla');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'cartelFalla';
+                el.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;'
+            'background:var(--bad-bg);color:var(--bad-fg);border:1px solid var(--bad-fg);' +
+            'border-radius:10px;padding:10px 14px;font-size:12.5px;font-weight:600;' +
+            'display:flex;gap:12px;align-items:center;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.35);';
+            el.innerHTML = '<span id="cartelFallaTxt"></span>' +
+            '<button type="button" class="btn small ghost" onclick="this.parentElement.style.display=\'none\'">Cerrar</button>';
+            document.body.appendChild(el);
+            }
+            document.getElementById('cartelFallaTxt').textContent =
+            msg || '⚠️ Problema de conexión. Revisá el historial de Movimientos antes de reenviar.';
+            el.style.display = 'flex';
+        }
+
         async function apiPost(payload) {
             if (isDemo) {
                 await new Promise(r => setTimeout(r, 400));
                 return { ok: true, id: 'DEMO-000', envio: 'ENV-DEMO' };
             }
             if (!navigator.onLine) {
-                mostrarCartelFallaConexion();
+                mostrarCartelFallaConexion('Sin conexión a internet. No se enviaron los datos.');
                 throw new Error('Sin conexión a internet. No se enviaron los datos.');
             }
             if (!payload._txid) payload._txid = generarTxid();
+
+            let text, res;
             try {
-                const res = await fetch(CONFIG.WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(payload)
+                res = await fetch(CONFIG.WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
                 });
-                return await res.json();
+                text = await res.text();
             } catch (err) {
-                mostrarCartelFallaConexion();
-                throw err;
+                console.error('[apiPost] fetch falló:', err);
+                const e = new Error('No se pudo confirmar la respuesta del servidor.');
+                e.ambiguo = true;   // puede que el servidor sí haya guardado
+                throw e;
             }
+            try {
+                return JSON.parse(text);
+            } catch (err) {
+                console.error('[apiPost] respuesta no JSON. HTTP', res.status, text.slice(0, 300));
+                const e = new Error('Respuesta inesperada del servidor.');
+                e.ambiguo = true;
+                throw e;
+            }
+        }
+
+        const _ultimoEnvio = { firma: '', txid: '' };
+
+        function asignarTxid(payload) {
+            const { fecha, _txid, ...resto } = payload;   // "fecha" cambia en cada click
+            const firma = JSON.stringify(resto);
+            if (_ultimoEnvio.firma !== firma) {
+                _ultimoEnvio.firma = firma;
+                _ultimoEnvio.txid = generarTxid();
+            }
+            payload._txid = _ultimoEnvio.txid;
+        }
+
+        const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+        async function apiPostSeguro(payload, intentos = 3) {
+            asignarTxid(payload);
+            for (let i = 0; i < intentos; i++) {
+                try {
+                    const resp = await apiPost(payload);
+                    if (resp && resp.ok === false && /ocupado/i.test(resp.error || '')) {
+                        await esperar(2000 * (i + 1));
+                        continue;
+                    }
+                    if (resp && resp.ok) _ultimoEnvio.firma = '';
+                    return resp;
+                } catch (err) {
+                    if (!err.ambiguo) throw err;
+                    await esperar(2000 * (i + 1));
+                }
+            }
+            await cargarTodo(true);
+            mostrarCartelFallaConexion('No pudimos confirmar la respuesta. Revisá Movimientos antes de reenviar.');
+            throw new Error('No se pudo confirmar. Revisá Movimientos antes de reenviar.');
         }
 
         function generarTxid() {
@@ -3333,7 +3398,7 @@
                     items
                 };
 
-                const resp = await apiPost(payload);
+                const resp = await apiPostSeguro(payload);
                 if (!resp.ok) throw new Error(resp.error || 'Error al guardar');
 
                 if (isDemo) {
@@ -3576,7 +3641,7 @@
                     obs_general: obsGeneral,
                     items: [{ id: p.id, cantidad }],
                 };
-                const resp = await apiPost(payload);
+                const resp = await apiPostSeguro(payload);
                 if (!resp.ok) throw new Error(resp.error || 'Error al guardar');
 
                 if (isDemo) {
@@ -4171,7 +4236,6 @@
         // Inicializar puntos con tema por defecto al cargar
         applyTheme('maestroSlate');
     </script>
-    <script src="conexion-protegida.js"></script>
 </body>
 
 </html>

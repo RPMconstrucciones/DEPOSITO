@@ -746,7 +746,7 @@ if (params.action === 'movimientos') {
 function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
-    lock.waitLock(10000);
+    lock.waitLock(30000);
   } catch (_) {
     return ContentService
       .createTextOutput(JSON.stringify({ ok: false, error: 'Sistema ocupado, intentá en unos segundos.' }))
@@ -1235,76 +1235,111 @@ function ajusteRapidoStockOpcionB(data, ss) {
 
   dep_inicializarHojaMovimientos(hojaMov);
 
-  const tipoRaw = data.tipo_movimiento || '';
-  const tipo = tipoRaw === 'DEVOLUCION' ? 'DEVOLUCIÓN' : tipoRaw; 
-  const zona = data.zona || '';
-  const ahora = new Date();
-  const timezone = Session.getScriptTimeZone();
-  const fechaHoy = Utilities.formatDate(ahora, timezone, 'dd/MM/yyyy');
+  const tipoRaw   = data.tipo_movimiento || '';
+  const tipo      = tipoRaw === 'DEVOLUCION' ? 'DEVOLUCIÓN' : tipoRaw;
+  const timezone  = Session.getScriptTimeZone();
+  const ahora     = new Date();
+  const fechaHoy  = Utilities.formatDate(ahora, timezone, 'dd/MM/yyyy');
   const horaAhora = Utilities.formatDate(ahora, timezone, 'HH:mm');
-  const nroEnvio = dep_generarNroEnvio();
-  const idPedido = dep_generarIdPedido(hojaMov, tipo);
 
   const ultimaFila = hojaStock.getLastRow();
-  const datos = ultimaFila > 1 ? hojaStock.getRange(2, 1, ultimaFila - 1, DEP_COL_STOCK.TOTAL).getValues() : [];
+  const datos = ultimaFila > 1
+    ? hojaStock.getRange(2, 1, ultimaFila - 1, DEP_COL_STOCK.TOTAL).getValues()
+    : [];
+  const indicePorId = {};
+  datos.forEach((r, i) => {
+    indicePorId[String(r[DEP_COL_STOCK.ID - 1]).trim().toUpperCase()] = i;
+  });
 
-  const noEncontrados = [];
+  // 1) VALIDAR TODO ANTES DE ESCRIBIR
+  const items = data.items || [];
+  const noEncontrados = items
+    .map(it => String(it.id || '').trim().toUpperCase())
+    .filter(id => indicePorId[id] === undefined);
+  if (noEncontrados.length > 0) {
+    return jsonResp({ ok: false, error: `No se encontraron estos productos: ${noEncontrados.join(', ')}` });
+  }
+
+  const nroEnvio = dep_generarNroEnvio();
+  const idPedido = dep_generarIdPedido(hojaMov, tipo);
 
   const partesObsMov = [];
   if (data.solicitante)   partesObsMov.push('Solicitante: ' + String(data.solicitante).trim());
   if (data.equipo)        partesObsMov.push('Equipo: ' + String(data.equipo).trim());
   if (data.tipo_servicio) partesObsMov.push('Servicio: ' + String(data.tipo_servicio).trim());
   if (data.km_hs)         partesObsMov.push('Km/Hs: ' + String(data.km_hs).trim());
-  const obsMov = partesObsMov.join(' | ');
-  // La factura aplica a ENTRADA, SALIDA y DEVOLUCIÓN, y solo se guarda en Movimientos (nunca en Stock)
-  const factura = String(data.factura || '').trim();
+  const obsMov     = partesObsMov.join(' | ');
+  const factura    = String(data.factura || '').trim();
+  const obsGeneral = String(data.obs_general || '').trim();
+  const fechaMov   = dep_normalizarFecha(data.fecha, timezone);
 
-  (data.items || []).forEach(item => {
-    const idBuscado = String(item.id || '').trim().toUpperCase();
-    const fila = datos.find(r => String(r[DEP_COL_STOCK.ID - 1]).trim().toUpperCase() === idBuscado);
+  const filasMov = [];
 
-    if (!fila) {
-      noEncontrados.push(idBuscado);
-      return;
-    }
+  // 2) STOCK: por número de fila, sin releer la hoja
+  items.forEach(item => {
+    const i       = indicePorId[String(item.id || '').trim().toUpperCase()];
+    const fila    = datos[i];
+    const filaNum = i + 2;
+    const cantidad = Number(item.cantidad) || 0;
 
     const zonaItem    = String(fila[DEP_COL_STOCK.ZONA        - 1] || data.zona || '');
     const familia     = String(fila[DEP_COL_STOCK.FAMILIA     - 1] || '');
     const marca       = String(fila[DEP_COL_STOCK.MARCA       - 1] || '');
     const descripcion = String(fila[DEP_COL_STOCK.DESCRIPCION - 1] || '');
     const unidad      = String(fila[DEP_COL_STOCK.UNIDAD      - 1] || item.unidad || '');
-
-    const ubicacion = {
+    const ub = {
       deposito: String(fila[DEP_COL_STOCK.UBIC_DEPOSITO - 1] || ''),
       estante:  String(fila[DEP_COL_STOCK.UBIC_ESTANTE  - 1] || ''),
       columna:  String(fila[DEP_COL_STOCK.UBIC_COLUMNA  - 1] || ''),
       fila:     String(fila[DEP_COL_STOCK.UBIC_FILA     - 1] || '')
     };
 
-    hojaMov.appendRow([
-      idPedido, dep_normalizarFecha(data.fecha, timezone), tipo, data.responsable || '', data.obra || '', zonaItem,
+    filasMov.push([
+      idPedido, fechaMov, tipo, data.responsable || '', data.obra || '', zonaItem,
       familia, marca, descripcion,
-      item.cantidad, unidad, obsMov, data.obs_general || '', nroEnvio,
-      ubicacion.deposito, ubicacion.estante, ubicacion.columna, ubicacion.fila,
+      cantidad, unidad, obsMov, obsGeneral, nroEnvio,
+      ub.deposito, ub.estante, ub.columna, ub.fila,
       factura
     ]);
 
-    if (factura) {
-      const celdaFacturaR = hojaMov.getRange(hojaMov.getLastRow(), DEP_COL_MOV.NRO_FACTURA);
-      celdaFacturaR.setNumberFormat('@');
-      celdaFacturaR.setValue(factura);
+    let entradas     = Number(fila[DEP_COL_STOCK.ENTRADAS     - 1]) || 0;
+    let salidas      = Number(fila[DEP_COL_STOCK.SALIDAS      - 1]) || 0;
+    let devoluciones = Number(fila[DEP_COL_STOCK.DEVOLUCIONES - 1]) || 0;
+    if      (tipo === 'ENTRADA')    entradas     += cantidad;
+    else if (tipo === 'SALIDA')     salidas      += cantidad;
+    else if (tipo === 'DEVOLUCIÓN') devoluciones += cantidad;
+    const stockActual = entradas - salidas + devoluciones;
+
+    fila[DEP_COL_STOCK.ENTRADAS     - 1] = entradas;
+    fila[DEP_COL_STOCK.SALIDAS      - 1] = salidas;
+    fila[DEP_COL_STOCK.DEVOLUCIONES - 1] = devoluciones;
+
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.ENTRADAS, 1, 4)
+      .setValues([[entradas, salidas, devoluciones, stockActual]]);
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.ESTADO)
+      .setFormula(`=IF(K${filaNum}<=L${filaNum},"REPONER","OK")`);
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_MOVIMIENTO).setValue(tipo);
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_FECHA, 1, 2).setValues([[fechaHoy, horaAhora]]);
+    if (obsGeneral) {
+      hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_MOV_OBS).setValue(obsGeneral);
     }
 
-    dep_actualizarStock(
-      hojaStock, zonaItem, familia, marca, descripcion,
-      tipo, Number(item.cantidad) || 0, fechaHoy, horaAhora,
-      ubicacion, unidad, '', data.obs_general || '', ''
-    );
-
+    const sinStock = stockActual <= 0;
+    hojaStock.getRangeList(['K' + filaNum, 'M' + filaNum])
+      .setBackground(sinStock ? '#fee2e2' : '#dcfce7')
+      .setFontColor(sinStock ? '#dc2626' : '#15803d')
+      .setFontWeight('bold');
   });
 
-  if (noEncontrados.length > 0) {
-    return jsonResp({ ok: false, error: `No se encontraron estos productos: ${noEncontrados.join(', ')}` });
+  // 3) MOVIMIENTOS: una sola escritura para todo el lote
+  if (filasMov.length > 0) {
+    const primera = hojaMov.getLastRow() + 1;
+    const faltan  = primera + filasMov.length - 1 - hojaMov.getMaxRows();
+    if (faltan > 0) hojaMov.insertRowsAfter(hojaMov.getMaxRows(), faltan);
+    if (factura) {
+      hojaMov.getRange(primera, DEP_COL_MOV.NRO_FACTURA, filasMov.length, 1).setNumberFormat('@');
+    }
+    hojaMov.getRange(primera, 1, filasMov.length, DEP_COL_MOV.TOTAL).setValues(filasMov);
   }
 
   return jsonResp({ ok: true, id: idPedido, envio: nroEnvio });
