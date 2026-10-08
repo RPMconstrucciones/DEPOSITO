@@ -1893,13 +1893,13 @@
             if (!el) {
                 el = document.createElement('div');
                 el.id = 'cartelFalla';
-                el.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;'
-            'background:var(--bad-bg);color:var(--bad-fg);border:1px solid var(--bad-fg);' +
-            'border-radius:10px;padding:10px 14px;font-size:12.5px;font-weight:600;' +
-            'display:flex;gap:12px;align-items:center;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.35);';
-            el.innerHTML = '<span id="cartelFallaTxt"></span>' +
-            '<button type="button" class="btn small ghost" onclick="this.parentElement.style.display=\'none\'">Cerrar</button>';
-            document.body.appendChild(el);
+                el.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:80;' +
+                    'background:var(--bad-bg);color:var(--bad-fg);border:1px solid var(--bad-fg);' +
+                    'border-radius:10px;padding:10px 14px;font-size:12.5px;font-weight:600;' +
+                    'display:flex;gap:12px;align-items:center;max-width:90vw;box-shadow:0 8px 24px rgba(0,0,0,.35);';
+                el.innerHTML = '<span id="cartelFallaTxt"></span>' +
+                    '<button type="button" class="btn small ghost" onclick="this.parentElement.style.display=\'none\'">Cerrar</button>';
+                document.body.appendChild(el);
             }
             document.getElementById('cartelFallaTxt').textContent =
             msg || '⚠️ Problema de conexión. Revisá el historial de Movimientos antes de reenviar.';
