@@ -150,9 +150,9 @@ const CONFIG = {
   serv: ["Preventivo","Correctivo"],
   ub: {dep:["3"],est:[1,2,3,4,5,6,7,8],col:Array.from({length:20},(_,i)=>i+1),fil:["A","B","C","D","E","F","G","H"]}
 };
-const LIQ={"Envase 1 L":1,"Envase 4 L":4,"Balde 20 L":20,"Tambor 200 L":200,"Granel (litros)":1};
+const LIQ={"Envase 1 L":1,"Envase 4 L":4,"Balde 20 L":20,"Tambor 208 L":208,"Granel (litros)":1};
 const FAM={
-  aceites:{n:"🛢️ Aceite / lubricante",u:"litros",campo:"tipo_aceite",req:1,codigo:1,pres:LIQ,
+  aceites:{n:"🛢️ Aceite / lubricante",u:"litros",campo:"tipo_aceite",req:1,codigo:1,cr:1,pres:LIQ,
     tipos:{"Aceite Motor":"AC-M","Aceite Hidráulico":"AC-H","Aceite Diferencial (Ejes)":"AC-D","Aceite de Transmisión Hidráulica":"AC-TH"}},
   grasas:{n:"🧴 Grasa",u:"kg",pref:"GR",codigo:1,cr:1,pres:{"Cartucho 0,4 kg":0.4,"Pote 1 kg":1,"Balde 18 kg":18,"Granel (kg)":1}},
   refrigerantes:{n:"🧊 Líquido refrigerante",u:"litros",pref:"LR",codigo:1,cr:1,pres:LIQ},
