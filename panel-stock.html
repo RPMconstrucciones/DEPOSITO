@@ -961,6 +961,110 @@
             border-color: var(--accent);
         }
 
+        /* ===== ESTILOS CARGA MÚLTIPLE DE PRODUCTOS ===== */
+        #newProductOverlay .modal {
+            max-width: 660px !important;
+            width: 96% !important;
+        }
+
+        .np-batch-card {
+            background: var(--bg-card);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+
+        .np-batch-card:hover {
+            border-color: #2b3d63;
+        }
+
+        .np-batch-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 9px 12px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--line-soft);
+            cursor: pointer;
+            user-select: none;
+            gap: 8px;
+        }
+
+        .np-batch-card-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--txt);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .np-card-badge {
+            font-size: 10.5px;
+            font-weight: 800;
+            font-family: var(--mono);
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            padding: 2px 7px;
+            border-radius: 6px;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+        }
+
+        .np-card-preview-text {
+            color: var(--txt-dim);
+            font-size: 12px;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .np-batch-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .np-batch-card-body {
+            padding: 12px 12px 14px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .np-add-btn-dashed {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px dashed var(--line);
+            background: rgba(255, 255, 255, 0.015);
+            border-radius: 9px;
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            margin-bottom: 12px;
+            transition: all .15s ease;
+        }
+
+        .np-add-btn-dashed:hover {
+            background: var(--accent-soft);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
         .lightbox {
             position: fixed;
             inset: 0;
@@ -1513,13 +1617,13 @@
 
     <!-- New Product Modal -->
     <div class="overlay" id="newProductOverlay">
-        <div class="modal" style="max-width: 440px; width: 100%;">
+        <div class="modal" style="max-width: 660px; width: 96%;">
             <button type="button" id="newProdCloseX" title="Cerrar ventana">✕</button>
             <div class="modal-body">
-                <h3 style="padding-right: 32px;">Registrar Nuevo Producto</h3>
-                <div class="sub">Ingresá los datos del nuevo producto para darlo de alta en el sistema.</div>
+                <h3 style="padding-right: 32px;">Registrar Nuevo(s) Producto(s)</h3>
+                <div class="sub">Ingresá los datos del ingreso y de los productos para darlos de alta en el sistema.</div>
 
-                <!-- ===== TIPO DE INGRESO / ALTA ===== -->
+                <!-- ===== DATOS GENERALES DEL INGRESO / REMITO ===== -->
                 <div class="field"
                     style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;">
                     <div
@@ -1539,192 +1643,67 @@
                             style="text-transform:uppercase; margin-top:4px;">
                     </div>
 
-                    <!-- N.º de factura (opcional, siempre visible) -->
+                    <!-- Depósito / Zona predeterminado (solo visible en modo DEPÓSITO) -->
+                    <div id="newProdZonaWrap" style="margin-top:10px;">
+                        <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">Depósito / Zona predeterminado <span style="color:var(--bad-fg);">*</span></label>
+                        <select id="newProdZona" onchange="toggleCustomZonaInput(this)" style="width:100%; margin-top:4px;">
+                            <option value="">Cargando zonas...</option>
+                        </select>
+                        <input type="text" id="newProdZonaCustom" placeholder="Nombre del nuevo depósito o zona..."
+                            style="display:none; margin-top:6px; text-transform:uppercase;">
+                    </div>
+
+                    <!-- Fila 2 columnas: Factura y Responsable -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">N.º de factura <span
+                                    style="font-weight:400; color:var(--txt-faint);">(opcional)</span></label>
+                            <input type="text" id="newProdFactura" placeholder="Ej: FC-0001-00012345"
+                                style="margin-top:4px; text-transform:uppercase;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">Responsable <span style="color:var(--bad-fg);">*</span></label>
+                            <input type="text" id="newProdResponsable" placeholder="Nombre de quien registra"
+                                style="margin-top:4px; text-transform:uppercase;">
+                        </div>
+                    </div>
+
+                    <!-- Observaciones generales del envío -->
                     <div style="margin-top:10px;">
-                        <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">N.º de factura <span
-                                style="font-weight:400; color:var(--txt-faint);">(opcional)</span></label>
-                        <input type="text" id="newProdFactura" placeholder="Ej: FC-0001-00012345"
+                        <label style="font-size:11px; font-weight:700; color:var(--txt-dim);">Observaciones generales del envío <span
+                                style="font-weight:400; color:var(--txt-faint);">(opcional - Movimientos)</span></label>
+                        <input type="text" id="newProdObsGeneral" placeholder="Transporte, motivo o aclaración del envío…"
                             style="margin-top:4px; text-transform:uppercase;">
                     </div>
                 </div>
 
-                <!-- ===== DEPÓSITO / ZONA (oculto en modo RETIRO) ===== -->
-                <div id="newProdZonaWrap" class="field">
-                    <label>Depósito / Zona <span style="color:var(--bad-fg);">*</span></label>
-                    <select id="newProdZona" onchange="toggleCustomZonaInput(this)" style="width:100%;">
-                        <option value="">Cargando zonas...</option>
-                    </select>
-                    <input type="text" id="newProdZonaCustom" placeholder="Nombre del nuevo depósito o zona..."
-                        style="display:none; margin-top:6px; text-transform:uppercase;">
-                </div>
-
-                <div class="field">
-                    <label>Descripción del Producto <span style="color:var(--bad-fg);">*</span></label>
-                    <textarea id="newProdDesc" placeholder="Descripción detallada del producto…" rows="2"
-                        oninput="autoResizeTextarea(this)" style="text-transform:uppercase;"></textarea>
-                </div>
-
-                <div class="field" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div>
-                        <label>Marca <span style="color:var(--bad-fg);">*</span></label>
-                        <select id="newProdMarcaSel" onchange="toggleCustomMarcaInput(this)" style="width:100%;">
-                            <option value="">— Seleccionar Marca —</option>
-                            <option value="GENÉRICA">Genérica</option>
-                            <option value="NO ESPECIFICADA">No especificada</option>
-                            <option value="__OTRA__">➕ Otra marca (escribir)...</option>
-                        </select>
-                        <input type="text" id="newProdMarcaCustom" placeholder="Escribir marca..."
-                            oninput="this.value=this.value.toUpperCase()"
-                            style="display:none; margin-top:4px; text-transform:uppercase;">
+                <!-- ===== SECCIÓN DE PRODUCTOS A REGISTRAR ===== -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin:16px 0 10px 0; flex-wrap:wrap; gap:8px;">
+                    <div style="font-size:11.5px; font-weight:800; color:var(--txt); text-transform:uppercase; letter-spacing:0.6px; display:flex; align-items:center; gap:6px;">
+                        <span>📋</span> Productos a registrar <span id="newProdItemsCountBadge" class="np-card-badge">1</span>
                     </div>
-                    <div>
-                        <label>Familia <span style="color:var(--bad-fg);">*</span></label>
-                        <select id="newProdFamiliaSel" onchange="toggleCustomFamiliaInput(this)" style="width:100%;">
-                            <option value="">Seleccionar o escribir...</option>
-                        </select>
-                        <input type="text" id="newProdFamiliaCustom" placeholder="Escribir familia..."
-                            oninput="this.value=this.value.toUpperCase()"
-                            style="display:none; margin-top:4px; text-transform:uppercase;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button type="button" class="btn ghost small" id="btnNpToggleAll" style="font-size:11px; padding:3px 8px; color:var(--txt-dim);">Contraer todos</button>
+                        <button type="button" class="btn small" id="btnNpAddAnother" style="font-size:11.5px; font-weight:700; border-color:var(--accent); color:var(--accent); background:var(--accent-soft);">➕ Agregar otro producto</button>
                     </div>
                 </div>
 
-                <div class="field" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-                    <div>
-                        <label>Unidad</label>
-                        <select id="newProdUnidad" style="width:100%;">
-                            <option value="un">un (unidad)</option>
-                            <option value="m">m (metros)</option>
-                            <option value="rollo">rollo</option>
-                            <option value="kg">kg</option>
-                            <option value="l">l (litros)</option>
-                            <option value="caja">caja</option>
-                            <option value="par">par</option>
-                            <option value="paquete">paquete</option>
-                            <option value="set">set</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Stock Inicial <span style="color:var(--bad-fg);">*</span></label>
-                        <input type="number" id="newProdStockInicial" min="0" step="1" placeholder="0">
-                    </div>
-                    <div>
-                        <label>Stock Mínimo</label>
-                        <input type="number" id="newProdStockMin" min="0" step="1" value="0" placeholder="0"
-                            onfocus="if(this.value==='0') this.value='';"
-                            onblur="if(this.value.trim()==='') this.value='0';">
-                    </div>
-                </div>
+                <!-- Contenedor dinámico de tarjetas de productos -->
+                <div id="newProdItemsContainer"></div>
 
-                <!-- ===== UBICACIÓN FÍSICA (oculto en modo RETIRO) ===== -->
-                <div id="newProdUbicacionWrap" class="field"
-                    style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0;">
-                    <div
-                        style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
-                        <span>📍</span> Ubicación física
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 0.9fr; gap: 8px; align-items: end;">
-                        <div style="display: flex; flex-direction: column;">
-                            <label
-                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Depósito</label>
-                            <select id="newProdUbiDep"
-                                onchange="toggleCustomUbiDepInput(this); actualizarVisibilidadAclaracionUbi();"
-                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box; cursor: pointer;">
-                                <option value="">—</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5A">5A</option>
-                                <option value="5B">5B</option>
-                                <option value="5C">5C</option>
-                                <option value="6">6</option>
-                                <option value="__OTRO__">➕ Otro...</option>
-                            </select>
-                        </div>
-                        <div style="display: flex; flex-direction: column;">
-                            <label
-                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Estante</label>
-                            <input type="number" id="newProdUbiEst" min="0" step="1" placeholder="Ej: 2"
-                                oninput="actualizarVisibilidadAclaracionUbi()"
-                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
-                        </div>
-                        <div style="display: flex; flex-direction: column;">
-                            <label
-                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Columna</label>
-                            <input type="number" id="newProdUbiCol" min="0" step="1" placeholder="Ej: 5"
-                                oninput="actualizarVisibilidadAclaracionUbi()"
-                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
-                        </div>
-                        <div style="display: flex; flex-direction: column;">
-                            <label
-                                style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Fila</label>
-                            <input type="text" id="newProdUbiFila" maxlength="1" placeholder="Ej: B"
-                                oninput="actualizarVisibilidadAclaracionUbi()"
-                                style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 800; font-size: 13px; text-transform: uppercase; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
-                        </div>
-                    </div>
-                    <input type="text" id="newProdUbiDepCustom" placeholder="Nombre/Nº del depósito personalizado..."
-                        style="display:none; margin-top:8px; text-transform:uppercase;">
-
-                    <!-- Aclaración de ubicación obligatoria si no hay estante/columna/fila -->
-                    <div id="newProdUbiAclaracionWrap"
-                        style="margin-top:10px; padding:10px 12px; background:rgba(217, 119, 6, 0.08); border:1px solid rgba(217, 119, 6, 0.35); border-radius:8px;">
-                        <div
-                            style="font-size:11px; font-weight:700; color:#d97706; display:flex; align-items:center; gap:5px; margin-bottom:4px;">
-                            <span>⚠️</span> Aclaración de ubicación <span style="color:var(--bad-fg);">*</span>
-                        </div>
-                        <div style="font-size:11px; color:var(--txt-dim); margin-bottom:6px; line-height:1.35;">
-                            Al no indicar Estante, Columna y Fila exactos, aclará dónde se ubica físicamente:
-                        </div>
-                        <input type="text" id="newProdUbiObs"
-                            placeholder="Ej: en pallet pasillo central / en piso / al lado de caja..."
-                            style="width:100%; text-transform:uppercase;">
-                    </div>
-                </div>
-
-                <div class="field"
-                    style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 12px 0;">
-                    <div
-                        style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
-                        <span>📷</span> Fotos del producto <span
-                            style="font-weight:400; color: var(--txt-faint); text-transform:none; letter-spacing:0;">(máx.
-                            2)</span>
-                    </div>
-                    <div id="newProdFotosPreview" style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;">
-                    </div>
-                    <input type="file" accept="image/*" id="newProdFotoInput" style="display:none"
-                        onchange="manejarSeleccionFotoNewProd(this)">
-                    <button type="button" class="btn small" id="newProdFotoBtn"
-                        onclick="document.getElementById('newProdFotoInput').click()">+ Agregar foto</button>
-                    <div id="newProdFotoMsg"
-                        style="display:none; font-size:11px; color: var(--txt-faint); margin-top: 6px;">Ya tenés las 2
-                        fotos máximas cargadas. Eliminá una (✕) para poder agregar otra.</div>
-                </div>
-
-                <div class="field" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <div>
-                        <label>Responsable</label>
-                        <input type="text" id="newProdResponsable" placeholder="Nombre de quien registra"
-                            style="text-transform:uppercase;">
-                    </div>
-                    <div>
-                        <label>Observaciones del ítem</label>
-                        <input type="text" id="newProdObs" placeholder="Observaciones de la pieza/ficha…"
-                            style="text-transform:uppercase;">
-                    </div>
-                </div>
-
-                <div class="field">
-                    <label>Observaciones generales del envío (opcional - Movimientos)</label>
-                    <input type="text" id="newProdObsGeneral" placeholder="Transporte, motivo o aclaración del envío…"
-                        style="text-transform:uppercase;">
-                </div>
+                <!-- Botón inferior para agregar otro producto -->
+                <button type="button" class="np-add-btn-dashed" id="btnNpAddAnotherBottom">
+                    <span>➕</span> Agregar otro producto a la lista
+                </button>
 
                 <div class="modal-err" id="newProdErr"></div>
             </div>
-            <div class="modal-actions">
-                <button class="btn ghost" id="newProdCancel">Cancelar</button>
-                <button class="btn primary" id="newProdConfirm">Registrar Producto</button>
+            <div class="modal-actions" style="display:flex; justify-content:space-between; align-items:center;">
+                <div id="newProdSummaryBadge" style="font-size:12px; font-weight:600; color:var(--txt-dim);">1 producto listo para registrar</div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn ghost" id="newProdCancel">Cancelar</button>
+                    <button class="btn primary" id="newProdConfirm">Registrar Producto</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2677,9 +2656,11 @@
         }
 
         // ============================================================
-        // REGISTRAR NUEVO PRODUCTO
         // ============================================================
-        let newProductCurrentImages = [];
+        // REGISTRAR NUEVO(S) PRODUCTO(S) - CARGA INDIVIDUAL O MÚLTIPLE
+        // ============================================================
+        let newProductCardCounter = 0;
+        let newProductCurrentImages = []; // Compatibilidad hacia atrás
 
         function toggleCustomZonaInput(sel) {
             const customInput = document.getElementById('newProdZonaCustom');
@@ -2735,22 +2716,7 @@
                 customInput.style.display = 'none';
             }
         }
-        function actualizarVisibilidadAclaracionUbi() {
-            const est = (document.getElementById('newProdUbiEst')?.value || '').trim();
-            const col = (document.getElementById('newProdUbiCol')?.value || '').trim();
-            const fila = (document.getElementById('newProdUbiFila')?.value || '').trim();
-            const wrap = document.getElementById('newProdUbiAclaracionWrap');
-            if (!wrap) return;
 
-            const tieneEstanteriaCompleta = est !== '' && col !== '' && fila !== '';
-            wrap.style.display = tieneEstanteriaCompleta ? 'none' : 'block';
-            if (tieneEstanteriaCompleta) {
-                const inpObs = document.getElementById('newProdUbiObs');
-                if (inpObs) inpObs.value = '';
-            }
-        }
-
-        // Reacciona al cambio de Tipo de Alta (Depósito / Retiro)
         function npTipoAltaChanged() {
             const tipo = document.getElementById('newProdTipoAlta')?.value;
             const esRetiro = tipo === 'RETIRO';
@@ -2765,7 +2731,7 @@
                 }
             }
 
-            // Zona / Depósito: oculto en modo RETIRO
+            // Zona / Depósito general: oculto en modo RETIRO
             const zonaWrap = document.getElementById('newProdZonaWrap');
             if (zonaWrap) {
                 zonaWrap.style.display = esRetiro ? 'none' : 'block';
@@ -2777,57 +2743,559 @@
                 }
             }
 
-            // Ubicación física (estante/col/fila/dep): oculto en modo RETIRO
-            const ubicWrap = document.getElementById('newProdUbicacionWrap');
-            if (ubicWrap) ubicWrap.style.display = esRetiro ? 'none' : 'block';
+            // Actualizar visibilidad de ubicación física en todas las tarjetas de producto
+            document.querySelectorAll('#newProdItemsContainer .np-card-ubi-wrap').forEach(wrap => {
+                wrap.style.display = esRetiro ? 'none' : 'block';
+            });
         }
 
+        function obtenerOpcionesMarcasHtml(marcaSeleccionada = '') {
+            const marcasRegistradas = Array.from(new Set(state.stock.map(p => (p.marca || '').trim()).filter(m => m && m !== '—' && m !== '-' && m !== 'GENÉRICA' && m !== 'NO ESPECIFICADA'))).sort();
+            let opts = '<option value="">-- Seleccionar Marca --</option>';
+            opts += `<option value="GENÉRICA"${marcaSeleccionada === 'GENÉRICA' ? ' selected' : ''}>Genérica</option>`;
+            opts += `<option value="NO ESPECIFICADA"${marcaSeleccionada === 'NO ESPECIFICADA' ? ' selected' : ''}>No especificada</option>`;
+            marcasRegistradas.forEach(m => {
+                const sel = m === marcaSeleccionada ? ' selected' : '';
+                opts += `<option value="${escapeAttr(m)}"${sel}>${escapeHtml(m)}</option>`;
+            });
+            const selOtra = marcaSeleccionada === '__OTRA__' ? ' selected' : '';
+            opts += `<option value="__OTRA__"${selOtra}>➕ Otra marca (escribir)...</option>`;
+            return opts;
+        }
 
+        function obtenerOpcionesFamiliasHtml(familiaSeleccionada = '') {
+            const familiasExistentes = Array.from(new Set(state.stock.map(p => p.familia).filter(Boolean))).sort();
+            let opts = '<option value="">-- Seleccionar Familia --</option>';
+            familiasExistentes.forEach(f => {
+                const sel = f === familiaSeleccionada ? ' selected' : '';
+                opts += `<option value="${escapeAttr(f)}"${sel}>${escapeHtml(f)}</option>`;
+            });
+            const selOtra = familiaSeleccionada === '__OTRA__' ? ' selected' : '';
+            opts += `<option value="__OTRA__"${selOtra}>➕ Otra familia...</option>`;
+            return opts;
+        }
+
+        function obtenerOpcionesUbiDepHtml(depSeleccionado = '') {
+            const standardDeps = ['1', '2', '3', '4', '5A', '5B', '5C', '6'];
+            let opts = '<option value="">—</option>';
+            standardDeps.forEach(d => {
+                const sel = d === depSeleccionado ? ' selected' : '';
+                opts += `<option value="${d}"${sel}>${d}</option>`;
+            });
+            const selOtro = (depSeleccionado && !standardDeps.includes(depSeleccionado)) || depSeleccionado === '__OTRO__' ? ' selected' : '';
+            opts += `<option value="__OTRO__"${selOtro}>➕ Otro...</option>`;
+            return opts;
+        }
+
+        function actualizarAclaracionUbiCard(card) {
+            if (!card) return;
+            const est = (card.querySelector('.np-card-ubi-est')?.value || '').trim();
+            const col = (card.querySelector('.np-card-ubi-col')?.value || '').trim();
+            const fila = (card.querySelector('.np-card-ubi-fila')?.value || '').trim();
+            const wrap = card.querySelector('.np-card-ubi-aclaracion-wrap');
+            if (!wrap) return;
+
+            const tieneEstanteriaCompleta = est !== '' && col !== '' && fila !== '';
+            wrap.style.display = tieneEstanteriaCompleta ? 'none' : 'block';
+            if (tieneEstanteriaCompleta) {
+                const inpObs = card.querySelector('.np-card-ubi-obs');
+                if (inpObs) inpObs.value = '';
+            }
+        }
+
+        function actualizarPreviewCard(card) {
+            if (!card) return;
+            const desc = (card.querySelector('.np-card-desc')?.value || '').trim();
+            const selMarca = card.querySelector('.np-card-marca-sel')?.value || '';
+            const customMarca = (card.querySelector('.np-card-marca-custom')?.value || '').trim();
+            const marca = selMarca === '__OTRA__' ? customMarca : selMarca;
+            const stock = (card.querySelector('.np-card-stock-inicial')?.value || '').trim();
+            const unidad = card.querySelector('.np-card-unidad')?.value || 'un';
+
+            const previewEl = card.querySelector('.np-card-preview-text');
+            if (previewEl) {
+                if (desc) {
+                    let info = desc;
+                    if (marca && marca !== '—' && marca !== '-') info += ` (${marca})`;
+                    if (stock !== '') info += ` — ${stock} ${unidad}`;
+                    previewEl.textContent = info;
+                    previewEl.style.color = 'var(--txt)';
+                } else {
+                    previewEl.textContent = 'Nuevo producto';
+                    previewEl.style.color = 'var(--txt-dim)';
+                }
+            }
+        }
+
+        function renderCardFotos(card) {
+            if (!card) return;
+            const preview = card.querySelector('.np-card-fotos-preview');
+            const btn = card.querySelector('.np-card-foto-btn');
+            const msg = card.querySelector('.np-card-foto-msg');
+            if (!preview) return;
+            const fotos = card._fotos || [];
+            if (fotos.length === 0) {
+                preview.innerHTML = `<span style="font-size:12px;color:var(--txt-faint);font-style:italic;">Sin fotos cargadas</span>`;
+            } else {
+                preview.innerHTML = fotos.map((img, i) => `
+                    <div style="position:relative;width:64px;height:64px;">
+                        <img src="${escapeAttr(img.dataUrl)}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line-soft);cursor:zoom-in;" onclick="openLightbox('${escapeAttr(img.dataUrl)}')">
+                        <button type="button" class="np-btn-foto-del" data-idx="${i}" title="Eliminar esta foto"
+                            style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--bad-fg);color:#fff;border:2px solid var(--bg-elev);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>
+                    </div>
+                `).join('');
+            }
+            const lleno = fotos.length >= 2;
+            if (btn) btn.style.display = lleno ? 'none' : 'inline-flex';
+            if (msg) msg.style.display = lleno ? 'block' : 'none';
+        }
+
+        function setupCardEventListeners(card) {
+            const descEl = card.querySelector('.np-card-desc');
+            const selMarca = card.querySelector('.np-card-marca-sel');
+            const customMarca = card.querySelector('.np-card-marca-custom');
+            const selFam = card.querySelector('.np-card-familia-sel');
+            const customFam = card.querySelector('.np-card-familia-custom');
+            const selUnidad = card.querySelector('.np-card-unidad');
+            const inpStock = card.querySelector('.np-card-stock-inicial');
+            const selUbiDep = card.querySelector('.np-card-ubi-dep');
+            const customUbiDep = card.querySelector('.np-card-ubi-dep-custom');
+            const inpEst = card.querySelector('.np-card-ubi-est');
+            const inpCol = card.querySelector('.np-card-ubi-col');
+            const inpFila = card.querySelector('.np-card-ubi-fila');
+            const fileInput = card.querySelector('.np-card-foto-input');
+            const btnFoto = card.querySelector('.np-card-foto-btn');
+            const previewFotos = card.querySelector('.np-card-fotos-preview');
+            const btnDuplicate = card.querySelector('.np-btn-duplicate');
+            const btnDelete = card.querySelector('.np-btn-delete');
+            const btnToggle = card.querySelector('.np-btn-toggle');
+            const header = card.querySelector('.np-batch-card-header');
+
+            if (descEl) {
+                descEl.addEventListener('input', () => {
+                    autoResizeTextarea(descEl);
+                    actualizarPreviewCard(card);
+                });
+            }
+
+            if (selMarca) {
+                selMarca.addEventListener('change', () => {
+                    if (selMarca.value === '__OTRA__') {
+                        customMarca.style.display = 'block';
+                        customMarca.focus();
+                    } else {
+                        customMarca.style.display = 'none';
+                    }
+                    actualizarPreviewCard(card);
+                });
+            }
+            if (customMarca) {
+                customMarca.addEventListener('input', () => actualizarPreviewCard(card));
+            }
+
+            if (selFam) {
+                selFam.addEventListener('change', () => {
+                    if (selFam.value === '__OTRA__') {
+                        customFam.style.display = 'block';
+                        customFam.focus();
+                    } else {
+                        customFam.style.display = 'none';
+                    }
+                });
+            }
+
+            if (inpStock) {
+                inpStock.addEventListener('input', () => actualizarPreviewCard(card));
+            }
+            if (selUnidad) {
+                selUnidad.addEventListener('change', () => actualizarPreviewCard(card));
+            }
+
+            if (selUbiDep) {
+                selUbiDep.addEventListener('change', () => {
+                    if (selUbiDep.value === '__OTRO__') {
+                        customUbiDep.style.display = 'block';
+                        customUbiDep.focus();
+                    } else {
+                        customUbiDep.style.display = 'none';
+                    }
+                    actualizarAclaracionUbiCard(card);
+                });
+            }
+
+            if (inpEst) {
+                inpEst.addEventListener('input', e => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    actualizarAclaracionUbiCard(card);
+                });
+            }
+            if (inpCol) {
+                inpCol.addEventListener('input', e => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                    actualizarAclaracionUbiCard(card);
+                });
+            }
+            if (inpFila) {
+                inpFila.addEventListener('input', e => {
+                    e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase();
+                    actualizarAclaracionUbiCard(card);
+                });
+            }
+
+            if (btnFoto && fileInput) {
+                btnFoto.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    fileInput.click();
+                });
+                fileInput.addEventListener('change', () => {
+                    const archivo = fileInput.files[0];
+                    fileInput.value = '';
+                    if (!archivo) return;
+                    if (card._fotos.length >= 2) {
+                        showToast('Ya tenés 2 fotos en este producto — eliminá una primero (✕)', true);
+                        return;
+                    }
+                    comprimirImagenEditProd(archivo, base64 => {
+                        card._fotos.push({
+                            dataUrl: 'data:image/jpeg;base64,' + base64,
+                            base64: base64
+                        });
+                        renderCardFotos(card);
+                    });
+                });
+            }
+
+            if (previewFotos) {
+                previewFotos.addEventListener('click', (e) => {
+                    const delBtn = e.target.closest('.np-btn-foto-del');
+                    if (!delBtn) return;
+                    e.stopPropagation();
+                    const idx = parseInt(delBtn.dataset.idx, 10);
+                    if (!isNaN(idx) && card._fotos) {
+                        card._fotos.splice(idx, 1);
+                        renderCardFotos(card);
+                    }
+                });
+            }
+
+            if (btnDuplicate) {
+                btnDuplicate.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    duplicarCard(card);
+                });
+            }
+
+            if (btnDelete) {
+                btnDelete.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const totalCards = document.querySelectorAll('#newProdItemsContainer .np-batch-card').length;
+                    if (totalCards <= 1) {
+                        showToast('Debe haber al menos un producto a registrar', true);
+                        return;
+                    }
+                    card.remove();
+                    actualizarNumerosCards();
+                });
+            }
+
+            const alternarColapso = () => {
+                const body = card.querySelector('.np-batch-card-body');
+                if (!body) return;
+                const estaVisible = body.style.display !== 'none';
+                body.style.display = estaVisible ? 'none' : 'flex';
+                if (btnToggle) btnToggle.textContent = estaVisible ? '▼' : '▲';
+            };
+
+            if (btnToggle) {
+                btnToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    alternarColapso();
+                });
+            }
+
+            if (header) {
+                header.addEventListener('click', (e) => {
+                    if (e.target.closest('.np-batch-card-actions')) return;
+                    alternarColapso();
+                });
+            }
+        }
+
+        function agregarItemNuevoProducto(datos = null) {
+            newProductCardCounter++;
+            const cardId = 'npCard_' + newProductCardCounter;
+            const container = document.getElementById('newProdItemsContainer');
+            if (!container) return null;
+
+            const tipoAlta = document.getElementById('newProdTipoAlta')?.value || 'DEPOSITO';
+            const esRetiro = tipoAlta === 'RETIRO';
+
+            const card = document.createElement('div');
+            card.className = 'np-batch-card';
+            card.id = cardId;
+            card._fotos = (datos && datos.fotos) ? datos.fotos.map(f => ({ ...f })) : [];
+
+            const descVal = datos?.desc || '';
+            const marcaVal = datos?.marcaSel || '';
+            const marcaCustomVal = datos?.marcaCustom || '';
+            const famVal = datos?.familiaSel || '';
+            const famCustomVal = datos?.familiaCustom || '';
+            const unidadVal = datos?.unidad || 'un';
+            const stockIniVal = datos?.stockInicial !== undefined ? datos.stockInicial : '';
+            const stockMinVal = datos?.stockMin !== undefined ? datos.stockMin : '0';
+            const ubiDepVal = datos?.ubiDep || '';
+            const ubiDepCustomVal = datos?.ubiDepCustom || '';
+            const ubiEstVal = datos?.ubiEst || '';
+            const ubiColVal = datos?.ubiCol || '';
+            const ubiFilaVal = datos?.ubiFila || '';
+            const ubiObsVal = datos?.ubiObs || '';
+            const obsVal = datos?.obs || '';
+
+            // Asignar IDs históricos al primer producto para compatibilidad absoluta
+            const isFirst = container.children.length === 0;
+            const descId = isFirst ? 'id="newProdDesc"' : '';
+            const stockIniId = isFirst ? 'id="newProdStockInicial"' : '';
+            const stockMinId = isFirst ? 'id="newProdStockMin"' : '';
+            const ubiEstId = isFirst ? 'id="newProdUbiEst"' : '';
+            const ubiColId = isFirst ? 'id="newProdUbiCol"' : '';
+            const ubiFilaId = isFirst ? 'id="newProdUbiFila"' : '';
+            const ubiObsId = isFirst ? 'id="newProdUbiObs"' : '';
+            const obsId = isFirst ? 'id="newProdObs"' : '';
+
+            card.innerHTML = `
+                <div class="np-batch-card-header">
+                    <div class="np-batch-card-title">
+                        <span class="np-card-badge">Ítem #<span class="np-card-num">1</span></span>
+                        <span class="np-card-preview-text">${descVal ? escapeHtml(descVal) : 'Nuevo producto'}</span>
+                    </div>
+                    <div class="np-batch-card-actions">
+                        <button type="button" class="btn small np-btn-duplicate" title="Duplicar datos en un nuevo producto" style="padding:2px 7px; font-size:11px; background:rgba(255,255,255,0.05); border-color:var(--line);">📋 Duplicar</button>
+                        <button type="button" class="btn small np-btn-delete" title="Eliminar este producto" style="padding:2px 6px; font-size:11px; background:rgba(248,113,113,0.1); border-color:rgba(248,113,113,0.3); color:var(--bad-fg);">🗑️</button>
+                        <button type="button" class="np-btn-toggle" title="Contraer / Expandir" style="background:transparent; border:none; color:var(--txt-dim); font-size:12px; cursor:pointer; padding:2px 5px;">▲</button>
+                    </div>
+                </div>
+                <div class="np-batch-card-body">
+                    <div class="field">
+                        <label>Descripción del Producto <span style="color:var(--bad-fg);">*</span></label>
+                        <textarea class="np-card-desc" ${descId} placeholder="Descripción detallada del producto…" rows="2" style="text-transform:uppercase;">${escapeHtml(descVal)}</textarea>
+                    </div>
+
+                    <div class="field" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div>
+                            <label>Marca <span style="color:var(--bad-fg);">*</span></label>
+                            <select class="np-card-marca-sel" style="width:100%;">
+                                ${obtenerOpcionesMarcasHtml(marcaVal)}
+                            </select>
+                            <input type="text" class="np-card-marca-custom" placeholder="Escribir marca..." value="${escapeAttr(marcaCustomVal)}"
+                                style="${marcaVal === '__OTRA__' ? 'display:block;' : 'display:none;'} margin-top:4px; text-transform:uppercase;">
+                        </div>
+                        <div>
+                            <label>Familia <span style="color:var(--bad-fg);">*</span></label>
+                            <select class="np-card-familia-sel" style="width:100%;">
+                                ${obtenerOpcionesFamiliasHtml(famVal)}
+                            </select>
+                            <input type="text" class="np-card-familia-custom" placeholder="Escribir familia..." value="${escapeAttr(famCustomVal)}"
+                                style="${famVal === '__OTRA__' ? 'display:block;' : 'display:none;'} margin-top:4px; text-transform:uppercase;">
+                        </div>
+                    </div>
+
+                    <div class="field" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+                        <div>
+                            <label>Unidad</label>
+                            <select class="np-card-unidad" style="width:100%;">
+                                <option value="un"${unidadVal === 'un' ? ' selected' : ''}>un (unidad)</option>
+                                <option value="m"${unidadVal === 'm' ? ' selected' : ''}>m (metros)</option>
+                                <option value="rollo"${unidadVal === 'rollo' ? ' selected' : ''}>rollo</option>
+                                <option value="kg"${unidadVal === 'kg' ? ' selected' : ''}>kg</option>
+                                <option value="l"${unidadVal === 'l' ? ' selected' : ''}>l (litros)</option>
+                                <option value="caja"${unidadVal === 'caja' ? ' selected' : ''}>caja</option>
+                                <option value="par"${unidadVal === 'par' ? ' selected' : ''}>par</option>
+                                <option value="paquete"${unidadVal === 'paquete' ? ' selected' : ''}>paquete</option>
+                                <option value="set"${unidadVal === 'set' ? ' selected' : ''}>set</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Stock Inicial <span style="color:var(--bad-fg);">*</span></label>
+                            <input type="number" class="np-card-stock-inicial" ${stockIniId} min="0" step="1" placeholder="0" value="${escapeAttr(stockIniVal)}">
+                        </div>
+                        <div>
+                            <label>Stock Mínimo</label>
+                            <input type="number" class="np-card-stock-min" ${stockMinId} min="0" step="1" value="${escapeAttr(stockMinVal)}" placeholder="0"
+                                onfocus="if(this.value==='0') this.value='';"
+                                onblur="if(this.value.trim()==='') this.value='0';">
+                        </div>
+                    </div>
+
+                    <!-- Ubicación física (oculta en modo RETIRO) -->
+                    <div class="np-card-ubi-wrap field" style="${esRetiro ? 'display:none;' : ''} background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 6px 0;">
+                        <div style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                            <span>📍</span> Ubicación física
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 0.9fr; gap: 8px; align-items: end;">
+                            <div style="display: flex; flex-direction: column;">
+                                <label style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Depósito</label>
+                                <select class="np-card-ubi-dep" style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box; cursor: pointer;">
+                                    ${obtenerOpcionesUbiDepHtml(ubiDepVal)}
+                                </select>
+                            </div>
+                            <div style="display: flex; flex-direction: column;">
+                                <label style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Estante</label>
+                                <input type="number" class="np-card-ubi-est" ${ubiEstId} min="0" step="1" placeholder="Ej: 2" value="${escapeAttr(ubiEstVal)}"
+                                    style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
+                            </div>
+                            <div style="display: flex; flex-direction: column;">
+                                <label style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Columna</label>
+                                <input type="number" class="np-card-ubi-col" ${ubiColId} min="0" step="1" placeholder="Ej: 5" value="${escapeAttr(ubiColVal)}"
+                                    style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 600; font-size: 13px; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
+                            </div>
+                            <div style="display: flex; flex-direction: column;">
+                                <label style="font-size: 10.5px; font-weight: 700; color: var(--txt-faint); margin-bottom: 4px; height: 16px; line-height: 16px; text-align: center; text-transform: uppercase; white-space: nowrap;">Fila</label>
+                                <input type="text" class="np-card-ubi-fila" ${ubiFilaId} maxlength="1" placeholder="Ej: B" value="${escapeAttr(ubiFilaVal)}"
+                                    style="width: 100%; height: 38px; background: var(--bg-elev); border: 1px solid var(--line); border-radius: 8px; color: var(--txt); font-weight: 800; font-size: 13px; text-transform: uppercase; text-align: center; padding: 0 4px; outline: none; box-sizing: border-box;">
+                            </div>
+                        </div>
+                        <input type="text" class="np-card-ubi-dep-custom" placeholder="Nombre/Nº del depósito personalizado..." value="${escapeAttr(ubiDepCustomVal)}"
+                            style="${ubiDepVal === '__OTRO__' ? 'display:block;' : 'display:none;'} margin-top:8px; text-transform:uppercase;">
+
+                        <div class="np-card-ubi-aclaracion-wrap" style="margin-top:10px; padding:10px 12px; background:rgba(217, 119, 6, 0.08); border:1px solid rgba(217, 119, 6, 0.35); border-radius:8px;">
+                            <div style="font-size:11px; font-weight:700; color:#d97706; display:flex; align-items:center; gap:5px; margin-bottom:4px;">
+                                <span>⚠️</span> Aclaración de ubicación <span style="color:var(--bad-fg);">*</span>
+                            </div>
+                            <div style="font-size:11px; color:var(--txt-dim); margin-bottom:6px; line-height:1.35;">
+                                Al no indicar Estante, Columna y Fila exactos, debés indicar la ubicación física:
+                            </div>
+                            <input type="text" class="np-card-ubi-obs" ${ubiObsId} placeholder="Ej: en pallet pasillo central / en piso / al lado de caja..." value="${escapeAttr(ubiObsVal)}"
+                                style="width:100%; text-transform:uppercase;">
+                        </div>
+                    </div>
+
+                    <!-- Fotos del producto (máx 2) -->
+                    <div class="field" style="background: var(--bg-card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin: 6px 0;">
+                        <div style="font-size: 10.5px; font-weight: 700; color: var(--txt-dim); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; display: flex; align-items: center; gap: 4px;">
+                            <span>📷</span> Fotos del producto <span style="font-weight:400; color: var(--txt-faint); text-transform:none; letter-spacing:0;">(máx. 2)</span>
+                        </div>
+                        <div class="np-card-fotos-preview" style="display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap;"></div>
+                        <input type="file" accept="image/*" class="np-card-foto-input" style="display:none">
+                        <button type="button" class="btn small np-card-foto-btn">+ Agregar foto</button>
+                        <div class="np-card-foto-msg" style="display:none; font-size:11px; color: var(--txt-faint); margin-top: 6px;">Ya tenés las 2 fotos máximas cargadas. Eliminá una (✕) para poder agregar otra.</div>
+                    </div>
+
+                    <div class="field">
+                        <label>Observaciones del ítem</label>
+                        <input type="text" class="np-card-obs" ${obsId} placeholder="Observaciones de la pieza/ficha…" value="${escapeAttr(obsVal)}" style="text-transform:uppercase;">
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+            setupCardEventListeners(card);
+            renderCardFotos(card);
+            actualizarAclaracionUbiCard(card);
+            actualizarNumerosCards();
+            autoResizeTextarea(card.querySelector('.np-card-desc'));
+            return card;
+        }
+
+        function duplicarCard(card) {
+            if (!card) return;
+            const desc = (card.querySelector('.np-card-desc')?.value || '').trim();
+            const marcaSel = card.querySelector('.np-card-marca-sel')?.value || '';
+            const marcaCustom = card.querySelector('.np-card-marca-custom')?.value || '';
+            const familiaSel = card.querySelector('.np-card-familia-sel')?.value || '';
+            const familiaCustom = card.querySelector('.np-card-familia-custom')?.value || '';
+            const unidad = card.querySelector('.np-card-unidad')?.value || 'un';
+            const stockMin = card.querySelector('.np-card-stock-min')?.value || '0';
+            const ubiDep = card.querySelector('.np-card-ubi-dep')?.value || '';
+            const ubiDepCustom = card.querySelector('.np-card-ubi-dep-custom')?.value || '';
+            const ubiEst = card.querySelector('.np-card-ubi-est')?.value || '';
+            const ubiCol = card.querySelector('.np-card-ubi-col')?.value || '';
+            const ubiFila = card.querySelector('.np-card-ubi-fila')?.value || '';
+            const ubiObs = card.querySelector('.np-card-ubi-obs')?.value || '';
+            const obs = card.querySelector('.np-card-obs')?.value || '';
+
+            const fotos = (card._fotos || []).map(f => ({ ...f }));
+
+            const nuevaCard = agregarItemNuevoProducto({
+                desc: desc,
+                marcaSel,
+                marcaCustom,
+                familiaSel,
+                familiaCustom,
+                unidad,
+                stockInicial: '',
+                stockMin,
+                ubiDep,
+                ubiDepCustom,
+                ubiEst,
+                ubiCol,
+                ubiFila,
+                ubiObs,
+                obs,
+                fotos
+            });
+
+            if (nuevaCard) {
+                nuevaCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                const descInput = nuevaCard.querySelector('.np-card-desc');
+                if (descInput) {
+                    descInput.focus();
+                    descInput.select();
+                }
+            }
+        }
+
+        function actualizarNumerosCards() {
+            const cards = Array.from(document.querySelectorAll('#newProdItemsContainer .np-batch-card'));
+            const total = cards.length;
+            cards.forEach((c, idx) => {
+                const numEl = c.querySelector('.np-card-num');
+                if (numEl) numEl.textContent = idx + 1;
+                const delBtn = c.querySelector('.np-btn-delete');
+                if (delBtn) delBtn.style.display = total > 1 ? 'inline-block' : 'none';
+            });
+
+            const badge = document.getElementById('newProdItemsCountBadge');
+            if (badge) badge.textContent = total;
+
+            const summary = document.getElementById('newProdSummaryBadge');
+            if (summary) {
+                summary.textContent = total === 1 ? '1 producto listo para registrar' : `${total} productos listos para registrar`;
+            }
+
+            const btnConfirm = document.getElementById('newProdConfirm');
+            if (btnConfirm && !btnConfirm.disabled) {
+                btnConfirm.textContent = total === 1 ? 'Registrar Producto' : `Registrar ${total} Productos`;
+            }
+        }
+
+        function toggleAllCards() {
+            const cards = Array.from(document.querySelectorAll('#newProdItemsContainer .np-batch-card'));
+            if (cards.length === 0) return;
+            const btn = document.getElementById('btnNpToggleAll');
+            const algunaExpandida = cards.some(c => {
+                const body = c.querySelector('.np-batch-card-body');
+                return body && body.style.display !== 'none';
+            });
+            const nuevoEstadoExpandido = !algunaExpandida;
+            cards.forEach(c => {
+                const body = c.querySelector('.np-batch-card-body');
+                const toggleBtn = c.querySelector('.np-btn-toggle');
+                if (body) body.style.display = nuevoEstadoExpandido ? 'flex' : 'none';
+                if (toggleBtn) toggleBtn.textContent = nuevoEstadoExpandido ? '▲' : '▼';
+            });
+            if (btn) btn.textContent = nuevoEstadoExpandido ? 'Contraer todos' : 'Expandir todos';
+        }
 
         function openNewProductModal() {
             state.modalOpen = true;
-            newProductCurrentImages = [];
 
-            // Limpiar campos
-            document.getElementById('newProdDesc').value = '';
-            document.getElementById('newProdStockInicial').value = '';
-            document.getElementById('newProdStockMin').value = '0';
-            document.getElementById('newProdUbiDep').value = '';
-            document.getElementById('newProdUbiDepCustom').value = '';
-            document.getElementById('newProdUbiDepCustom').style.display = 'none';
-            document.getElementById('newProdUbiEst').value = '';
-            document.getElementById('newProdUbiCol').value = '';
-            document.getElementById('newProdUbiFila').value = '';
-            document.getElementById('newProdUbiObs').value = '';
-            document.getElementById('newProdResponsable').value = '';
-            document.getElementById('newProdObs').value = '';
-            document.getElementById('newProdObsGeneral').value = '';
-            document.getElementById('newProdErr').style.display = 'none';
-            document.getElementById('newProdUnidad').value = 'un';
-
-            // Poblar marcas existentes + opciones fijas
-            const selMarca = document.getElementById('newProdMarcaSel');
-            const marcasRegistradas = Array.from(new Set(state.stock.map(p => (p.marca || '').trim()).filter(m => m && m !== '—' && m !== '-' && m !== 'GENÉRICA' && m !== 'NO ESPECIFICADA'))).sort();
-            let optsMarca = '<option value="">-- Seleccionar Marca --</option>';
-            optsMarca += '<option value="GENÉRICA">Genérica</option>';
-            optsMarca += '<option value="NO ESPECIFICADA">No especificada</option>';
-            if (marcasRegistradas.length > 0) {
-                marcasRegistradas.forEach(m => {
-                    optsMarca += `<option value="${escapeAttr(m)}">${escapeHtml(m)}</option>`;
-                });
-            }
-            optsMarca += '<option value="__OTRA__">➕ Otra marca (escribir)...</option>';
-            selMarca.innerHTML = optsMarca;
-            selMarca.value = '';
-            toggleCustomMarcaInput(selMarca);
-            document.getElementById('newProdMarcaCustom').value = '';
-
-            // Nuevos campos
+            // Limpiar campos generales del remito/ingreso
             document.getElementById('newProdTipoAlta').value = 'DEPOSITO';
             document.getElementById('newProdLugarRetiro').value = '';
             document.getElementById('newProdFactura').value = '';
-            npTipoAltaChanged();          // ajustar visibilidad según tipo default
-            actualizarVisibilidadAclaracionUbi();
+            document.getElementById('newProdResponsable').value = '';
+            document.getElementById('newProdObsGeneral').value = '';
+            document.getElementById('newProdErr').style.display = 'none';
 
             // Poblar zonas creadas
             const zonasExistentes = Array.from(new Set(state.stock.map(p => p.zona).filter(Boolean))).sort();
@@ -2839,7 +3307,6 @@
             optsZona += '<option value="__OTRA__">➕ Otra zona (crear nueva)...</option>';
             selZona.innerHTML = optsZona;
 
-            // Pre-seleccionar la zona activa en la vista si existe
             if (state.zona && zonasExistentes.includes(state.zona)) {
                 selZona.value = state.zona;
             } else if (zonasExistentes.length === 1) {
@@ -2850,77 +3317,80 @@
             toggleCustomZonaInput(selZona);
             document.getElementById('newProdZonaCustom').value = '';
 
-            // Poblar familias existentes
-            const familiasExistentes = Array.from(new Set(state.stock.map(p => p.familia).filter(Boolean))).sort();
-            const selFam = document.getElementById('newProdFamiliaSel');
-            let optsFam = '<option value="">-- Seleccionar Familia --</option>';
-            familiasExistentes.forEach(f => {
-                optsFam += `<option value="${escapeAttr(f)}">${escapeHtml(f)}</option>`;
-            });
-            optsFam += '<option value="__OTRA__">➕ Otra familia...</option>';
-            selFam.innerHTML = optsFam;
-            selFam.value = '';
-            toggleCustomFamiliaInput(selFam);
-            document.getElementById('newProdFamiliaCustom').value = '';
+            npTipoAltaChanged();
 
-            renderNewProdFotos();
+            // Limpiar contenedor de productos y generar el primer producto
+            const container = document.getElementById('newProdItemsContainer');
+            if (container) container.innerHTML = '';
+            newProductCardCounter = 0;
+            const firstCard = agregarItemNuevoProducto();
+
             document.getElementById('newProductOverlay').classList.add('show');
-            autoResizeTextarea(document.getElementById('newProdDesc'));
+            if (firstCard) {
+                const firstDesc = firstCard.querySelector('.np-card-desc');
+                if (firstDesc) {
+                    autoResizeTextarea(firstDesc);
+                    setTimeout(() => firstDesc.focus(), 80);
+                }
+            }
         }
 
         function closeNewProductModal() {
             state.modalOpen = false;
-            newProductCurrentImages = [];
             document.getElementById('newProductOverlay').classList.remove('show');
         }
 
         function renderNewProdFotos() {
-            const cont = document.getElementById('newProdFotosPreview');
-            const btn = document.getElementById('newProdFotoBtn');
-            const msg = document.getElementById('newProdFotoMsg');
-            if (!cont) return;
-            cont.innerHTML = newProductCurrentImages.map((img, i) => `
-                <div style="position:relative;width:64px;height:64px;">
-                    <img src="${escapeAttr(img.dataUrl)}" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line-soft);cursor:zoom-in;" onclick="openLightbox('${escapeAttr(img.dataUrl)}')">
-                    <button type="button" onclick="eliminarFotoNewProd(${i})" title="Eliminar esta foto"
-                        style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--bad-fg);color:#fff;border:2px solid var(--bg-elev);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;">✕</button>
-                </div>
-            `).join('') || `<span style="font-size:12px;color:var(--txt-faint);font-style:italic;">Sin fotos cargadas</span>`;
-            const lleno = newProductCurrentImages.length >= 2;
-            if (btn) btn.style.display = lleno ? 'none' : 'inline-flex';
-            if (msg) msg.style.display = lleno ? 'block' : 'none';
+            // Compatibilidad hacia atrás si algún llamado residual lo invoca
+            const firstCard = document.querySelector('#newProdItemsContainer .np-batch-card');
+            if (firstCard) renderCardFotos(firstCard);
         }
 
         function manejarSeleccionFotoNewProd(input) {
+            // Compatibilidad hacia atrás
+            const firstCard = document.querySelector('#newProdItemsContainer .np-batch-card');
+            if (!firstCard) return;
             const archivo = input.files[0];
             input.value = '';
             if (!archivo) return;
-
-            if (newProductCurrentImages.length >= 2) {
-                showToast('Ya tenés 2 fotos — eliminá una primero (✕)', true);
+            if (firstCard._fotos && firstCard._fotos.length >= 2) {
+                showToast('Ya tenés 2 fotos en este producto — eliminá una primero (✕)', true);
                 return;
             }
             comprimirImagenEditProd(archivo, base64 => {
-                newProductCurrentImages.push({
+                if (!firstCard._fotos) firstCard._fotos = [];
+                firstCard._fotos.push({
                     dataUrl: 'data:image/jpeg;base64,' + base64,
                     base64: base64
                 });
-                renderNewProdFotos();
+                renderCardFotos(firstCard);
             });
         }
 
         function eliminarFotoNewProd(indice) {
-            newProductCurrentImages.splice(indice, 1);
-            renderNewProdFotos();
+            // Compatibilidad hacia atrás
+            const firstCard = document.querySelector('#newProdItemsContainer .np-batch-card');
+            if (firstCard && firstCard._fotos) {
+                firstCard._fotos.splice(indice, 1);
+                renderCardFotos(firstCard);
+            }
         }
 
-        // ============================================================
-        // REEMPLAZAR la función confirmNewProduct() completa por esta versión.
-        // Motivo: dejar de armar un texto "obsFinal" con datos duplicados y
-        // mandar cada dato en su propio campo, tal como lo espera el
-        // Codigo.gs corregido (que arma el Obs. ítem limpio del lado del
-        // servidor y guarda la factura en su propia columna).
-        // ============================================================
+        function mostrarErrorEnCard(card, mensaje) {
+            const errBox = document.getElementById('newProdErr');
+            if (errBox) {
+                errBox.textContent = mensaje;
+                errBox.style.display = 'block';
+            }
+            const body = card.querySelector('.np-batch-card-body');
+            const toggleBtn = card.querySelector('.np-btn-toggle');
+            if (body && body.style.display === 'none') {
+                body.style.display = 'flex';
+                if (toggleBtn) toggleBtn.textContent = '▲';
+            }
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
         async function confirmNewProduct() {
             const btnConfirm = document.getElementById('newProdConfirm');
             if (btnConfirm.disabled) return;
@@ -2937,249 +3407,299 @@
                 ? document.getElementById('newProdLugarRetiro').value.trim().toUpperCase()
                 : '';
 
-            // ── Factura (opcional en ambos modos) — viaja SOLA, sin prefijo ──
+            // ── Factura (opcional en ambos modos) ──────────────────────
             const factura = document.getElementById('newProdFactura').value.trim().toUpperCase();
 
-            // ── Zona (solo requerida en modo DEPÓSITO) ─────────────────
+            // ── Zona general (solo requerida en modo DEPÓSITO) ─────────
             const selZona = document.getElementById('newProdZona').value;
             const customZona = document.getElementById('newProdZonaCustom').value.trim().toUpperCase();
             const zona = esRetiro ? '' : (selZona === '__OTRA__' ? customZona : selZona).trim().toUpperCase();
 
-            const desc = document.getElementById('newProdDesc').value.trim().toUpperCase();
-
-            // ── Marca ──────────────────────────────────────────────────
-            const selMarca = document.getElementById('newProdMarcaSel').value;
-            const customMarca = document.getElementById('newProdMarcaCustom').value.trim().toUpperCase();
-            const marca = (selMarca === '__OTRA__' ? customMarca : selMarca).trim().toUpperCase();
-
-            const selFam = document.getElementById('newProdFamiliaSel').value;
-            const customFam = document.getElementById('newProdFamiliaCustom').value.trim().toUpperCase();
-            const familia = (selFam === '__OTRA__' ? customFam : selFam).trim().toUpperCase();
-
-            const unidad = document.getElementById('newProdUnidad').value;
-            const stockInicialVal = document.getElementById('newProdStockInicial').value.trim();
-            const stockMin = Number(document.getElementById('newProdStockMin').value) || 0;
-
-            // ── Ubicación física (solo relevante en modo DEPÓSITO) ─────
-            const selUbiDep = document.getElementById('newProdUbiDep').value;
-            const customUbiDep = document.getElementById('newProdUbiDepCustom').value.trim().toUpperCase();
-            const ubiDep = esRetiro ? '' : (selUbiDep === '__OTRO__' ? customUbiDep : selUbiDep).trim().toUpperCase();
-            const ubiEst = esRetiro ? '' : document.getElementById('newProdUbiEst').value.trim();
-            const ubiCol = esRetiro ? '' : document.getElementById('newProdUbiCol').value.trim();
-            const ubiFila = esRetiro ? '' : document.getElementById('newProdUbiFila').value.trim().toUpperCase();
-
             const responsable = document.getElementById('newProdResponsable').value.trim().toUpperCase();
-            const obs = document.getElementById('newProdObs').value.trim().toUpperCase();
             const obsGeneralEnvio = document.getElementById('newProdObsGeneral').value.trim().toUpperCase();
 
-            // ── Validaciones ───────────────────────────────────────────
-            if (!desc) {
-                errBox.textContent = 'La descripción del producto es obligatoria.';
-                errBox.style.display = 'block';
-                return;
-            }
-            if (!marca) {
-                errBox.textContent = selMarca === '__OTRA__'
-                    ? 'Ingresá el nombre de la marca.'
-                    : 'Seleccioná o ingresá una Marca obligatoria.';
-                errBox.style.display = 'block';
-                return;
-            }
-            if (stockInicialVal === '' || isNaN(Number(stockInicialVal)) || Number(stockInicialVal) < 0) {
-                errBox.textContent = 'El Stock Inicial es obligatorio (ingresá 0 o un valor mayor).';
-                errBox.style.display = 'block';
-                return;
-            }
-            const stockInicial = Number(stockInicialVal);
-
-            if (!familia) {
-                errBox.textContent = 'Seleccioná o ingresá una Familia.';
-                errBox.style.display = 'block';
-                return;
-            }
+            // ── Validaciones generales de remito / encabezado ──────────
             if (!responsable) {
-                errBox.textContent = 'Ingresá el responsable que carga el producto.';
+                errBox.textContent = 'Ingresá el responsable que carga los productos.';
                 errBox.style.display = 'block';
+                document.getElementById('newProdResponsable').focus();
                 return;
             }
 
             if (esRetiro && !lugarRetiro) {
                 errBox.textContent = 'Indicá el lugar de retiro / proveedor.';
                 errBox.style.display = 'block';
+                document.getElementById('newProdLugarRetiro').focus();
                 return;
             }
+
             if (!esRetiro && !zona) {
-                errBox.textContent = 'Seleccioná o ingresá una Zona / Depósito.';
+                errBox.textContent = 'Seleccioná o ingresá una Zona / Depósito general.';
+                errBox.style.display = 'block';
+                document.getElementById('newProdZona').focus();
+                return;
+            }
+
+            const cards = Array.from(document.querySelectorAll('#newProdItemsContainer .np-batch-card'));
+            if (cards.length === 0) {
+                errBox.textContent = 'Debés registrar al menos un producto.';
                 errBox.style.display = 'block';
                 return;
             }
 
-            // ── Aclaración de ubicación (solo en modo DEPÓSITO) ───────
-            // Viaja SOLA como "ubicacion_aclaracion" — el backend decide si va
-            // al Obs. ítem (solo si además falta estante/columna/fila).
-            let aclaracionUbi = '';
-            if (!esRetiro) {
-                const tieneEstanteriaCompleta = ubiEst !== '' && ubiCol !== '' && ubiFila !== '';
-                if (!tieneEstanteriaCompleta) {
-                    aclaracionUbi = document.getElementById('newProdUbiObs').value.trim().toUpperCase();
-                    if (!aclaracionUbi) {
-                        errBox.textContent = 'Al no indicar Estante, Columna y Fila exactos, debés ingresar la Aclaración de Ubicación física obligatoria.';
-                        errBox.style.display = 'block';
-                        return;
+            // ── Validaciones por cada producto ─────────────────────────
+            const itemsValidados = [];
+
+            for (let i = 0; i < cards.length; i++) {
+                const c = cards[i];
+                const numLabel = `Ítem #${i + 1}`;
+
+                const desc = (c.querySelector('.np-card-desc')?.value || '').trim().toUpperCase();
+                const selMarca = c.querySelector('.np-card-marca-sel')?.value || '';
+                const customMarca = (c.querySelector('.np-card-marca-custom')?.value || '').trim().toUpperCase();
+                const marca = (selMarca === '__OTRA__' ? customMarca : selMarca).trim().toUpperCase();
+
+                const selFam = c.querySelector('.np-card-familia-sel')?.value || '';
+                const customFam = (c.querySelector('.np-card-familia-custom')?.value || '').trim().toUpperCase();
+                const familia = (selFam === '__OTRA__' ? customFam : selFam).trim().toUpperCase();
+
+                const unidad = c.querySelector('.np-card-unidad')?.value || 'un';
+                const stockInicialVal = (c.querySelector('.np-card-stock-inicial')?.value || '').trim();
+                const stockMin = Number(c.querySelector('.np-card-stock-min')?.value) || 0;
+
+                // Ubicación física
+                const selUbiDep = c.querySelector('.np-card-ubi-dep')?.value || '';
+                const customUbiDep = (c.querySelector('.np-card-ubi-dep-custom')?.value || '').trim().toUpperCase();
+                const ubiDep = esRetiro ? '' : (selUbiDep === '__OTRO__' ? customUbiDep : selUbiDep).trim().toUpperCase();
+                const ubiEst = esRetiro ? '' : (c.querySelector('.np-card-ubi-est')?.value || '').trim();
+                const ubiCol = esRetiro ? '' : (c.querySelector('.np-card-ubi-col')?.value || '').trim();
+                const ubiFila = esRetiro ? '' : (c.querySelector('.np-card-ubi-fila')?.value || '').trim().toUpperCase();
+
+                let aclaracionUbi = '';
+                if (!esRetiro) {
+                    const tieneEstanteriaCompleta = ubiEst !== '' && ubiCol !== '' && ubiFila !== '';
+                    if (!tieneEstanteriaCompleta) {
+                        aclaracionUbi = (c.querySelector('.np-card-ubi-obs')?.value || '').trim().toUpperCase();
+                        if (!aclaracionUbi) {
+                            mostrarErrorEnCard(c, `${numLabel}: Al no indicar Estante, Columna y Fila exactos, debés ingresar la Aclaración de Ubicación física obligatoria.`);
+                            c.querySelector('.np-card-ubi-obs')?.focus();
+                            return;
+                        }
                     }
                 }
+
+                const obs = (c.querySelector('.np-card-obs')?.value || '').trim().toUpperCase();
+                const fotos = (c._fotos || []).slice();
+
+                if (!desc) {
+                    mostrarErrorEnCard(c, `${numLabel}: La descripción del producto es obligatoria.`);
+                    c.querySelector('.np-card-desc')?.focus();
+                    return;
+                }
+                if (!marca) {
+                    mostrarErrorEnCard(c, `${numLabel}: Seleccioná o ingresá una Marca obligatoria.`);
+                    c.querySelector('.np-card-marca-sel')?.focus();
+                    return;
+                }
+                if (stockInicialVal === '' || isNaN(Number(stockInicialVal)) || Number(stockInicialVal) < 0) {
+                    mostrarErrorEnCard(c, `${numLabel}: El Stock Inicial es obligatorio (ingresá 0 o un valor mayor).`);
+                    c.querySelector('.np-card-stock-inicial')?.focus();
+                    return;
+                }
+                const stockInicial = Number(stockInicialVal);
+
+                if (!familia) {
+                    mostrarErrorEnCard(c, `${numLabel}: Seleccioná o ingresá una Familia obligatoria.`);
+                    c.querySelector('.np-card-familia-sel')?.focus();
+                    return;
+                }
+
+                // Obs. ítem local para reflejar al instante
+                let obsItemLocalParts = [];
+                if (esRetiro && lugarRetiro) obsItemLocalParts.push('Retiro: ' + lugarRetiro);
+                if (!esRetiro && aclaracionUbi) obsItemLocalParts.push(aclaracionUbi);
+                if (obs) obsItemLocalParts.push(obs);
+                const obsItemLocal = obsItemLocalParts.join(' | ');
+
+                itemsValidados.push({
+                    desc,
+                    marca,
+                    familia,
+                    unidad,
+                    stockInicial,
+                    stockMin,
+                    ubiDep,
+                    ubiEst,
+                    ubiCol,
+                    ubiFila,
+                    aclaracionUbi,
+                    obs,
+                    obsItemLocal,
+                    fotos
+                });
             }
 
-            // ── Etiqueta de Obra, SOLO para reflejar en pantalla al instante ──
-            // (el backend recalcula esto mismo a partir de tipo_alta; no se manda)
             const obraMovimiento = esRetiro
                 ? 'Ingreso inicial / Alta - Retiro'
                 : 'Ingreso inicial / Alta - Depósito';
 
-            // ── Obs. ítem local, SOLO para reflejar en pantalla al instante ──
-            // (el backend arma la versión real que se guarda en la planilla)
-            let obsItemLocalParts = [];
-            if (esRetiro && lugarRetiro) obsItemLocalParts.push('Retiro: ' + lugarRetiro);
-            if (!esRetiro && aclaracionUbi) obsItemLocalParts.push(aclaracionUbi);
-            if (obs) obsItemLocalParts.push(obs);
-            const obsItemLocal = obsItemLocalParts.join(' | ');
-
+            const totalItems = itemsValidados.length;
             btnConfirm.disabled = true;
-            btnConfirm.textContent = 'Registrando…';
+            btnConfirm.textContent = `Registrando ${totalItems} producto${totalItems > 1 ? 's' : ''}…`;
 
             try {
-                // Copia de las fotos ANTES de que closeNewProductModal() las borre
-                const fotosParaEnviar = newProductCurrentImages.slice();
-
-                // Generar ID local para reflejar al instante
-                const maxNum = state.stock.reduce((max, p) => {
+                // Generar IDs locales incrementales para reflejar al instante
+                let maxNum = state.stock.reduce((max, p) => {
                     const m = String(p.id || '').match(/PROD-(\d+)/i);
                     return m ? Math.max(max, parseInt(m[1], 10)) : max;
                 }, 0);
-                const localId = 'PROD-' + String(maxNum + 1).padStart(3, '0');
 
-                const fotosDrive = fotosParaEnviar.map(x => x.dataUrl).join('||');
-                const nuevoProducto = {
-                    id: localId,
-                    zona: zona,
-                    familia: familia,
-                    marca: marca,
-                    descripcion: desc,
-                    unidad: unidad,
-                    entradas: stockInicial > 0 ? stockInicial : 0,
-                    salidas: 0,
-                    devoluciones: 0,
-                    stock_actual: stockInicial,
-                    stock_minimo: stockMin,
-                    estado: stockInicial <= stockMin ? 'REPONER' : 'OK',
-                    ult_mov: stockInicial > 0 ? 'ENTRADA' : 'ALTA',
-                    ult_fecha: new Date().toLocaleDateString('es-AR'),
-                    ult_hora: horaAhora(),
-                    ubicacion_deposito: ubiDep,
-                    ubicacion_estante: ubiEst,
-                    ubicacion_columna: ubiCol,
-                    ubicacion_fila: ubiFila,
-                    imagen: fotosDrive,
-                    ult_obs: obsItemLocal
-                };
+                const nuevosProductosLocales = [];
 
-                // Agregar localmente
-                state.stock.unshift(nuevoProducto);
+                for (let i = 0; i < itemsValidados.length; i++) {
+                    const item = itemsValidados[i];
+                    maxNum++;
+                    const localId = 'PROD-' + String(maxNum).padStart(3, '0');
+                    item.localId = localId;
 
-                if (stockInicial > 0) {
-                    state.mov.unshift({
-                        fecha: new Date().toLocaleDateString('es-AR') + ' ' + horaAhora(),
-                        tipo: 'ENTRADA',
+                    const fotosDrive = item.fotos.map(x => x.dataUrl).join('||');
+                    const nuevoProducto = {
+                        id: localId,
                         zona: zona,
-                        descripcion: desc,
-                        cantidad: stockInicial,
-                        responsable: responsable || 'ALTA DE PRODUCTO',
-                        obra: obraMovimiento
-                    });
+                        familia: item.familia,
+                        marca: item.marca,
+                        descripcion: item.desc,
+                        unidad: item.unidad,
+                        entradas: item.stockInicial > 0 ? item.stockInicial : 0,
+                        salidas: 0,
+                        devoluciones: 0,
+                        stock_actual: item.stockInicial,
+                        stock_minimo: item.stockMin,
+                        estado: item.stockInicial <= item.stockMin ? 'REPONER' : 'OK',
+                        ult_mov: item.stockInicial > 0 ? 'ENTRADA' : 'ALTA',
+                        ult_fecha: new Date().toLocaleDateString('es-AR'),
+                        ult_hora: horaAhora(),
+                        ubicacion_deposito: item.ubiDep,
+                        ubicacion_estante: item.ubiEst,
+                        ubicacion_columna: item.ubiCol,
+                        ubicacion_fila: item.ubiFila,
+                        imagen: fotosDrive,
+                        ult_obs: item.obsItemLocal
+                    };
+
+                    item.nuevoProducto = nuevoProducto;
+                    nuevosProductosLocales.push(nuevoProducto);
+
+                    state.stock.unshift(nuevoProducto);
+
+                    if (item.stockInicial > 0) {
+                        state.mov.unshift({
+                            fecha: new Date().toLocaleDateString('es-AR') + ' ' + horaAhora(),
+                            tipo: 'ENTRADA',
+                            zona: zona,
+                            descripcion: item.desc,
+                            cantidad: item.stockInicial,
+                            responsable: responsable || 'ALTA DE PRODUCTO',
+                            obra: obraMovimiento
+                        });
+                    }
                 }
 
                 closeNewProductModal();
                 buildZoneChips();
                 populateFamiliaFilter();
                 renderAll();
-                showSuccessModal(`¡Producto "${desc}" registrado con éxito! (ID: ${localId})`);
 
-                // Sincronizar en Apps Script si no es demo
+                if (totalItems === 1) {
+                    showSuccessModal(`¡Producto "${itemsValidados[0].desc}" registrado con éxito! (ID: ${itemsValidados[0].localId})`);
+                } else {
+                    showSuccessModal(`¡${totalItems} productos nuevos registrados con éxito!`);
+                }
+
+                // Sincronizar en Apps Script de forma secuencial
                 if (!isDemo) {
-                    const payload = {
-                        accion: 'crear-producto',
-                        zona: zona,
-                        familia: familia,
-                        marca: marca,
-                        descripcion: desc,
-                        unidad: unidad,
-                        stock_inicial: stockInicial,
-                        stock_minimo: stockMin,
-                        deposito: ubiDep,
-                        estante: ubiEst,
-                        columna: ubiCol,
-                        fila: ubiFila,
-                        responsable: responsable,
-                        observaciones: obs,                 // ← observación libre, SIN concatenar nada más
-                        obs_general: obsGeneralEnvio,
-                        tipo_alta: tipoAlta,                // 'DEPOSITO' | 'RETIRO' — el backend arma "Obra" con esto
-                        lugar_retiro: lugarRetiro,
-                        ubicacion_aclaracion: aclaracionUbi, // ← nuevo nombre de campo, va suelto
-                        factura: factura,                    // ← va a su propia columna, sin prefijo
-                        fotos_base64: fotosParaEnviar.map(x => x.base64)
-                    };
-                    const res = await apiPost(payload);
-                    if (res && res.ok && res.existente) {
-                        // El producto ya existía: se quita el duplicado local y se recarga el real
-                        state.stock = state.stock.filter(p => p !== nuevoProducto);
-                        showToast(`Ya existía (ID ${res.id}): la entrada se sumó al stock existente ✓`);
-                        await cargarTodo(true);
-                        return;
-                    }
-                    if (res && res.ok && res.id) {
-                        nuevoProducto.id = res.id;
-                        // Reemplazamos el preview local (base64) por el link real de Drive
-                        if (res.imagen) {
-                            nuevoProducto.imagen = res.imagen;
-                        } else if (fotosParaEnviar.length > 0) {
-                            // Fallback: si el backend no procesó las fotos en crear-producto,
-                            // las subimos mediante actualizar-imagen para garantizar que queden en Drive
-                            let subidas = [];
-                            for (let i = 0; i < fotosParaEnviar.length; i++) {
-                                try {
-                                    const resFoto = await apiPost({
-                                        accion: 'actualizar-imagen',
-                                        id: res.id,
-                                        foto_base64: fotosParaEnviar[i].base64,
-                                        modo: i === 0 ? 'reemplazar' : 'agregar'
-                                    });
-                                    if (resFoto && resFoto.ok && resFoto.imagen) {
-                                        subidas = resFoto.imagen.split('||').map(s => s.trim()).filter(Boolean);
+                    let guardadosOk = 0;
+                    for (let i = 0; i < itemsValidados.length; i++) {
+                        const item = itemsValidados[i];
+                        if (totalItems > 1) {
+                            showToast(`Guardando en la nube ${i + 1} de ${totalItems}: "${item.desc}"…`);
+                        }
+                        const payload = {
+                            accion: 'crear-producto',
+                            zona: zona,
+                            familia: item.familia,
+                            marca: item.marca,
+                            descripcion: item.desc,
+                            unidad: item.unidad,
+                            stock_inicial: item.stockInicial,
+                            stock_minimo: item.stockMin,
+                            deposito: item.ubiDep,
+                            estante: item.ubiEst,
+                            columna: item.ubiCol,
+                            fila: item.ubiFila,
+                            responsable: responsable,
+                            observaciones: item.obs,
+                            obs_general: obsGeneralEnvio,
+                            tipo_alta: tipoAlta,
+                            lugar_retiro: lugarRetiro,
+                            ubicacion_aclaracion: item.aclaracionUbi,
+                            factura: factura,
+                            fotos_base64: item.fotos.map(x => x.base64)
+                        };
+
+                        try {
+                            const res = await apiPost(payload);
+                            if (res && res.ok && res.existente) {
+                                state.stock = state.stock.filter(p => p !== item.nuevoProducto);
+                                showToast(`"${item.desc}" ya existía (ID ${res.id}): entrada sumada al stock ✓`);
+                            } else if (res && res.ok && res.id) {
+                                item.nuevoProducto.id = res.id;
+                                if (res.imagen) {
+                                    item.nuevoProducto.imagen = res.imagen;
+                                } else if (item.fotos.length > 0) {
+                                    let subidas = [];
+                                    for (let fi = 0; fi < item.fotos.length; fi++) {
+                                        try {
+                                            const resFoto = await apiPost({
+                                                accion: 'actualizar-imagen',
+                                                id: res.id,
+                                                foto_base64: item.fotos[fi].base64,
+                                                modo: fi === 0 ? 'reemplazar' : 'agregar'
+                                            });
+                                            if (resFoto && resFoto.ok && resFoto.imagen) {
+                                                subidas = resFoto.imagen.split('||').map(s => s.trim()).filter(Boolean);
+                                            }
+                                        } catch (errFoto) {
+                                            console.error("Error subiendo foto de nuevo producto:", errFoto);
+                                        }
                                     }
-                                } catch (errFoto) {
-                                    console.error("Error subiendo foto de nuevo producto:", errFoto);
+                                    if (subidas.length > 0) {
+                                        item.nuevoProducto.imagen = subidas.join('||');
+                                    }
                                 }
+                                guardadosOk++;
+                            } else if (res && !res.ok) {
+                                showToast(`Error al guardar "${item.desc}": ${res.error || ''}`, true);
                             }
-                            if (subidas.length > 0) {
-                                nuevoProducto.imagen = subidas.join('||');
-                            }
+                        } catch (errSync) {
+                            console.error("Error guardando producto en nube:", item.desc, errSync);
+                            showToast(`Error sincronizando "${item.desc}" en la nube`, true);
                         }
-                        renderStock();
-                        if (res.error_fotos) {
-                            showToast(`Producto guardado (ID ${res.id}), pero la foto no se pudo subir: ${res.error_fotos}`, true);
-                        } else {
-                            showToast(`Guardado en la nube con ID ${res.id} ✓`);
-                        }
-                    } else if (res && !res.ok) {
-                        showToast('Error al guardar en la nube: ' + (res.error || ''), true);
+                    }
+
+                    renderStock();
+                    if (totalItems > 1) {
+                        showToast(`¡Se sincronizaron ${guardadosOk} de ${totalItems} productos en la nube! ✓`);
+                    } else if (guardadosOk === 1) {
+                        showToast(`Guardado en la nube con ID ${itemsValidados[0].nuevoProducto.id} ✓`);
                     }
                 }
             } catch (e) {
-                console.error("Error al registrar producto:", e);
-                showToast('Error al registrar el producto', true);
+                console.error("Error al registrar productos:", e);
+                showToast('Error al registrar los productos', true);
             } finally {
                 btnConfirm.disabled = false;
-                btnConfirm.textContent = 'Registrar Producto';
+                actualizarNumerosCards();
             }
         }
 
@@ -3924,17 +4444,47 @@
         document.getElementById('newProdCancel').addEventListener('click', closeNewProductModal);
         document.getElementById('newProdCloseX').addEventListener('click', closeNewProductModal);
         document.getElementById('newProdConfirm').addEventListener('click', confirmNewProduct);
-        document.getElementById('newProdUbiEst').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
-        document.getElementById('newProdUbiCol').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^0-9]/g, ''); });
-        document.getElementById('newProdUbiFila').addEventListener('input', e => { e.target.value = e.target.value.replace(/[^a-zA-Z]/g, '').toUpperCase(); });
 
-        document.querySelectorAll('#newProductOverlay input[type="text"], #newProductOverlay textarea').forEach(el => {
-            el.addEventListener('input', () => {
-                const s = el.selectionStart, e = el.selectionEnd;
-                el.value = el.value.toUpperCase();
-                if (s !== null && e !== null) el.setSelectionRange(s, e);
+        const btnAddAnother = document.getElementById('btnNpAddAnother');
+        if (btnAddAnother) {
+            btnAddAnother.addEventListener('click', () => {
+                const card = agregarItemNuevoProducto();
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    card.querySelector('.np-card-desc')?.focus();
+                }
             });
-        });
+        }
+
+        const btnAddAnotherBottom = document.getElementById('btnNpAddAnotherBottom');
+        if (btnAddAnotherBottom) {
+            btnAddAnotherBottom.addEventListener('click', () => {
+                const card = agregarItemNuevoProducto();
+                if (card) {
+                    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    card.querySelector('.np-card-desc')?.focus();
+                }
+            });
+        }
+
+        const btnToggleAll = document.getElementById('btnNpToggleAll');
+        if (btnToggleAll) {
+            btnToggleAll.addEventListener('click', toggleAllCards);
+        }
+
+        // Delegación de eventos para convertir texto a mayúsculas automáticamente en todo el modal
+        const newProductOverlay = document.getElementById('newProductOverlay');
+        if (newProductOverlay) {
+            newProductOverlay.addEventListener('input', (e) => {
+                if ((e.target.tagName === 'INPUT' && (e.target.type === 'text' || !e.target.type)) || e.target.tagName === 'TEXTAREA') {
+                    const s = e.target.selectionStart, end = e.target.selectionEnd;
+                    e.target.value = e.target.value.toUpperCase();
+                    if (s !== null && end !== null) {
+                        try { e.target.setSelectionRange(s, end); } catch (_) {}
+                    }
+                }
+            });
+        }
 
         document.getElementById('btnBatchAdjust').addEventListener('click', openBatchAdjustModal);
         document.getElementById('btnCopySelected').addEventListener('click', copySelectedProducts);
