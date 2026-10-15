@@ -1226,8 +1226,22 @@
 </head>
 
 <body>
+    <!-- ⬇️ NUEVO -->
+    <div id="loginOverlay" style="position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;">
+        <div style="background:var(--bg-elev);border:1px solid var(--line);border-radius:14px;padding:24px;width:100%;max-width:320px;">
+            <div class="brand-eyebrow">RPM Construcciones</div>
+            <div class="brand-title" style="margin-bottom:16px;">Ingresar</div>
+            <div class="field"><label>Usuario</label><input type="text" id="loginUser" autocapitalize="none" autocomplete="username"></div>
+            <div class="field"><label>Contraseña</label><input type="password" id="loginPass" autocomplete="current-password"></div>
+            <div class="modal-err" id="loginErr"></div>
+            <button class="btn primary" id="loginBtn" style="width:100%;justify-content:center;margin-top:12px;">Entrar</button>
+        </div>
+    </div>
+    <!-- ⬆️ FIN NUEVO -->
+
     <div class="app">
 
+        <!-- SELECTOR DE DISEÑO -->
         <!-- SELECTOR DE DISEÑO -->
         <div id="themeSelectorContainer"
             style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; position: relative;">
@@ -1339,6 +1353,9 @@
                 <button class="btn small" id="btnExport">📊 Exportar Excel</button>
                 <button class="btn small ghost" id="btnExportAll"
                     title="Exporta todos los materiales, ignorando filtros y selección">📦 Exportar todo</button>
+                <!-- ⬇️ NUEVO -->
+                <button class="btn small ghost" id="btnLogout">Salir</button>
+                <!-- ⬆️ FIN NUEVO -->
             </div>
         </div>
 
@@ -1800,6 +1817,10 @@
     <div class="toast" id="toast"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <!-- ⬇️ NUEVO -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <!-- ⬆️ FIN NUEVO -->
     <script>
         // ============================================================
         // CONFIG — completar con la URL del Web App (Implementar > Nueva implementación)
@@ -1811,6 +1832,49 @@
         };
 
         const isDemo = !CONFIG.WEB_APP_URL || CONFIG.WEB_APP_URL.indexOf('PEGA_ACA') === 0;
+
+        // ⬇️ NUEVO ─────────────────────────────────────────
+        firebase.initializeApp({
+            apiKey: "AIzaSyARLqbiEpIn5R2NfQssBVdPhMM5j6ZSe38",
+            authDomain: "depositorpm-9b0c6.firebaseapp.com",
+            projectId: "depositorpm-9b0c6"
+        });
+        const auth = firebase.auth();
+        const AUTH_DOMINIO = '@rpm.local';
+
+        async function getIdToken() {
+            return auth.currentUser ? await auth.currentUser.getIdToken() : '';
+        }
+
+        auth.onAuthStateChanged(user => {
+            document.getElementById('loginOverlay').style.display = user ? 'none' : 'flex';
+            if (user) { cargarTodo(false); }
+            else { state.stock = []; state.mov = []; renderAll(); }
+        });
+
+        async function entrarLogin() {
+            const u = document.getElementById('loginUser').value.trim().toLowerCase();
+            const p = document.getElementById('loginPass').value;
+            const err = document.getElementById('loginErr');
+            err.style.display = 'none';
+            if (!u || !p) { err.textContent = 'Ingresá usuario y contraseña.'; err.style.display = 'block'; return; }
+            try {
+                await auth.signInWithEmailAndPassword(u + AUTH_DOMINIO, p);
+                document.getElementById('loginPass').value = '';
+            } catch (e) {
+                console.error('Login error:', e.code, e.message);
+                let msg = 'Usuario o contraseña incorrectos.';
+                if (e.code === 'auth/unauthorized-domain') msg = 'Este dominio no está autorizado en Firebase.';
+                else if (e.code === 'auth/network-request-failed') msg = 'Sin conexión. Revisá tu internet.';
+                else if (e.code === 'auth/operation-not-allowed') msg = 'El acceso con correo/contraseña no está habilitado en Firebase.';
+                else if (e.code === 'auth/too-many-requests') msg = 'Demasiados intentos. Esperá unos minutos.';
+                err.textContent = msg; err.style.display = 'block';
+            }
+        }
+        document.getElementById('loginBtn').addEventListener('click', entrarLogin);
+        document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') entrarLogin(); });
+        document.getElementById('btnLogout').addEventListener('click', () => auth.signOut());
+        // ⬆️ FIN NUEVO ─────────────────────────────────────
 
         // ============================================================
         // DEMO DATA — se usa solo si no configuraste WEB_APP_URL
@@ -1859,12 +1923,15 @@
                 if (action === 'stock') return { ok: true, productos: DEMO_STOCK };
                 if (action === 'movimientos') return { ok: true, movimientos: DEMO_MOV };
             }
+            const token = encodeURIComponent(await getIdToken());
             const url = action === 'stock'
-                ? `${CONFIG.WEB_APP_URL}?action=json`
-                : `${CONFIG.WEB_APP_URL}?action=movimientos&limit=1500`;
+                ? `${CONFIG.WEB_APP_URL}?action=json&token=${token}`
+                : `${CONFIG.WEB_APP_URL}?action=movimientos&limit=1500&token=${token}`;
             const res = await fetch(url);
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.json();
+            const data = await res.json();
+            if (data && data.auth === false) { auth.signOut(); throw new Error('Sesión no válida'); }
+            return data;
         }
 
         function mostrarCartelFallaConexion(msg) {
@@ -1895,6 +1962,7 @@
                 throw new Error('Sin conexión a internet. No se enviaron los datos.');
             }
             if (!payload._txid) payload._txid = generarTxid();
+            payload.token = await getIdToken();   // ⬅️ NUEVO
 
             let text, res;
             try {
@@ -1911,7 +1979,9 @@
                 throw e;
             }
             try {
-                return JSON.parse(text);
+                const r = JSON.parse(text);                        // ⬅️ NUEVO
+                if (r && r.auth === false) auth.signOut();         // ⬅️ NUEVO
+                return r;                                          // ⬅️ NUEVO
             } catch (err) {
                 console.error('[apiPost] respuesta no JSON. HTTP', res.status, text.slice(0, 300));
                 const e = new Error('Respuesta inesperada del servidor.');
@@ -1961,6 +2031,7 @@
         }
 
         async function cargarTodo(silencioso) {
+            if (!auth.currentUser) return;   // ⬅️ NUEVO
             try {
                 if (!silencioso) setStatus('Cargando…', true);
                 const [rStock, rMov] = await Promise.all([apiGet('stock'), apiGet('movimientos')]);
