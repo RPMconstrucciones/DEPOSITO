@@ -1222,6 +1222,62 @@
         .cart-order-bar.tipo-devolucion {
             border-color: var(--devol-fg);
         }
+
+        /* ===== AJUSTES: MAYÚSCULAS + LETRA MÁS GRANDE ===== */
+        #stockBody,
+        #movBody,
+        .zone-row,
+        .stats,
+        .filter-select,
+        .filter-select option {
+            text-transform: uppercase;
+        }
+
+        .btn-edit-desc {
+            text-transform: none;
+        }
+
+        body {
+            font-size: 15px;
+        }
+
+        table,
+        .sticky-header-table {
+            font-size: 14px;
+        }
+
+        thead th {
+            font-size: 11.5px;
+        }
+
+        .zone-chip {
+            font-size: 13px;
+        }
+
+        .fam-badge {
+            font-size: 11.5px;
+        }
+
+        .id-tag,
+        .loc-tag {
+            font-size: 12px;
+        }
+
+        .obs-tag {
+            font-size: 12.5px;
+        }
+
+        .estado-pill {
+            font-size: 11px;
+        }
+
+        .stock-btn {
+            font-size: 15px;
+        }
+
+        .stat-label {
+            font-size: 11.5px;
+        }
     </style>
 </head>
 
@@ -2039,11 +2095,13 @@
                 const nuevoStock = rStock.productos || [];
                 const nuevoMov = (rMov && rMov.ok) ? (rMov.movimientos || []) : [];
 
-                const huboCambios = JSON.stringify(nuevoStock) !== JSON.stringify(state.stock)
-                    || JSON.stringify(nuevoMov) !== JSON.stringify(state.mov);
+                const firma = JSON.stringify(nuevoStock) + JSON.stringify(nuevoMov);
+                const huboCambios = firma !== state.firma;
+                state.firma = firma;
 
                 state.stock = nuevoStock;
                 state.mov = nuevoMov;
+                normalizarDatos();
 
                 // Modo silencioso (polling) sin cambios reales → no se toca la tabla en absoluto.
                 if (!silencioso || huboCambios) {
@@ -2081,11 +2139,11 @@
         // ZONE CHIPS
         // ============================================================
         function buildZoneChips() {
-            const zonas = Array.from(new Set(state.stock.map(p => p.zona).filter(Boolean))).sort();
+            const zonas = Array.from(new Set(state.stock.map(p => p.zonaLabel).filter(Boolean))).sort();
             const row = document.getElementById('zoneRow');
             const chips = ['<button class="zone-chip' + (state.zona === '' ? ' active' : '') + '" data-zona="">Todos los depósitos<span class="count">' + state.stock.length + '</span></button>'];
             zonas.forEach(z => {
-                const n = state.stock.filter(p => p.zona === z).length;
+                const n = state.stock.filter(p => p.zonaLabel === z).length;
                 chips.push(`<button class="zone-chip${state.zona === z ? ' active' : ''}" data-zona="${escapeAttr(z)}">${escapeHtml(z)}<span class="count">${n}</span></button>`);
             });
             row.innerHTML = chips.join('');
@@ -2100,11 +2158,13 @@
 
         function populateFamiliaFilter() {
             const sel = document.getElementById('filterFamilia');
-            const current = sel.value;
-            const familias = Array.from(new Set(state.stock.map(p => p.familia).filter(Boolean))).sort();
+            const familias = Array.from(new Set(
+            zonaFiltrado(state.stock).map(p => p.familia).filter(Boolean)
+            )).sort((a, b) => a.localeCompare(b, 'es'));
             sel.innerHTML = '<option value="">Todas las familias</option>' +
                 familias.map(f => `<option value="${escapeAttr(f)}">${escapeHtml(f)}</option>`).join('');
-            sel.value = familias.includes(current) ? current : '';
+            if (!familias.includes(state.stockUi.familia)) state.stockUi.familia = '';
+            sel.value = state.stockUi.familia;
         }
 
         // ============================================================
@@ -2115,6 +2175,42 @@
             return str.normalize("NFD")
                 .replace(/[\u0300-\u036f]/g, "")
                 .toLowerCase();
+        }
+
+        function claveTexto(s) {
+            return normalizeText(String(s || '')).replace(/\s+/g, ' ').trim();
+        }
+
+        // Agrupa variantes (mayúsc./acentos/espacios) y elige la más usada como etiqueta
+        function mapaCanonico(valores) {
+            const cuenta = new Map();
+            valores.forEach(v => {
+                const t = String(v || '').trim();
+                if (!t) return;
+                const k = claveTexto(t);
+                if (!cuenta.has(k)) cuenta.set(k, new Map());
+                const m = cuenta.get(k);
+                m.set(t, (m.get(t) || 0) + 1);
+            });
+            const out = new Map();
+            cuenta.forEach((vars, k) => {
+                const mejor = [...vars.entries()].sort((a, b) => b[1] - a[1])[0][0];
+                out.set(k, mejor.toUpperCase());
+            });
+            return out;
+        }
+
+        function normalizarDatos() {
+            const todos = [...state.stock, ...state.mov];
+            const zonas = mapaCanonico(todos.map(x => x.zona));
+            const fams = mapaCanonico(todos.map(x => x.familia));
+            const marcas = mapaCanonico(todos.map(x => x.marca));
+            todos.forEach(x => {
+                // x.zona queda intacta: se sigue enviando tal cual al backend
+                if (x.zona) x.zonaLabel = zonas.get(claveTexto(x.zona));
+                if (x.familia) x.familia = fams.get(claveTexto(x.familia)) || x.familia;
+                if (x.marca && x.marca !== '—') x.marca = marcas.get(claveTexto(x.marca)) || x.marca;
+            });
         }
 
         function matchesSearch(item, query, fields) {
@@ -2158,7 +2254,7 @@
         }
 
         function zonaFiltrado(list) {
-            return state.zona ? list.filter(x => x.zona === state.zona) : list;
+        return state.zona ? list.filter(x => x.zonaLabel === state.zona) : list;
         }
 
         function stockFiltrado() {
@@ -2568,6 +2664,7 @@
             p.estado = p.stock_actual <= p.stock_minimo ? 'REPONER' : 'OK';
 
             closeEditProductModal();
+            normalizarDatos();
             buildZoneChips();
             populateFamiliaFilter();
             renderAll();
@@ -3369,7 +3466,7 @@
             document.getElementById('newProdErr').style.display = 'none';
 
             // Poblar zonas creadas
-            const zonasExistentes = Array.from(new Set(state.stock.map(p => p.zona).filter(Boolean))).sort();
+            const zonasExistentes = Array.from(new Set(state.stock.map(p => p.zonaLabel).filter(Boolean))).sort();
             const selZona = document.getElementById('newProdZona');
             let optsZona = '<option value="">-- Seleccionar Depósito / Zona --</option>';
             zonasExistentes.forEach(z => {
@@ -3484,7 +3581,11 @@
             // ── Zona general (solo requerida en modo DEPÓSITO) ─────────
             const selZona = document.getElementById('newProdZona').value;
             const customZona = document.getElementById('newProdZonaCustom').value.trim().toUpperCase();
-            const zona = esRetiro ? '' : (selZona === '__OTRA__' ? customZona : selZona).trim().toUpperCase();
+            let zona = esRetiro ? '' : (selZona === '__OTRA__' ? customZona : selZona).trim().toUpperCase();
+            if (zona) {
+            const ya = state.stock.find(p => claveTexto(p.zona) === claveTexto(zona));
+                if (ya) zona = ya.zonaLabel;   // reutiliza la zona existente en vez de crear una variante
+            }
 
             const responsable = document.getElementById('newProdResponsable').value.trim().toUpperCase();
             const obsGeneralEnvio = document.getElementById('newProdObsGeneral').value.trim().toUpperCase();
@@ -3677,6 +3778,7 @@
                 }
 
                 closeNewProductModal();
+                normalizarDatos();
                 buildZoneChips();
                 populateFamiliaFilter();
                 renderAll();
@@ -4121,6 +4223,7 @@
         }
 
         function renderAll() {
+            populateFamiliaFilter();
             renderStats();
             populateStockProductoFilter();
             populateMovFamiliaFilter();
