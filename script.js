@@ -5,6 +5,45 @@
 // Cada formulario manda el campo "zona" para identificarse.
 // ============================================================
 
+// ⬇️ NUEVO ─────────────────────────────────────────────────
+// SEGURIDAD — Firebase Auth
+// Mientras sea false, el script acepta pedidos sin login (para ir probando).
+// Cuando todos los HTML tengan login, cambiarlo a true.
+const AUTH_OBLIGATORIA = false;
+
+const FB_ROLES = {
+  'deposito@rpm.local': 'escritura',
+  'gerencia@rpm.local': 'escritura'
+  // más adelante: 'jefe@rpm.local': 'escritura', 'dev@rpm.local': 'escritura'
+};
+
+function autenticar_(idToken) {
+  if (!idToken) return { ok: false };
+  const cache = CacheService.getScriptCache();
+  const key = 'tk_' + Utilities.base64EncodeWebSafe(
+    Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, idToken));
+  let email = cache.get(key);
+  if (!email) {
+    try {
+      const apiKey = PropertiesService.getScriptProperties().getProperty('FB_API_KEY');
+      const res = UrlFetchApp.fetch(
+        'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + apiKey,
+        { method: 'post', contentType: 'application/json',
+          payload: JSON.stringify({ idToken: idToken }), muteHttpExceptions: true });
+      if (res.getResponseCode() !== 200) return { ok: false };
+      const u = (JSON.parse(res.getContentText()).users || [])[0];
+      if (!u || !u.email) return { ok: false };
+      email = String(u.email).toLowerCase();
+      cache.put(key, email, 300); // 5 min: evita consultar a Firebase en cada polling
+    } catch (err) { return { ok: false }; }
+  }
+  const rol = FB_ROLES[email];
+  return rol ? { ok: true, email: email, rol: rol } : { ok: false };
+}
+
+function forzarAutorizacionExterna() { UrlFetchApp.fetch('https://www.google.com'); }
+// ⬆️ FIN NUEVO ─────────────────────────────────────────────
+
 // ============================================================
 // 1. CONFIG Y CONSTANTES
 // ============================================================
@@ -133,7 +172,18 @@ const ORDEN_DESCRIPCION = {
   // ── Instalación Eléctrica (formulario nuevo) ──
   modulos:     ['tipo', 'subtipo', 'color'],
   cajas_ie:    ['formato', 'material', 'medida'],
-  canieria:    ['tipo', 'tuerca', 'material', 'diametro_medida', 'color']
+  canieria:    ['tipo', 'tuerca', 'material', 'diametro_medida', 'color'],
+  // ── Insumos libres (texto libre + marca) ──
+  grampas:            ['descripcion'],
+  mordaza_jabalina:   ['descripcion'],
+  bornera_bpn:        ['descripcion'],
+  separador_bornera:  ['descripcion'],
+  arandela:           ['descripcion'],
+  prensa_cable:       ['descripcion'],
+  cinta_aisladora:    ['descripcion'],
+  cinta_autosoldable: ['descripcion'],
+  precinto_plastico:  ['descripcion'],
+  prolongador:        ['descripcion']
 };
 
 const FAMILIAS = {
@@ -152,7 +202,7 @@ const FAMILIAS = {
   pulsadores:    'Pulsador',
   ojosbuey:      'Ojo de Buey',
   bloqueaux:     'Bloque de Contacto Auxiliar',
-  terminales:    'Terminal / Conector',
+  terminales:    'Terminal',
   filtros:       'Filtro',
   aceites:       'Aceite / Lubricante',
   grasas:        'Grasa',
@@ -257,7 +307,18 @@ const FAMILIAS = {
   // ── Instalación Eléctrica (formulario nuevo) ──
   modulos:       'Módulo para Embutir',
   cajas_ie:      'Caja para Embutir (Módulos)',
-  canieria:      'Accesorio de Cañería'
+  canieria:      'Accesorio de Cañería',
+  // ── Insumos libres ──
+  grampas:            'GRAMPA',   // se reemplaza por el tipo elegido (ver A-4)
+  mordaza_jabalina:   'MORDAZA PARA JABALINA',
+  bornera_bpn:        'BORNERA PASO BPN',
+  separador_bornera:  'SEPARADOR PARA BORNERA',
+  arandela:           'ARANDELA',
+  prensa_cable:       'PRENSA CABLE',
+  cinta_aisladora:    'CINTA AISLADORA PVC',
+  cinta_autosoldable: 'CINTA AUTOSOLDABLE',
+  precinto_plastico:  'PRECINTO PLASTICO',
+  prolongador:        'PROLONGADOR'
 };
 
 // ============================================================
@@ -514,6 +575,13 @@ function limpiarImagenesVencidas() {
 function doGet(e) {
   const params = e.parameter || {};
 
+  // ⬇️ NUEVO
+  if (params.action && AUTH_OBLIGATORIA) {
+    const auth = autenticar_(params.token);
+    if (!auth.ok) return jsonResp({ ok: false, auth: false, error: 'No autorizado' });
+  }
+  // ⬆️ FIN NUEVO
+
   if (params.action === 'herr-datos') return herr_doGet(params);
 
   if (params.action === 'json') {
@@ -755,6 +823,16 @@ function doPost(e) {
 
   try {
     const data = JSON.parse(e.postData.contents);
+
+    // ⬇️ NUEVO
+    if (AUTH_OBLIGATORIA) {
+      const auth = autenticar_(data.token);
+      if (!auth.ok) return jsonResp({ ok: false, auth: false, error: 'No autorizado' });
+      if (auth.rol === 'lectura') return jsonResp({ ok: false, permiso: false, error: 'Tu usuario es de solo lectura.' });
+    }
+    delete data.token;
+    // ⬆️ FIN NUEVO
+
     Logger.log('Payload recibido: ' + JSON.stringify(data));
 
     const ss = SpreadsheetApp.openById('1PWCKGAQgZfBEWPwqWppsbylLdJLxJe3I6XWrEAhBwQk');
@@ -841,6 +919,7 @@ function procesarDeposito(data, ss) {
   const obra         = data.obra            || '';
   const zona         = data.zona            || 'Sin zona';
   const obsGenerales = data.observaciones   || '';
+  const factura      = String(data.factura || '').trim();
 
   const idPedido = dep_generarIdPedido(hojaMov, tipo);
   const nroEnvio = dep_generarNroEnvio();
@@ -893,7 +972,12 @@ function procesarDeposito(data, ss) {
           if (partes.length > 0) item.dimensiones = partes.join('x') + ' mm';
         }
       }
-           let marca = item.marca || 'No especificado';
+      let familiaFinal = nombreFamilia;
+      if (key === 'grampas' && item.tipo) familiaFinal = String(item.tipo).trim();
+      if (key === 'terminales' && item.tipo_terminal) familiaFinal = String(item.tipo_terminal).trim();
+      if (key === 'filtros') familiaFinal = familiaFiltro(item.tipo);
+      if (key === 'lamparas') familiaFinal = familiaLampara(item);
+      let marca = item.marca || 'No especificado';
       if (key === 'filtros' && item.codigo) {
         marca = marca + ' | ' + item.codigo;
       }
@@ -931,19 +1015,25 @@ function procesarDeposito(data, ss) {
 
       hojaMov.appendRow([
         idPedido, fecha, tipo, responsable, obra, zona,
-        nombreFamilia, marca, descripcion,
+        familiaFinal, marca, descripcion,
         cantidad, unidad, obs, obsGenerales, nroEnvio,
         ubicacion.deposito, ubicacion.estante, ubicacion.columna, ubicacion.fila,
-        ''   // N° Factura — no aplica a este tipo de movimiento
+        factura
       ]);
+      if (factura) {
+        const celdaFactura = hojaMov.getRange(hojaMov.getLastRow(), DEP_COL_MOV.NRO_FACTURA);
+        celdaFactura.setNumberFormat('@');
+        celdaFactura.setValue(factura);
+      }
 
-      dep_actualizarStock(hojaStock, zona, nombreFamilia, marca, descripcion, tipo, cantidad, fechaHoy, horaAhora, ubicacion, unidad, obs, obsGenerales, imagenUrl);
+      dep_actualizarStock(hojaStock, zona, familiaFinal, marca, descripcion, tipo, cantidad, fechaHoy, horaAhora, ubicacion, unidad, obs, obsGenerales, imagenUrl);
     });
   }
 
   if (data.producto_nuevo && data.producto_nuevo.descripcion && data.producto_nuevo.descripcion.trim() !== '') {
     const pn       = data.producto_nuevo;
     const cantidad = Number(pn.cantidad) || 0;
+    const pnMarca  = String(pn.marca || '').trim() || 'No especificado';
     const unidad   = pn.unidad           || 'un';
 
     let pnDimensiones = '';
@@ -966,7 +1056,7 @@ function procesarDeposito(data, ss) {
 
     hojaMov.appendRow([
       idPedido, fecha, tipo, responsable, obra, zona,
-      'Producto nuevo', '—', pnDescripcionFinal,
+      'Producto nuevo', pnMarca, pnDescripcionFinal,
       cantidad, unidad, pn.observacion || '', obsGenerales, nroEnvio,
       pn.deposito || '', pn.estante || '', pn.columna || '', pn.fila || '',
       ''   // N° Factura — no aplica a este tipo de movimiento
@@ -986,12 +1076,45 @@ function procesarDeposito(data, ss) {
       imagenNuevoUrl = urls.join('||');
     }
 
-    dep_actualizarStock(hojaStock, zona, 'Producto nuevo', '—', pnDescripcionFinal, tipo, cantidad, fechaHoy, horaAhora, ubicacionNuevo, pn.unidad, pn.observacion, obsGenerales, imagenNuevoUrl);
+    dep_actualizarStock(hojaStock, zona, 'Producto nuevo', pnMarca, pnDescripcionFinal, tipo, cantidad, fechaHoy, horaAhora, ubicacionNuevo, pn.unidad, pn.observacion, obsGenerales, imagenNuevoUrl);
   }
 
   return ContentService
     .createTextOutput(JSON.stringify({ ok: true, id: idPedido, envio: nroEnvio }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Familia del stock según el tipo de filtro elegido en el formulario de Filtros
+function familiaFiltro(tipo) {
+  const t = String(tipo || '').trim().toLowerCase();
+  if (/aceite/.test(t))                        return 'Filtro de aceite';
+  if (/^filtro de aire/.test(t))               return 'Filtro de aire';
+  if (/gasoil/.test(t))                        return 'Filtro de gasoil';
+  if (/^filtro refrigerante/.test(t))          return 'Filtro refrigerante';
+  if (/^acoples/.test(t))                      return 'Acoples';
+  if (/^filtro urea/.test(t))                  return 'Filtro de urea';
+  if (/^filtro tipo vasito/.test(t))           return 'Filtro tipo vasito';
+  if (/^c[aá]mara para gomas/.test(t))         return 'Cámara para gomas';
+  return 'Filtro';
+}
+
+// Familia del stock según la tecnología de la lámpara (teoría de 4 familias)
+function familiaLampara(item) {
+  const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const clasificar = t => {
+    if (!t) return '';
+    // 1° Descarga: va primero para que "halogenuro / mercurio halogenado" no caigan en Halógena
+    if (/sodio|vapor|mercurio|halogenuro|halogenad|metalic|metal halide|\bmh\b|descarga|mezcladora|mixta|lucalox|vialox/.test(t)) return 'Lámpara de Descarga (Sodio/Mercurio/MH)';
+    // 2° LED
+    if (/\bled\b|smd/.test(t)) return 'Lámpara LED';
+    // 3° Halógena / Incandescente: va antes que Fluorescente para ignorar el "Bajo Consumo" de marketing
+    if (/incandescente|halogen|reflectora/.test(t)) return 'Lámpara Halógena / Incandescente';
+    // 4° Fluorescente / Bajo Consumo
+    if (/fluorescente|\bcfl\b|bajo consumo|dulux|longlast|\besl\b/.test(t)) return 'Lámpara Fluorescente / Bajo Consumo';
+    return '';
+  };
+  // Primero el tipo; si no alcanza, el modelo (ej. VIALOX, LUCALOX). Si nada coincide, queda la familia genérica de siempre.
+  return clasificar(norm(item.tipo)) || clasificar(norm(item.modelo)) || 'Lámpara / Foco';
 }
 
 function armarDescripcion(familiaKey, item) {

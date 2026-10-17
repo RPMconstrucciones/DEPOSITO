@@ -2413,7 +2413,7 @@
     // 3.1 CONFIG
     // ============================================================
     const CONFIG = {
-      zona: "Lámparas y Focos",
+      zona: "LÁMPARAS Y FOCOS",
       appsScriptUrl: "https://script.google.com/macros/s/AKfycbw5o6UAwEEJUs727rnHvchCL97Z66QlVJ1UZZg5y12_-1qkgs9_gXBX1Bj-8LUmoosd/exec",
       storageKey: "rpm_borrador_lamparas",
       pollingIntervalMs: 25000,
@@ -4089,8 +4089,8 @@
       fotosNuevoPendientes = [];
       const previewNuevo = document.getElementById('nuevo_foto_preview');
       if (previewNuevo) previewNuevo.innerHTML = '';
-      const btnNuevo = document.getElementById('nuevo_foto_btn');
-      if (btnNuevo) btnNuevo.style.display = 'block';
+      const btnNuevo = document.getElementById('nuevo_foto_btns');
+      if (btnNuevo) btnNuevo.style.display = 'flex';
       ['nuevo_descripcion', 'nuevo_cantidad', 'nuevo_observacion'].forEach(id => {
         const el = document.getElementById(id); if (el) el.value = '';
       });
