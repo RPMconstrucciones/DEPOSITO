@@ -214,44 +214,128 @@
             cursor: not-allowed;
         }
 
-        /* ---------- ZONE CHIPS ---------- */
-        .zone-row {
+        /* ---------- ZONE CHIPS (ESTILO CAJA/PASOS) ---------- */
+        .filter-panel {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 18px 22px;
+            margin-bottom: 24px;
             display: flex;
-            flex-wrap: wrap;
-            gap: 7px;
-            margin-bottom: 16px;
+            flex-direction: column;
+            gap: 18px;
         }
 
+        .filter-step {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .filter-step.sub {
+            padding-left: 16px;
+            border-left: 2px solid var(--line);
+        }
+
+        .filter-step-label {
+            font-family: var(--sans);
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--txt-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .zone-line {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Scrollbar sutil para que las miles de familias no molesten a la vista */
+        .zone-line-scrollable {
+            max-height: 105px; /* Muestra unas 3 filas máximo */
+            overflow-y: auto;
+            padding-right: 6px;
+            align-content: flex-start;
+        }
+        .zone-line-scrollable::-webkit-scrollbar { width: 6px; }
+        .zone-line-scrollable::-webkit-scrollbar-track { background: transparent; }
+        .zone-line-scrollable::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+        .zone-line-scrollable::-webkit-scrollbar-thumb:hover { background: var(--txt-faint); }
+
         .zone-chip {
+            position: relative;
             flex-shrink: 0;
-            font-family: var(--mono);
+            font-family: var(--sans);
             font-size: 12px;
             font-weight: 600;
-            letter-spacing: .2px;
-            padding: 8px 14px;
+            padding: 7px 14px;
             border-radius: 20px;
-            border: 1px solid var(--line);
-            background: var(--bg-card);
+            border: 1px solid transparent;
+            background: var(--bg-elev);
             color: var(--txt-dim);
             cursor: pointer;
-            transition: .15s all;
+            transition: all 0.2s ease;
             white-space: nowrap;
         }
 
         .zone-chip:hover {
-            border-color: #33456f;
-            color: var(--txt);
-        }
-
-        .zone-chip.active {
-            background: var(--accent-soft);
-            border-color: var(--accent);
+            background: var(--hover-bg);
             color: var(--txt);
         }
 
         .zone-chip .count {
-            opacity: .6;
+            opacity: 0.6;
             margin-left: 6px;
+            font-weight: 400;
+        }
+
+        /* -- NIVEL 1: DEPÓSITOS (Mayor peso - Azul Brillante) -- */
+        .zone-chip[data-level="dep"].active {
+            background: rgba(59, 130, 246, 0.1);
+            border-color: #3b82f6;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+        }
+        .zone-chip[data-level="dep"].active::after {
+            content: ''; position: absolute; top: -2px; right: -2px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #60a5fa; box-shadow: 0 0 6px #3b82f6;
+        }
+
+        /* -- NIVEL 2: ZONAS (Peso medio - Índigo/Morado Brillante) -- */
+        .zone-chip[data-level="zona"] { font-size: 11.5px; padding: 6px 13px; }
+        .zone-chip[data-level="zona"].active {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: #6366f1;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(99, 102, 241, 0.25);
+        }
+        .zone-chip[data-level="zona"].active::after {
+            content: ''; position: absolute; top: -2px; right: -2px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #818cf8; box-shadow: 0 0 6px #6366f1;
+        }
+
+        /* -- NIVEL 3: FAMILIAS (Peso menor - Turquesa Brillante) -- */
+        .zone-chip[data-level="fam"] { font-size: 11.5px; padding: 6px 12px; }
+        .zone-chip[data-level="fam"].active {
+            background: rgba(20, 184, 166, 0.1);
+            border-color: #14b8a6;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(20, 184, 166, 0.25);
+        }
+        .zone-chip[data-level="fam"].active::after {
+            content: ''; position: absolute; top: -2px; right: -2px;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #2dd4bf; box-shadow: 0 0 6px #14b8a6;
+        }
+
+        .zone-chip.active .count {
+            color: rgba(255, 255, 255, 0.85);
+            opacity: 1;
         }
 
         /* ---------- STATS ---------- */
@@ -1907,6 +1991,7 @@
             stock: [],
             mov: [],
             zona: '',           // '' = todas
+            dep: '',            // '' = todos, '__NONE__' = sin ubicación, o '1','2','5A'...
             activeTab: 'stock',
             stockUi: { search: '', familia: '', estado: '', producto: '', sortKey: 'familia', sortDir: 1 },
             movUi: { search: '', tipo: '', familia: '', producto: '', sortKey: 'fecha', sortDir: -1, page: 0 },
@@ -2080,32 +2165,106 @@
         // ============================================================
         // ZONE CHIPS
         // ============================================================
+        function chipHtml(level, value, label, count, active) {
+            return `<button class="zone-chip${active ? ' active' : ''}" data-level="${level}" data-value="${escapeAttr(value)}">${escapeHtml(label)}<span class="count">${count}</span></button>`;
+        }
+
         function buildZoneChips() {
-            const zonas = Array.from(new Set(state.stock.map(p => p.zona).filter(Boolean))).sort();
             const row = document.getElementById('zoneRow');
-            const chips = ['<button class="zone-chip' + (state.zona === '' ? ' active' : '') + '" data-zona="">Todos los depósitos<span class="count">' + state.stock.length + '</span></button>'];
-            zonas.forEach(z => {
-                const n = state.stock.filter(p => p.zona === z).length;
-                chips.push(`<button class="zone-chip${state.zona === z ? ' active' : ''}" data-zona="${escapeAttr(z)}">${escapeHtml(z)}<span class="count">${n}</span></button>`);
+            const coll = (a, b) => a.localeCompare(b, undefined, { numeric: true });
+
+            // Nivel 1: depósitos
+            const deps = Array.from(new Set(state.stock.map(depOf).filter(Boolean))).sort(coll);
+            const sinDep = state.stock.filter(p => !depOf(p)).length;
+            let l1 = chipHtml('dep', '', 'Todos los depósitos', state.stock.length, !state.dep);
+            deps.forEach(d => {
+                l1 += chipHtml('dep', d, 'Depósito ' + d, state.stock.filter(p => depOf(p) === d).length, state.dep === d);
             });
-            row.innerHTML = chips.join('');
-            row.querySelectorAll('.zone-chip').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    state.zona = btn.dataset.zona;
-                    renderAll();
-                    row.querySelectorAll('.zone-chip').forEach(b => b.classList.toggle('active', b === btn));
+            if (sinDep) l1 += chipHtml('dep', '__NONE__', 'Sin ubicación', sinDep, state.dep === '__NONE__');
+
+            // Nivel 2: zonas
+            const baseDep = state.stock.filter(matchDep);
+            const zonas = Array.from(new Set(baseDep.map(p => p.zona).filter(Boolean))).sort(coll);
+            if (state.zona && !zonas.includes(state.zona)) state.zona = '';
+            
+            let l2 = '';
+            if (zonas.length > 0) {
+                l2 = chipHtml('zona', '', 'Todas las zonas', baseDep.length, !state.zona);
+                zonas.forEach(z => {
+                    l2 += chipHtml('zona', z, z, baseDep.filter(p => p.zona === z).length, state.zona === z);
                 });
-            });
+            }
+
+            // Nivel 3: familias
+            const baseZona = zonaFiltrado(state.stock);
+            const fams = Array.from(new Set(baseZona.map(p => p.familia).filter(Boolean))).sort(coll);
+            if (state.stockUi.familia && !fams.includes(state.stockUi.familia)) state.stockUi.familia = '';
+            
+            let l3 = '';
+            if (fams.length > 0) {
+                l3 = chipHtml('fam', '', 'Todas las familias', baseZona.length, !state.stockUi.familia);
+                fams.forEach(f => {
+                    l3 += chipHtml('fam', f, f, baseZona.filter(p => p.familia === f).length, state.stockUi.familia === f);
+                });
+            }
+
+            // Construir el HTML con estilo de panel
+            let html = `<div class="filter-panel">`;
+            
+            // Paso 1
+            html += `<div class="filter-step">
+                        <div class="filter-step-label">1. SELECCIONAR DEPÓSITO</div>
+                        <div class="zone-line">${l1}</div>
+                     </div>`;
+                     
+            // Paso 2
+            if (l2) {
+                const nombreDep = state.dep ? (state.dep === '__NONE__' ? 'Sin ubicación' : `Depósito ${state.dep}`) : 'Todos los depósitos';
+                html += `<div class="filter-step sub">
+                            <div class="filter-step-label">2. FILTRAR POR ZONA <span style="color:var(--txt-faint); margin-left:6px; font-weight:normal; text-transform:none;">(en ${nombreDep})</span></div>
+                            <div class="zone-line">${l2}</div>
+                         </div>`;
+            }
+            
+            // Paso 3 (Acá le agregamos la clase para el scroll)
+            if (l3) {
+                let nombreZona = state.zona ? `Zona: ${state.zona}` : 'Todas las zonas';
+                let stepNum = l2 ? '3' : '2';
+                html += `<div class="filter-step sub">
+                            <div class="filter-step-label">${stepNum}. FILTRAR POR FAMILIA <span style="color:var(--txt-faint); margin-left:6px; font-weight:normal; text-transform:none;">(${nombreZona})</span></div>
+                            <div class="zone-line zone-line-scrollable">${l3}</div>
+                         </div>`;
+            }
+
+            html += `</div>`;
+            row.innerHTML = html;
+
+            row.onclick = e => {
+                const btn = e.target.closest('.zone-chip');
+                if (!btn) return;
+                const v = btn.dataset.value;
+                if (btn.dataset.level === 'dep') { state.dep = v; state.zona = ''; state.stockUi.familia = ''; }
+                else if (btn.dataset.level === 'zona') { state.zona = v; state.stockUi.familia = ''; }
+                else { state.stockUi.familia = v; }
+                state.movUi.familia = state.stockUi.familia;
+                state.stockUi.producto = '';
+                state.movUi.producto = '';
+                state.movUi.page = 0;
+                buildZoneChips();
+                populateFamiliaFilter();
+                renderAll();
+            };
         }
 
         function populateFamiliaFilter() {
             const sel = document.getElementById('filterFamilia');
-            const current = sel.value;
-            const familias = Array.from(new Set(state.stock.map(p => p.familia).filter(Boolean))).sort();
+            const familias = Array.from(new Set(zonaFiltrado(state.stock).map(p => p.familia).filter(Boolean))).sort();
             sel.innerHTML = '<option value="">Todas las familias</option>' +
                 familias.map(f => `<option value="${escapeAttr(f)}">${escapeHtml(f)}</option>`).join('');
-            sel.value = familias.includes(current) ? current : '';
+            if (!familias.includes(state.stockUi.familia)) state.stockUi.familia = '';
+            sel.value = state.stockUi.familia;
         }
+
 
         // ============================================================
         // FILTER / SORT HELPERS
@@ -2157,8 +2316,22 @@
             return false;
         }
 
+        function depOf(x) {
+            if (x.stock_actual !== undefined) {               // es un producto de stock
+                return String(x.ubicacion_deposito || '').trim().toUpperCase();
+            }
+            const u = getMovProductInfo(x).ubicacion;         // es un movimiento: "4 / 3 / 1 / A"
+            return (!u || u === '—') ? '' : u.split('/')[0].trim().toUpperCase();
+        }
+
+        function matchDep(x) {
+            if (!state.dep) return true;
+            const d = depOf(x);
+            return state.dep === '__NONE__' ? d === '' : d === state.dep;
+        }
+
         function zonaFiltrado(list) {
-            return state.zona ? list.filter(x => x.zona === state.zona) : list;
+            return list.filter(x => (!state.zona || x.zona === state.zona) && matchDep(x));
         }
 
         function stockFiltrado() {
@@ -2445,7 +2618,9 @@
             }
 
             document.getElementById('stockCount').textContent = `${list.length} producto${list.length === 1 ? '' : 's'}`;
-            document.getElementById('stockZonaLabel').textContent = state.zona || 'Todos los depósitos';
+            document.getElementById('stockZonaLabel').textContent =
+                [state.dep && (state.dep === '__NONE__' ? 'Sin ubicación' : 'Depósito ' + state.dep), state.zona]
+                    .filter(Boolean).join(' › ') || 'Todos los depósitos';
 
             updateCartOrderBar();
         }
@@ -4466,7 +4641,13 @@
         });
 
         document.getElementById('stockSearch').addEventListener('input', e => { state.stockUi.search = e.target.value; renderStock(); });
-        document.getElementById('filterFamilia').addEventListener('change', e => { state.stockUi.familia = e.target.value; state.stockUi.producto = ''; populateStockProductoFilter(); renderStock(); });
+        document.getElementById('filterFamilia').addEventListener('change', e => {
+            state.stockUi.familia = e.target.value;
+            state.stockUi.producto = '';
+            buildZoneChips();
+            populateStockProductoFilter();
+            renderStock();
+        });
         document.getElementById('filterProductoStock').addEventListener('change', e => { state.stockUi.producto = e.target.value; renderStock(); });
         document.getElementById('filterEstado').addEventListener('change', e => { state.stockUi.estado = e.target.value; renderStock(); });
 
