@@ -1996,6 +1996,7 @@
             stockUi: { search: '', familia: '', estado: '', producto: '', sortKey: 'familia', sortDir: 1 },
             movUi: { search: '', tipo: '', familia: '', producto: '', sortKey: 'fecha', sortDir: -1, page: 0 },
             modalOpen: false,
+            guardandoFicha: false,
             selectedIds: new Set(),
             batchDraftQtys: {},
         };
@@ -2117,6 +2118,7 @@
 
         async function cargarTodo(silencioso) {
             if (!auth.currentUser) return;   // ⬅️ NUEVO
+            if (state.guardandoFicha) return; // evita sobreescribir mientras se guarda la ficha
             try {
                 if (!silencioso) setStatus('Cargando…', true);
                 const [rStock, rMov] = await Promise.all([apiGet('stock'), apiGet('movimientos')]);
@@ -2657,28 +2659,36 @@
             editProductCurrentId = id;
             state.modalOpen = true;
             document.getElementById('editProdTitle').textContent = `Editar ${p.id}`;
-            document.getElementById('editProdSub').textContent = `Depósito: ${p.zona}`;
+            document.getElementById('editProdSub').textContent = `Depósito: ${p.zona || '—'}`;
             document.getElementById('editProdDesc').value = p.descripcion || '';
             document.getElementById('editProdMarca').value = p.marca || '';
             document.getElementById('editProdFamilia').value = p.familia || '';
             document.getElementById('editProdMin').value = p.stock_minimo || 0;
             const depOriginal = (p.ubicacion_deposito || '').trim();
+            const depUpper = depOriginal.toUpperCase();
             const selEditDep = document.getElementById('editProdUbiDep');
             const opcionesFijas = ['', '1', '2', '3', '4', '5A', '5B', '5C', '6'];
             const editUbiDepCustom = document.getElementById('editProdUbiDepCustom');
-            if (opcionesFijas.includes(depOriginal.toUpperCase())) {
-                selEditDep.value = depOriginal;
+            if (opcionesFijas.includes(depUpper)) {
+                selEditDep.value = depUpper;
                 editUbiDepCustom.style.display = 'none';
                 editUbiDepCustom.value = '';
             } else {
                 selEditDep.value = '__OTRO__';
                 editUbiDepCustom.style.display = 'block';
                 editUbiDepCustom.value = depOriginal;
-            } document.getElementById('editProdUbiEst').value = (p.ubicacion_estante !== undefined && p.ubicacion_estante !== null) ? p.ubicacion_estante : '';
+            }
+            document.getElementById('editProdUbiEst').value = (p.ubicacion_estante !== undefined && p.ubicacion_estante !== null) ? p.ubicacion_estante : '';
             document.getElementById('editProdUbiCol').value = (p.ubicacion_columna !== undefined && p.ubicacion_columna !== null) ? p.ubicacion_columna : '';
             document.getElementById('editProdUbiFila').value = (p.ubicacion_fila || '').toUpperCase();
             document.getElementById('editProdObs').value = p.ult_obs || '';
             document.getElementById('editProdErr').style.display = 'none';
+            document.getElementById('editProdErr').textContent = '';
+            const btnConfirm = document.getElementById('editProdConfirm');
+            if (btnConfirm) {
+                btnConfirm.disabled = false;
+                btnConfirm.textContent = 'Guardar Cambios';
+            }
             editProductCurrentImages = (p.imagen || '').split('||').map(s => s.trim()).filter(Boolean);
             renderEditProdFotos();
             document.getElementById('editProductOverlay').classList.add('show');
@@ -2688,15 +2698,21 @@
         function closeEditProductModal() {
             state.modalOpen = false;
             editProductCurrentImages = [];
+            const btnConfirm = document.getElementById('editProdConfirm');
+            if (btnConfirm) {
+                btnConfirm.disabled = false;
+                btnConfirm.textContent = 'Guardar Cambios';
+            }
             document.getElementById('editProductOverlay').classList.remove('show');
         }
 
         async function confirmEditProduct() {
             const btn = document.getElementById('editProdConfirm');
-            if (btn.disabled) return;
+            if (btn && btn.disabled) return;
 
-            if (!editProductCurrentId) return;
-            const p = state.stock.find(x => x.id === editProductCurrentId);
+            const idAEditar = editProductCurrentId;
+            if (!idAEditar) return;
+            const p = state.stock.find(x => x.id === idAEditar);
             if (!p) return;
 
             const nuevaDesc = document.getElementById('editProdDesc').value.trim();
@@ -2706,7 +2722,7 @@
             const selEditDepVal = document.getElementById('editProdUbiDep').value;
             const nuevaUbiDep = selEditDepVal === '__OTRO__'
                 ? document.getElementById('editProdUbiDepCustom').value.trim().toUpperCase()
-                : selEditDepVal.trim();
+                : selEditDepVal.trim().toUpperCase();
             const nuevaUbiEst = document.getElementById('editProdUbiEst').value.trim();
             const nuevaUbiCol = document.getElementById('editProdUbiCol').value.trim();
             let nuevaUbiFila = document.getElementById('editProdUbiFila').value.trim().toUpperCase();
@@ -2722,8 +2738,45 @@
                 return;
             }
 
-            btn.disabled = true;
+            errBox.style.display = 'none';
+            errBox.textContent = '';
 
+            const viejaDesc = p.descripcion || '';
+            const viejaMarca = p.marca || '';
+
+            // Detectar qué campos cambiaron realmente
+            const datosCambiaron =
+                nuevaDesc !== (p.descripcion || '').trim() ||
+                nuevaMarca !== (p.marca || '').trim() ||
+                nuevaFamilia !== (p.familia || '').trim() ||
+                nuevoMin !== (Number(p.stock_minimo) || 0);
+
+            const obsCambio = nuevaObs !== (p.ult_obs || '').trim();
+
+            const curDep = (p.ubicacion_deposito || '').trim().toUpperCase();
+            const curEst = String(p.ubicacion_estante !== undefined && p.ubicacion_estante !== null ? p.ubicacion_estante : '').trim();
+            const curCol = String(p.ubicacion_columna !== undefined && p.ubicacion_columna !== null ? p.ubicacion_columna : '').trim();
+            const curFila = (p.ubicacion_fila || '').trim().toUpperCase();
+
+            const ubicCambio =
+                nuevaUbiDep !== curDep ||
+                nuevaUbiEst !== curEst ||
+                nuevaUbiCol !== curCol ||
+                nuevaUbiFila !== curFila;
+
+            if (!datosCambiaron && !obsCambio && !ubicCambio) {
+                closeEditProductModal();
+                showToast('Sin cambios para guardar');
+                return;
+            }
+
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Guardando…';
+            }
+            state.guardandoFicha = true;
+
+            // Actualizar datos del producto en memoria local
             p.descripcion = nuevaDesc;
             p.marca = nuevaMarca;
             p.familia = nuevaFamilia;
@@ -2732,58 +2785,95 @@
             p.ubicacion_estante = nuevaUbiEst;
             p.ubicacion_columna = nuevaUbiCol;
             p.ubicacion_fila = nuevaUbiFila;
-            // La observación se reemplaza con el valor actual del campo, sin
-            // concatenar con lo que ya estaba guardado — así coincide con lo
-            // que realmente se guarda en el backend vía "actualizar-observacion"
-            // (que también sobreescribe, no concatena).
-            if (nuevaObs) {
-                p.ult_obs = nuevaObs;
-            }
-            // Si el campo queda vacío, no se toca p.ult_obs (no se borra por accidente).el historial) 
+            p.ult_obs = nuevaObs;
             p.estado = p.stock_actual <= p.stock_minimo ? 'REPONER' : 'OK';
+
+            // Si cambió descripción o marca, sincronizar en los movimientos locales
+            if (datosCambiaron && state.mov) {
+                const viejaDescNorm = viejaDesc.trim().toLowerCase();
+                const viejaMarcaNorm = viejaMarca.trim().toLowerCase();
+                state.mov.forEach(m => {
+                    if (m.id === idAEditar) {
+                        m.descripcion = nuevaDesc;
+                        m.marca = nuevaMarca;
+                        m.familia = nuevaFamilia;
+                    } else if (!m.id && (m.descripcion || '').trim().toLowerCase() === viejaDescNorm &&
+                               (!viejaMarcaNorm || (m.marca || '').trim().toLowerCase() === viejaMarcaNorm)) {
+                        m.descripcion = nuevaDesc;
+                        m.marca = nuevaMarca;
+                        m.familia = nuevaFamilia;
+                    }
+                });
+            }
 
             closeEditProductModal();
             buildZoneChips();
             populateFamiliaFilter();
             renderAll();
-            showToast('Producto actualizado ✓');
+            showToast('Guardando cambios en la nube…');
 
             if (!isDemo) {
                 try {
-                    const resDatos = await apiPost({
-                        accion: "actualizar-datos",
-                        id: editProductCurrentId,
-                        descripcion: nuevaDesc,
-                        marca: nuevaMarca,
-                        familia: nuevaFamilia,
-                        stock_minimo: nuevoMin
-                    });
-                    await apiPost({
-                        accion: "actualizar-observacion",
-                        id: editProductCurrentId,
-                        observacion: nuevaObs
-                    });
-                    const resUbic = await apiPost({
-                        accion: "actualizar-ubicacion",
-                        id: editProductCurrentId,
-                        deposito: nuevaUbiDep,
-                        estante: nuevaUbiEst,
-                        columna: nuevaUbiCol,
-                        fila: nuevaUbiFila
-                    });
-                    if (resDatos && resDatos.ok && resUbic && resUbic.ok) {
+                    let resDatos = { ok: true };
+                    let resObs = { ok: true };
+                    let resUbic = { ok: true };
+
+                    if (datosCambiaron) {
+                        resDatos = await apiPostSeguro({
+                            accion: "actualizar-datos",
+                            id: idAEditar,
+                            descripcion: nuevaDesc,
+                            marca: nuevaMarca,
+                            familia: nuevaFamilia,
+                            stock_minimo: nuevoMin
+                        });
+                    }
+
+                    if (obsCambio) {
+                        resObs = await apiPostSeguro({
+                            accion: "actualizar-observacion",
+                            id: idAEditar,
+                            observacion: nuevaObs
+                        });
+                    }
+
+                    if (ubicCambio) {
+                        resUbic = await apiPostSeguro({
+                            accion: "actualizar-ubicacion",
+                            id: idAEditar,
+                            deposito: nuevaUbiDep,
+                            estante: nuevaUbiEst,
+                            columna: nuevaUbiCol,
+                            fila: nuevaUbiFila
+                        });
+                    }
+
+                    const exito = (resDatos && resDatos.ok !== false) &&
+                                  (resObs && resObs.ok !== false) &&
+                                  (resUbic && resUbic.ok !== false);
+
+                    if (exito) {
                         showToast('Ficha y ubicación guardadas en la nube ✓');
                     } else {
-                        showToast('Guardado parcial — revisá la conexión y reintentá.', true);
+                        const err = (resDatos && resDatos.error) || (resObs && resObs.error) || (resUbic && resUbic.error) || 'Guardado parcial';
+                        console.warn('[confirmEditProduct] Guardado parcial:', err);
+                        showToast(`Guardado parcial: ${err}. Revisá la conexión.`, true);
                     }
                 } catch (e) {
                     console.error("Error al sincronizar datos:", e);
                     showToast('No se pudo guardar en la nube. Reintentá.', true);
+                } finally {
+                    state.guardandoFicha = false;
                 }
+            } else {
+                state.guardandoFicha = false;
+                showToast('Producto actualizado ✓');
             }
 
-            btn.disabled = false;
-
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Guardar Cambios';
+            }
         }
 
         // ============================================================
@@ -4752,7 +4842,7 @@
         // ============================================================
         document.getElementById('demoBanner').style.display = isDemo ? 'flex' : 'none';
         cargarTodo(false);
-        setInterval(() => { if (!state.modalOpen) cargarTodo(true); }, CONFIG.POLL_MS);
+        setInterval(() => { if (!state.modalOpen && !state.guardandoFicha) cargarTodo(true); }, CONFIG.POLL_MS);
 
 
         // =========================================================================
