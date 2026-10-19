@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="color-scheme" content="dark">
-<title>Depósito — Aceites y Combustibles — RPM</title>
+<title>Depósito — Lubricantes y Fluidos — RPM</title>
 <style>
 /* ============================================================
    1.1 RESET Y VARIABLES BASE
@@ -468,7 +468,7 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
 .mini-confirm-stepper{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .mini-confirm-stepper button{width:32px;height:32px;border-radius:6px;border:1.5px solid #334155;background:#1e293b;color:#f8fafc;font-size:16px;font-weight:700;cursor:pointer}
 .mini-confirm-stepper span{font-size:16px;font-weight:700;min-width:24px;text-align:center;color:#f8fafc}
-.mini-confirm-input{width:56px;height:32px;text-align:center;border-radius:6px;border:1.5px solid #334155;background:#1e293b;color:#f8fafc;font-size:16px;font-weight:700;-moz-appearance:textfield;}
+.mini-confirm-input{width:72px;height:32px;text-align:center;border-radius:6px;border:1.5px solid #334155;background:#1e293b;color:#f8fafc;font-size:16px;font-weight:700;-moz-appearance:textfield;}
 .mini-confirm-input::-webkit-outer-spin-button,.mini-confirm-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .mini-confirm-unidad{font-size:12px;color:#94a3b8;font-weight:600;margin-left:2px;}
 .mini-confirm-tipo{display:flex;gap:8px;margin-bottom:10px}
@@ -570,7 +570,7 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
      ============================================================ -->
 <div id="screen-home" class="screen active">
   <div class="home-eyebrow">RPM Construcciones</div>
-  <div class="home-zone">🛢️ Depósito<span> — Aceites y Combustibles</span></div>
+  <div class="home-zone">🛢️ Depósito<span> — Lubricantes y Fluidos</span></div>
   <div class="home-sub">¿Qué querés hacer?</div>
 
   <button class="home-btn home-btn-stock" onclick="goStock()">
@@ -586,7 +586,7 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
     <div class="home-btn-icon">✏️</div>
     <div class="home-btn-text">
       <div class="home-btn-title">Cargar movimiento</div>
-      <div class="home-btn-desc">Entrada, salida o devolución</div>
+      <div class="home-btn-desc">Alta de tachos y bidones</div>
     </div>
     <span class="home-btn-arrow">›</span>
   </button>
@@ -605,7 +605,7 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
   <div class="topbar">
     <button class="topbar-back" onclick="goHome()">‹</button>
     <span class="topbar-title">Stock actual</span>
-    <span class="topbar-badge">🛢️ Acei/Comb.</span>
+    <span class="topbar-badge">🛢️ Lubric.</span>
   </div>
 
   <div class="barra-carrito" id="barra_carrito">
@@ -708,7 +708,7 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
   <div class="topbar">
     <button class="topbar-back" onclick="goHome()">‹</button>
     <span class="topbar-title">Registrar movimiento</span>
-    <span class="topbar-badge">🛢️ Acei/Comb.</span>
+    <span class="topbar-badge">🛢️ Lubric.</span>
   </div>
 
   <div class="form-scroll">
@@ -720,8 +720,6 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
       <select id="tipo_movimiento">
         <option value="">— Seleccioná —</option>
         <option>ENTRADA</option>
-        <option>SALIDA</option>
-        <option>DEVOLUCIÓN</option>
       </select>
 
       <label>Responsable <span class="req">*</span></label>
@@ -909,12 +907,12 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
 // 3.1 CONFIG
 // ============================================================
 const CONFIG = {
-  zona: "Depósito de Aceites y Combustibles",
+  zona: "LUBRICANTES Y FLUIDOS",
   appsScriptUrl: "https://script.google.com/macros/s/AKfycbw5o6UAwEEJUs727rnHvchCL97Z66QlVJ1UZZg5y12_-1qkgs9_gXBX1Bj-8LUmoosd/exec",
-  storageKey: "rpm_borrador_aceites_combustibles",
+  storageKey: "rpm_borrador_lubricantes_fluidos",
   pollingIntervalMs: 25000,
   ubicacion: {
-    depositos: ['3'], // TODO: confirmar el número real de depósito físico
+    depositos: ['1','2','3','4','5','6'],
     estantes:  ['1','2','3','4','5','6','7','8'],
     columnas:  Array.from({length:20}, (_,i)=>String(i+1)),
     filas:     ['A','B','C','D','E','F','G','H'],
@@ -1186,9 +1184,12 @@ function applyFilters() {
     else { filtered = filtered.filter(p => p.descripcion.toLowerCase().includes(valor.toLowerCase())); }
   }
   if (query) {
-    filtered = filtered.filter(p =>
-      (p.descripcion + ' ' + p.marca + ' ' + p.familia + ' ' + p.id).toLowerCase().includes(query)
-    );
+    const limpiar = s => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+    const tokens = query.split(/\s+/).map(limpiar).filter(Boolean);
+    filtered = filtered.filter(p => {
+      const t = limpiar(p.descripcion + p.marca + p.familia + p.id);
+      return tokens.every(k => t.includes(k));
+    });
   }
   if (fDeposito) filtered = filtered.filter(p => String(p.ubicacion_deposito || '') === fDeposito);
   if (fEstante)  filtered = filtered.filter(p => String(p.ubicacion_estante  || '') === fEstante);
@@ -1241,7 +1242,7 @@ function renderStock(list) {
           ' <span class="link-editar-obs" onclick="event.stopPropagation(); iniciarEditarObservacion(\'' + p.id + '\')">(Editar)</span>' +
         '</div>' +
         '<div id="obs_edit_' + p.id + '" onclick="event.stopPropagation()"></div>' +
-        '<div class="sc-bottom"><span class="sc-id">' + p.id + '</span><span class="sc-qty ' + qtyClass + '">' + p.stock_actual + ' u.</span></div>' +
+        '<div class="sc-bottom"><span class="sc-id">' + p.id + '</span><span class="sc-qty ' + qtyClass + '">' + p.stock_actual + ' ' + (p.unidad || 'u.') + '</span></div>' +
         '<button class="btn-mov" onclick="event.stopPropagation(); iniciarAjusteRapido(\'' + p.id + '\')">↕ Movimiento</button>' +
         '<div id="mini_confirm_' + p.id + '" onclick="event.stopPropagation()"></div>' +
       '</div>';
@@ -1285,9 +1286,9 @@ function openDetail(idx) {
     '<div class="detail-stock-card">' +
       '<div class="detail-stock-label">Stock actual</div>' +
       '<div class="detail-stock-num" style="color:' + colNum + '">' + p.stock_actual + '</div>' +
-      '<div class="detail-stock-unit">unidades</div>' +
+      '<div class="detail-stock-unit">' + (p.unidad || 'unidades') + '</div>' +
       '<div class="detail-state-badge" style="background:' + bgBadge + ';color:' + colBadge + '">' + p.estado + '</div>' +
-      (p.stock_minimo > 0 ? '<div class="detail-min">Mínimo: ' + p.stock_minimo + ' u.</div>' : '') +
+      (p.stock_minimo > 0 ? '<div class="detail-min">Mínimo: ' + p.stock_minimo + ' ' + (p.unidad || 'u.') + '</div>' : '') +
     '</div>' +
     '<div class="detail-stats">' +
       '<div class="detail-stat ent"><div class="detail-stat-num">' + p.entradas + '</div><div class="detail-stat-label">Entradas</div></div>' +
@@ -1701,7 +1702,7 @@ function mostrarStepperMovimiento(idProducto){
       '<div class="mini-confirm-titulo">Movimiento: ' + tipoMovimientoStockGlobal + '</div>' +
       '<div class="mini-confirm-stepper">' +
         '<button type="button" onclick="ajustarCantidadMini(\'' + idProducto + '\',-1)">−</button>' +
-        '<input type="number" inputmode="numeric" min="1" class="mini-confirm-input" id="mini_cant_' + idProducto + '" value="1" onchange="this.value=Math.max(1,parseInt(this.value,10)||1)">' +
+        '<input type="number" inputmode="decimal" min="0" step="any" class="mini-confirm-input" id="mini_cant_' + idProducto + '" value="1" onchange="this.value=Math.max(0,parseFloat(this.value)||0)">' +
         '<button type="button" onclick="ajustarCantidadMini(\'' + idProducto + '\',1)">+</button>' +
         '<span class="mini-confirm-unidad">' + unidad + '</span>' +
       '</div>' +
@@ -1714,8 +1715,8 @@ function mostrarStepperMovimiento(idProducto){
 }
 function ajustarCantidadMini(idProducto,delta){
   const input=document.getElementById('mini_cant_' + idProducto);
-  let val=(parseInt(input.value,10)||1)+delta;
-  if(val<1)val=1;
+  let val=Math.round(((parseFloat(input.value)||0)+delta)*100)/100;
+  if(val<0)val=0;
   input.value=val;
 }
 function cerrarMiniConfirm(idProducto){
@@ -1735,12 +1736,13 @@ function volverATipoMovimiento(idProducto){
 function confirmarAgregarCarrito(idProducto){
   const cont=document.getElementById('mini_confirm_' + idProducto);
   const tipo=cont.dataset.tipoActual||tipoMovimientoStockGlobal;
-  const cantidad=parseInt(document.getElementById('mini_cant_' + idProducto).value,10)||1;
+  const cantidad=parseFloat(document.getElementById('mini_cant_' + idProducto).value)||0;
+  if(cantidad<=0){toastDep("⚠ Ingresá una cantidad mayor a 0","error");return;}
   const producto=stockData.find(p=>p.id===idProducto);
   if(!producto)return;
   carritoRapido.tipo=tipo;
   const existente=carritoRapido.items.find(it=>it.id===idProducto);
-  if(existente)existente.cantidad+=cantidad;
+  if(existente)existente.cantidad=Math.round((existente.cantidad+cantidad)*100)/100;
   else carritoRapido.items.push({
   id:idProducto,
   familia:producto.familia,
@@ -1838,7 +1840,7 @@ async function enviarCarritoRapido(overlay){
     return;
   }
   const obsGeneral=document.getElementById("carrito_obs_general").value.trim();
-  if(!responsable||!obra){toastDep("⚠ Completá Responsable y Obra","error");}
+  if(!responsable||!obra){toastDep("⚠ Completá Responsable y Obra","error");return;}
   const btn=overlay.querySelector("#btn_confirmar_carrito");
   btn.disabled=true;btn.textContent="Enviando...";
   const payload={
@@ -1854,6 +1856,8 @@ async function enviarCarritoRapido(overlay){
     fecha:new Date().toLocaleString("es-AR",{hour12:false}),
     items:carritoRapido.items.map(it=>({id:it.id,familia:it.familia,marca:it.marca,descripcion:it.descripcion,cantidad:it.cantidad,unidad:it.unidad}))
   };
+  if(!carritoRapido._txid) carritoRapido._txid = (crypto.randomUUID ? crypto.randomUUID() : 'tx-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+  payload._txid = carritoRapido._txid;
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), 20000);
   try{
@@ -1937,16 +1941,17 @@ const counters = {
 };
 const FAMILIES = Object.keys(counters);
 
+const REQ_LUB = [['producto','Descripción del producto'],['marca','Marca'],['capacidad','Capacidad del envase'],['cantidad','Cantidad']];
 const REQUIRED = {
-  aceites:       [['tipo_aceite','Tipo de aceite'],['cantidad','Cantidad']],
-  grasas:        [['cantidad','Cantidad']],
-  refrigerantes: [['cantidad','Cantidad']],
-  liquido_freno: [['cantidad','Cantidad']],
+  aceites:       [['tipo_aceite','Tipo de aceite'], ...REQ_LUB],
+  grasas:        REQ_LUB,
+  refrigerantes: REQ_LUB,
+  liquido_freno: REQ_LUB,
   combustibles:  [['tipo_combustible','Tipo de combustible'],['cantidad','Cantidad']],
 };
 
 const UNITS = {
-  aceites:['litros'], grasas:['kg'], refrigerantes:['litros'], liquido_freno:['litros'], combustibles:['litros'],
+  aceites:['L'], grasas:['kg'], refrigerantes:['L'], liquido_freno:['L'], combustibles:['L'],
 };
 
 const FAM_NAMES = {
@@ -1976,12 +1981,12 @@ function kitHint(fam, n) {
 
 const fotosPendientes = {};
 
-const CODIGO_PREFIJO_FAM = { grasas: 'GR', refrigerantes: 'LR', liquido_freno: 'LF' };
+const CODIGO_PREFIJO_FAM = { grasas: 'GRA', refrigerantes: 'LIR', liquido_freno: 'LIF' };
 const CODIGO_PREFIJO_ACEITE = {
-  'Aceite Motor': 'AC-M',
-  'Aceite Hidráulico': 'AC-H',
-  'Aceite Diferencial (Ejes)': 'AC-D',
-  'Aceite de Transmisión Hidráulica': 'AC-TH'
+  'Aceite Motor': 'ACM',
+  'Aceite Hidráulico': 'ACH',
+  'Aceite Diferencial (Ejes)': 'ADE',
+  'Aceite de Transmisión Hidráulica': 'ATH'
 };
 
 function bloqueCodigo(fam) {
@@ -2245,6 +2250,32 @@ function showOther(sel, otherId) {
   el.style.display = sel.value === 'OTRO' ? 'block' : 'none';
   if (sel.value !== 'OTRO') el.value = '';
 }
+function bloqueLubricante(fam, n, qtyRow) {
+  const tipoHtml = fam === 'aceites'
+    ? lbl('aceites','tipo_aceite','Tipo de aceite') +
+      '<select data-fam="aceites" data-campo="tipo_aceite"><option value="">— Seleccioná —</option>' +
+      opts(['Aceite Motor','Aceite Hidráulico','Aceite Diferencial (Ejes)','Aceite de Transmisión Hidráulica']) + '</select>'
+    : fam === 'liquido_freno'
+      ? '<label>Tipo <span class="opc">(opcional)</span></label><select data-fam="liquido_freno" data-campo="tipo"><option value="">— Seleccioná —</option>' + opts(['DOT 3','DOT 4','DOT 5']) + '</select>'
+      : '';
+  return tipoHtml +
+    lbl(fam,'producto','Descripción del producto') +
+    '<input type="text" data-fam="' + fam + '" data-campo="producto" placeholder="Ej: AZOLLA ZS68, RUBIA 7400 15W40">' +
+    lbl(fam,'marca','Marca') +
+    '<input type="text" data-fam="' + fam + '" data-campo="marca" placeholder="Ej: TOTAL ENERGIES, YPF">' +
+    '<label>Formato</label>' +
+    '<select data-fam="' + fam + '" data-campo="formato"><option value="TACHO">Tacho (con código)</option><option value="BIDÓN">Bidón (sin código, se suma)</option></select>' +
+    lbl(fam,'capacidad','Capacidad del envase (' + UNITS[fam][0] + ')') +
+    '<input type="number" data-fam="' + fam + '" data-campo="capacidad" min="0" step="any" inputmode="decimal" placeholder="Ej: 208">' +
+    '<div class="solo-tacho">' + bloqueCodigo(fam) +
+      '<label>Lote <span class="opc">(opcional)</span></label>' +
+      '<input type="text" data-fam="' + fam + '" data-campo="lote" placeholder="Ej: 1538615"></div>' +
+    lbl(fam,'cantidad','Cantidad actual a ingresar') + qtyRow +
+    '<label>Estado del envase</label>' +
+    '<select data-fam="' + fam + '" data-campo="estado"><option value="NUEVO">NUEVO</option><option value="USADO">USADO</option></select>' +
+    '<label>Observaciones</label>' +
+    '<input type="text" name="' + fam + '_observaciones_' + n + '" placeholder="Opcional">';
+}
 
 function addItem(fam) {
   counters[fam]++;
@@ -2255,46 +2286,15 @@ function addItem(fam) {
 
   const qtyRow = '' +
     '<div class="qty-unit">' +
-      '<input type="number" name="' + fam + '_cantidad_' + n + '" data-fam="' + fam + '" data-campo="cantidad" min="0.1" step="0.1" placeholder="0">' +
+      '<input type="number" name="' + fam + '_cantidad_' + n + '" data-fam="' + fam + '" data-campo="cantidad" min="0" step="any" inputmode="decimal" placeholder="0">' +
       '<select name="' + fam + '_unidad_' + n + '" ' + oc + '>' + uOpts(fam) + '</select>' +
     '</div>' + hint;
 
   const TEMPLATES = {
-    aceites:
-      lbl('aceites','tipo_aceite','Tipo de aceite') +
-      '<select data-fam="aceites" data-campo="tipo_aceite">' +
-        '<option value="">— Seleccioná —</option>' + opts(['Aceite Motor','Aceite Hidráulico','Aceite Diferencial (Ejes)','Aceite de Transmisión Hidráulica','Otro']) + '</select>' +
-      bloqueCodigo('aceites') +
-      '<label>Marca <span class="opc">(opcional)</span></label>' +
-      '<input type="text" data-fam="aceites" data-campo="marca" placeholder="Ej: YPF, Shell, Mobil, Total">' +
-      lbl('aceites','cantidad','Cantidad') + qtyRow +
-      '<label>Observaciones</label>' +
-      '<input type="text" name="aceites_observaciones_' + n + '" placeholder="Opcional">',
-
-    grasas:
-      '<label>Marca/Tipo <span class="opc">(opcional)</span></label>' +
-      '<input type="text" data-fam="grasas" data-campo="marca_tipo" placeholder="Ej: Grasa de litio, Grasa EP2">' +
-      bloqueCodigo('grasas') +
-      lbl('grasas','cantidad','Cantidad') + qtyRow +
-      '<label>Observaciones</label>' +
-      '<input type="text" name="grasas_observaciones_' + n + '" placeholder="Opcional">',
-
-    refrigerantes:
-      '<label>Marca/Tipo <span class="opc">(opcional)</span></label>' +
-      '<input type="text" data-fam="refrigerantes" data-campo="marca_tipo" placeholder="Ej: Refrigerante verde, rosa">' +
-      bloqueCodigo('refrigerantes') +
-      lbl('refrigerantes','cantidad','Cantidad') + qtyRow +
-      '<label>Observaciones</label>' +
-      '<input type="text" name="refrigerantes_observaciones_' + n + '" placeholder="Opcional">',
-
-    liquido_freno:
-      '<label>Tipo <span class="opc">(opcional)</span></label>' +
-      '<select data-fam="liquido_freno" data-campo="tipo">' +
-        '<option value="">— Seleccioná —</option>' + opts(['DOT 3','DOT 4','DOT 5']) + '</select>' +
-      bloqueCodigo('liquido_freno') +
-      lbl('liquido_freno','cantidad','Cantidad') + qtyRow +
-      '<label>Observaciones</label>' +
-      '<input type="text" name="liquido_freno_observaciones_' + n + '" placeholder="Opcional">',
+    aceites:       bloqueLubricante('aceites', n, qtyRow),
+    grasas:        bloqueLubricante('grasas', n, qtyRow),
+    refrigerantes: bloqueLubricante('refrigerantes', n, qtyRow),
+    liquido_freno: bloqueLubricante('liquido_freno', n, qtyRow),
 
     combustibles:
       lbl('combustibles','tipo_combustible','Tipo de combustible') +
@@ -2329,6 +2329,14 @@ function addItem(fam) {
         });
       }
     }
+    const selFormato = bloque.querySelector('[data-campo="formato"]');
+    if (selFormato) selFormato.addEventListener('change', () => {
+      const esT = selFormato.value === 'TACHO';
+      bloque.querySelectorAll('.solo-tacho').forEach(w => w.style.display = esT ? '' : 'none');
+      if (!esT) bloque.querySelectorAll('.solo-tacho input:not([readonly])').forEach(i => i.value = '');
+      const cap = bloque.querySelector('[data-campo="capacidad"]');
+      if (cap && !esT && !cap.value) cap.value = 20;
+    });
     bloque.insertAdjacentHTML('beforeend', bloqueUbicacionItem(fam, n));
     bloque.querySelectorAll('input[type="text"]').forEach(inp => forzarMayusculas(inp));
     bloque.querySelectorAll('[data-fam][data-campo]').forEach(el => {
@@ -2387,6 +2395,17 @@ function validateBlock(fam, block) {
     });
   }
 
+  if (['aceites','grasas','refrigerantes','liquido_freno'].includes(fam)) {
+    const formato = block.querySelector('[data-campo="formato"]')?.value;
+    const num = block.querySelector('[data-campo="codigo_numero"]');
+    const cant = parseFloat(block.querySelector('[data-campo="cantidad"]')?.value) || 0;
+    const cap = parseFloat(block.querySelector('[data-campo="capacidad"]')?.value) || 0;
+    if (formato === 'TACHO') {
+      if (num && !num.value.trim()) { num.classList.add('err'); errs.push('Número de código del tacho'); }
+      else if (num) num.classList.remove('err');
+      if (cap && cant > cap) errs.push('La cantidad supera la capacidad del tacho');
+    }
+  }
   return errs;
 }
 
@@ -2411,12 +2430,17 @@ function collectItems(fam) {
         data['observaciones'] = el.value;
       }
     });
-    if (data.codigo_numero) data.codigo = (data.codigo_prefijo ? data.codigo_prefijo + '-' : '') + data.codigo_numero;
+    if (data.codigo_numero) data.codigo = (data.codigo_prefijo ? data.codigo_prefijo + '-' : '') + String(data.codigo_numero).padStart(2, '0');
     const fotosItem = fotosPendientes[fam + '_' + n];
     if (n && fotosItem && fotosItem.length) data.fotos_base64 = fotosItem;
     if (!Object.values(data).some(v => v)) return null;
     const selUni = block.querySelector('select[name="' + fam + '_unidad_' + n + '"]');
     if (selUni) data.unidad = selUni.value;
+    if (['aceites','grasas','refrigerantes','liquido_freno'].includes(fam)) {
+      const u = String(data.unidad || '').toUpperCase();
+      data.presentacion = (data.formato === 'BIDÓN' ? 'BIDÓN ' : '') + data.capacidad + ' ' + u;
+      data.observaciones = [data.estado, data.observaciones].filter(Boolean).join(' | ');
+    }
     return data;
   }).filter(Boolean);
 }
@@ -2550,6 +2574,7 @@ function restaurarBorrador() {
     });
   });
 
+  document.querySelectorAll('[data-campo="formato"]').forEach(s => s.dispatchEvent(new Event('change')));
   actualizarEstadoBorrador('Borrador restaurado');
 }
 
@@ -2758,15 +2783,19 @@ async function submitForm() {
   const ctrlEnvio = new AbortController();
   const tidEnvio = setTimeout(() => ctrlEnvio.abort(), 20000);
 
+  if (!window._txidEnvio) window._txidEnvio = (crypto.randomUUID ? crypto.randomUUID() : 'tx-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+  payload._txid = window._txidEnvio;
   try {
-    await fetch(APPS_SCRIPT_URL, {
+    const respEnvio = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
       signal: ctrlEnvio.signal
     });
+    const resultadoEnvio = await respEnvio.json();
     clearTimeout(tidEnvio);
+    if (!resultadoEnvio.ok) throw new Error(resultadoEnvio.error || 'Error del servidor');
+    window._txidEnvio = null;
     try { localStorage.removeItem(CONFIG.storageKey); } catch (e) {}
     document.getElementById('ov-ok-detail').textContent =
       tipo + ' registrada por ' + resp + ' — ' + total + ' producto' + (total!==1?'s':'') + ' guardado' + (total!==1?'s':'') + '.';
@@ -2776,7 +2805,8 @@ async function submitForm() {
   } catch (err) {
     clearTimeout(tidEnvio);
     btn.disabled = false; btn.textContent = 'Registrar movimiento';
-    mostrarCartelFallaConexion(() => submitForm());
+    if (err.name === 'AbortError' || err instanceof TypeError) mostrarCartelFallaConexion(() => submitForm());
+    else toastDep('❌ ' + err.message, 'error');
   }
 }
 
@@ -2867,7 +2897,16 @@ function revisarDeepLinkProducto() {
   };
   intentarAbrir();
 }
+function mostrarCartelFallaConexion(reintentar) {
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay';
+  ov.innerHTML = '<div class="modal-box"><p>⚠ No se pudo confirmar el envío.<br>Revisá el historial antes de reintentar para no duplicar.</p>' +
+    '<button class="modal-btn primary" id="btn_reintentar_envio">Reintentar</button>' +
+    '<button class="modal-btn cancel" id="btn_cerrar_falla">Cerrar</button></div>';
+  document.body.appendChild(ov);
+  ov.querySelector('#btn_reintentar_envio').onclick = () => { ov.remove(); if (reintentar) reintentar(); };
+  ov.querySelector('#btn_cerrar_falla').onclick = () => ov.remove();
+}
 </script>
-<script src="conexion-protegida.js"></script>
 </body>
 </html>

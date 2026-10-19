@@ -320,6 +320,17 @@ const FAMILIAS = {
   precinto_plastico:  'PRECINTO PLASTICO',
   prolongador:        'PROLONGADOR'
 };
+const ZONA_LUBRICANTES = 'LUBRICANTES Y FLUIDOS';
+const FAM_LUBRICANTES  = ['aceites', 'grasas', 'refrigerantes', 'liquido_freno'];
+function R2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
+function familiaAceite(tipo) {
+  const t = String(tipo || '').toLowerCase();
+  if (/transm/.test(t))           return 'Aceite de Transmisión Hidráulica';
+  if (/hidr/.test(t))             return 'Aceite Hidráulico';
+  if (/motor/.test(t))            return 'Aceite Motor';
+  if (/diferencial|ejes/.test(t)) return 'Aceite de Diferencial de Ejes';
+  return 'Aceite / Lubricante';
+}
 
 // ============================================================
 // 1.2 Columnas — Depósito
@@ -977,6 +988,7 @@ function procesarDeposito(data, ss) {
       if (key === 'terminales' && item.tipo_terminal) familiaFinal = String(item.tipo_terminal).trim();
       if (key === 'filtros') familiaFinal = familiaFiltro(item.tipo);
       if (key === 'lamparas') familiaFinal = familiaLampara(item);
+      if (key === 'aceites') familiaFinal = familiaAceite(item.tipo_aceite);
       let marca = item.marca || 'No especificado';
       if (key === 'filtros' && item.codigo) {
         marca = marca + ' | ' + item.codigo;
@@ -1120,9 +1132,10 @@ function familiaLampara(item) {
 function armarDescripcion(familiaKey, item) {
   const camposOrden = ORDEN_DESCRIPCION[familiaKey] || [];
 
-  // Formulario de Aceites y Combustibles: tipo de aceite + código
-  if (familiaKey === 'aceites' && item.tipo_aceite) {
-    return [item.tipo_aceite, item.codigo].filter(v => v && String(v).trim() !== '').join(' | ');
+  if (FAM_LUBRICANTES.includes(familiaKey)) {
+    return [item.codigo, familiaKey === 'liquido_freno' ? item.tipo : '', item.producto,
+            item.presentacion, item.lote ? 'LOTE ' + item.lote : '']
+      .map(v => String(v || '').trim()).filter(Boolean).join(' | ');
   }
 
   if (camposOrden.length === 0) {
@@ -1195,7 +1208,8 @@ function dep_actualizarStock(hojaStock, zona, familia, marca, descripcion, tipo,
   else if (tipo === 'SALIDA')     salidas      += cantidad;
   else if (tipo === 'DEVOLUCIÓN') devoluciones += cantidad;
 
-  const stockActual = entradas - salidas + devoluciones;
+  entradas = R2(entradas); salidas = R2(salidas); devoluciones = R2(devoluciones);
+  const stockActual = R2(entradas - salidas + devoluciones);
 
   hojaStock.getRange(filaNum, DEP_COL_STOCK.ENTRADAS, 1, 4)
     .setValues([[entradas, salidas, devoluciones, stockActual]]);
@@ -1382,6 +1396,19 @@ function ajusteRapidoStockOpcionB(data, ss) {
   if (noEncontrados.length > 0) {
     return jsonResp({ ok: false, error: `No se encontraron estos productos: ${noEncontrados.join(', ')}` });
   }
+  if (tipo === 'SALIDA') {
+    const pedido = {};
+    items.forEach(it => {
+      const k = String(it.id || '').trim().toUpperCase();
+      pedido[k] = (pedido[k] || 0) + (Number(it.cantidad) || 0);
+    });
+    const sinStock = Object.keys(pedido).filter(k => {
+      const f = datos[indicePorId[k]];
+      return String(f[DEP_COL_STOCK.ZONA - 1]).trim().toUpperCase() === ZONA_LUBRICANTES &&
+             pedido[k] > (Number(f[DEP_COL_STOCK.STOCK_ACTUAL - 1]) || 0) + 0.0001;
+    });
+    if (sinStock.length) return jsonResp({ ok: false, error: 'Stock insuficiente en: ' + sinStock.join(', ') });
+  }
 
   const nroEnvio = dep_generarNroEnvio();
   const idPedido = dep_generarIdPedido(hojaMov, tipo);
@@ -1431,7 +1458,8 @@ function ajusteRapidoStockOpcionB(data, ss) {
     if      (tipo === 'ENTRADA')    entradas     += cantidad;
     else if (tipo === 'SALIDA')     salidas      += cantidad;
     else if (tipo === 'DEVOLUCIÓN') devoluciones += cantidad;
-    const stockActual = entradas - salidas + devoluciones;
+    entradas = R2(entradas); salidas = R2(salidas); devoluciones = R2(devoluciones);
+    const stockActual = R2(entradas - salidas + devoluciones);
 
     fila[DEP_COL_STOCK.ENTRADAS     - 1] = entradas;
     fila[DEP_COL_STOCK.SALIDAS      - 1] = salidas;
