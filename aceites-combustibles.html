@@ -10,12 +10,12 @@
 <title>Depósito — Lubricantes y Fluidos — RPM</title>
 <style>
 /* ============================================================
-   1.1 RESET Y VARIABLES BASE
+  1.1 RESET Y VARIABLES BASE
    ============================================================ */
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 /* El documento nunca scrollea; solo scrollean .stock-scroll / .form-scroll.
-   Esto evita que position:fixed se rompa cuando la página se embebe en un
+  Esto evita que position:fixed se rompa cuando la página se embebe en un
    iframe de Google Sites que se ajusta al alto del contenido. */
 html, body { height: 100%; overflow: hidden; }
 
@@ -26,7 +26,7 @@ body {
 button, .sc-icon-btn, .btn-mov { outline: none; }
 
 /* ============================================================
-   1.2 LAYOUT GENERAL (.screen, .topbar)
+  1.2 LAYOUT GENERAL (.screen, .topbar)
    ============================================================ */
 .screen {
   position: fixed;
@@ -497,7 +497,7 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
 .stock-card.en-carrito-salida{border-left:4px solid #dc2626}
 
 /* ============================================================
-   1.7 OVERLAYS Y MODALES (zoom, confirmación, toasts)
+  1.7 OVERLAYS Y MODALES (zoom, confirmación, toasts)
    ============================================================ */
 .form-overlay {
   display: none; position: fixed; inset: 0; z-index: 999;
@@ -561,13 +561,31 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
 .hist-fecha { font-size: 11px; color: #64748b; margin-bottom: 4px; }
 .hist-linea { font-size: 12px; color: #94a3b8; line-height: 1.5; }
 .hist-vacio { font-size: 12px; color: #64748b; }
+
+/* ── Firma en SALIDA ── */
+#screen-firma { background: #0f172a; }
+#screen-firma label { color: #cbd5e1; }
+#screen-firma input[type="text"] { background: #0f172a; color: #f8fafc; border-color: #334155; }
+.firma-card { background: #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+.firma-item { font-size: 13px; padding: 6px 0; border-bottom: 1px solid #334155; color: #f8fafc; }
+.firma-item:last-child { border-bottom: none; }
+.firma-item strong { color: #fca5a5; }
+.firma-wrap { position: relative; background: #fff; border-radius: 12px; border: 2px dashed #64748b; overflow: hidden; margin-bottom: 6px; }
+.firma-wrap.err { border-color: #dc2626; }
+#firma_canvas { display: block; width: 100%; height: 230px; touch-action: none; cursor: crosshair; }
+.firma-hint { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; color: #94a3b8; font-size: 14px; }
+.firma-linea { position: absolute; left: 7%; right: 7%; bottom: 46px; border-top: 1.5px solid #cbd5e1; pointer-events: none; }
+.firma-msg { display: none; font-size: 12px; color: #fca5a5; font-weight: 700; margin-bottom: 8px; }
+.firma-msg.show { display: block; }
+.btn-firma-borrar { width: 100%; padding: 11px; background: #334155; color: #cbd5e1; border: none; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 4px; }
+
 </style>
 </head>
 <body>
 
 <!-- ============================================================
-     2.1 PANTALLA HOME
-     ============================================================ -->
+    2.1 PANTALLA HOME
+    ============================================================ -->
 <div id="screen-home" class="screen active">
   <div class="home-eyebrow">RPM Construcciones</div>
   <div class="home-zone">🛢️ Depósito<span> — Lubricantes y Fluidos</span></div>
@@ -599,8 +617,8 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
 </div>
 
 <!-- ============================================================
-     2.2 PANTALLA STOCK
-     ============================================================ -->
+    2.2 PANTALLA STOCK
+    ============================================================ -->
 <div id="screen-stock" class="screen" style="position:fixed;">
   <div class="topbar">
     <button class="topbar-back" onclick="goHome()">‹</button>
@@ -643,9 +661,9 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
       <div class="stock-search">
         <span class="stock-search-icon">🔍</span>
         <input type="search" id="search-input" placeholder="Buscar producto, marca..." 
-       oninput="applyFilters()" 
-       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" 
-       name="busqueda_stock_aceites_combustibles">      </div>
+      oninput="applyFilters()" 
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" 
+      name="busqueda_stock_aceites_combustibles">      </div>
 
       <div class="filter-panel">
         <div class="filter-panel-title">Filtrar</div>
@@ -702,8 +720,8 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
 </div>
 
 <!-- ============================================================
-     2.3 PANTALLA FORMULARIO
-     ============================================================ -->
+    2.3 PANTALLA FORMULARIO
+    ============================================================ -->
 <div id="screen-form" class="screen">
   <div class="topbar">
     <button class="topbar-back" onclick="goHome()">‹</button>
@@ -886,8 +904,40 @@ select.err, input.err { border-color: #dc2626; background: #fff5f5; margin-botto
 </div>
 
 <!-- ============================================================
-     2.4 OVERLAYS GLOBALES
-     ============================================================ -->
+      2.4 OVERLAYS GLOBALES
+      ============================================================ -->
+
+<!-- PANTALLA FIRMA (solo SALIDA) -->
+<div id="screen-firma" class="screen">
+  <div class="topbar">
+    <button class="topbar-back" onclick="cancelarFirma()">‹</button>
+    <span class="topbar-title">✍️ Firma de conformidad</span>
+    <span class="topbar-badge">🛢️ Lubric.</span>
+  </div>
+  <div class="stock-scroll">
+    <div class="firma-card">
+      <div class="f-section-title" style="color:#475569">Resumen de la salida</div>
+      <div id="firma_resumen"></div>
+    </div>
+    <div class="firma-card">
+      <div class="f-section-title" style="color:#475569">Quién retira</div>
+      <label>Nombre y apellido <span class="req">*</span></label>
+      <input type="text" id="firma_nombre" placeholder="Quien recibe el material" autocomplete="off">
+      <label>DNI <span class="opc">(opcional)</span></label>
+      <input type="text" id="firma_dni" inputmode="numeric" placeholder="Sin puntos" autocomplete="off">
+      <label>Firma <span class="req">*</span></label>
+      <div class="firma-wrap" id="firma_wrap">
+        <canvas id="firma_canvas"></canvas>
+        <div class="firma-linea"></div>
+        <div class="firma-hint" id="firma_hint">Firmá acá con el dedo</div>
+      </div>
+      <div class="firma-msg" id="firma_msg">⚠ Falta la firma</div>
+      <button class="btn-firma-borrar" onclick="iniciarCanvasFirma()">🗑️ Borrar y firmar de nuevo</button>
+    </div>
+    <button class="btn-submit" id="firma_guardar" onclick="guardarFirma()">Guardar firma y registrar salida</button>
+  </div>
+</div>
+
 <div class="form-overlay form-overlay-ok" id="ov-ok">
   <div class="ov-icon">✅</div>
   <div class="ov-title-ok">¡Movimiento registrado!</div>
@@ -1774,6 +1824,7 @@ function vaciarCarritoRapido(){
   applyFilters();
 }
 function abrirModalConfirmarCarrito(){
+  delete carritoRapido._firma;   // cada confirmación pide firma nueva
   if(carritoRapido.items.length===0)return;
   const overlay=document.createElement("div");
   overlay.className="modal-overlay";
@@ -1816,7 +1867,7 @@ function abrirModalConfirmarCarrito(){
           '<label style="display:block;text-align:left;font-size:11px;font-weight:700;color:#cbd5e1;margin-bottom:4px;">Kilometraje / horómetro <span style="font-weight:400;color:#64748b;">(opcional)</span></label>' +
           '<input type="text" id="carrito_km_hs" placeholder="Ej: 12500 km o 3400 hs" style="width:100%;padding:8px;border:1.5px solid #334155;border-radius:6px;margin-bottom:14px;background:#0f172a;color:#f8fafc;">'
         : '') +
-      '<button class="modal-btn primary" id="btn_confirmar_carrito">Registrar movimiento</button>' +
+'<button class="modal-btn primary" id="btn_confirmar_carrito">' + (carritoRapido.tipo === 'SALIDA' ? 'Continuar a firma ✍️' : 'Registrar movimiento') + '</button>' +
       '<button class="modal-btn cancel" id="btn_cancelar_carrito">Cancelar</button>' +
     '</div>';
   document.body.appendChild(overlay);
@@ -1830,6 +1881,96 @@ function abrirModalConfirmarCarrito(){
   if (inpEquipo) forzarMayusculas(inpEquipo);
   const inpSolic = document.getElementById('carrito_solicitante');
   if (inpSolic) forzarMayusculas(inpSolic);}
+
+// ── FIRMA EN SALIDA ──
+let firmaOverlay = null, firmaDibujando = false, firmaHay = false, firmaUlt = null;
+function fEl(id) { return document.getElementById(id); }
+
+function abrirPantallaFirma(overlay) {
+  firmaOverlay = overlay;
+  overlay.style.display = 'none';           // el modal queda oculto pero vivo (conserva responsable, obra, etc.)
+  fEl('firma_resumen').innerHTML = carritoRapido.items.map(it =>
+    '<div class="firma-item">' + escHtml(it.descripcion) + ' — <strong>−' + it.cantidad + ' ' + escHtml(it.unidad) + '</strong></div>'
+  ).join('');
+  const solic = (fEl('carrito_solicitante') || {}).value || '';
+  fEl('firma_nombre').value = solic.trim();  // sugiere el solicitante, se puede cambiar
+  fEl('firma_dni').value = '';
+  fEl('firma_nombre').classList.remove('err');
+  const b = fEl('firma_guardar'); b.disabled = false; b.textContent = 'Guardar firma y registrar salida';
+  showScreen('screen-firma');
+  requestAnimationFrame(iniciarCanvasFirma); // el canvas tiene que estar visible para medirlo
+}
+
+function cancelarFirma() {
+  showScreen('screen-stock');
+  if (firmaOverlay) {
+    firmaOverlay.style.display = '';
+    const b = firmaOverlay.querySelector('#btn_confirmar_carrito');
+    if (b) { b.disabled = false; b.textContent = 'Continuar a firma ✍️'; }
+  }
+}
+
+function iniciarCanvasFirma() {
+  const cv = fEl('firma_canvas'), ctx = cv.getContext('2d');
+  const ratio = Math.max(window.devicePixelRatio || 1, 1), r = cv.getBoundingClientRect();
+  cv.width = r.width * ratio; cv.height = r.height * ratio;
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(ratio, ratio);
+  ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, r.width, r.height);   // fondo blanco: sin esto el PNG sale transparente
+  ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#0f172a';
+  firmaHay = false;
+  fEl('firma_hint').style.display = 'flex';
+}
+
+(function enlazarCanvasFirma() {
+  const cv = fEl('firma_canvas'), ctx = cv.getContext('2d');
+  const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  cv.addEventListener('pointerdown', e => {
+    e.preventDefault(); cv.setPointerCapture(e.pointerId);
+    firmaDibujando = true; firmaUlt = pos(e);
+    ctx.beginPath(); ctx.arc(firmaUlt.x, firmaUlt.y, 1.2, 0, Math.PI * 2); ctx.fillStyle = '#0f172a'; ctx.fill();
+    firmaHay = true;
+    fEl('firma_hint').style.display = 'none';
+    fEl('firma_wrap').classList.remove('err'); fEl('firma_msg').classList.remove('show');
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!firmaDibujando) return; e.preventDefault();
+    const p = pos(e);
+    ctx.beginPath(); ctx.moveTo(firmaUlt.x, firmaUlt.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    firmaUlt = p;
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => cv.addEventListener(ev, () => { firmaDibujando = false; }));
+})();
+
+function firmaABase64() {
+  // Reduce a 600px de ancho para que el envío al Apps Script no sea pesado
+  const cv = fEl('firma_canvas');
+  const esc = Math.min(1, 600 / cv.width);
+  const tmp = document.createElement('canvas');
+  tmp.width = cv.width * esc; tmp.height = cv.height * esc;
+  tmp.getContext('2d').drawImage(cv, 0, 0, tmp.width, tmp.height);
+  return tmp.toDataURL('image/png').split(',')[1];
+}
+
+function guardarFirma() {
+  const nombre = fEl('firma_nombre').value.trim();
+  fEl('firma_nombre').classList.toggle('err', !nombre);
+  if (!nombre) { toastDep('⚠ Falta el nombre de quien retira', 'error'); return; }
+  if (!firmaHay) { fEl('firma_wrap').classList.add('err'); fEl('firma_msg').classList.add('show'); return; }
+  if (!navigator.onLine) { toastDep('❌ Sin conexión. Probá de nuevo cuando vuelva la señal', 'error'); return; }
+
+  carritoRapido._firma = { firmante: nombre, dni: fEl('firma_dni').value.trim(), base64: firmaABase64() };
+
+  const btn = fEl('firma_guardar');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+  // Si el envío falla, enviarCarritoRapido vuelve a habilitar su botón: copiamos eso al botón de firma
+  const bOv = firmaOverlay.querySelector('#btn_confirmar_carrito');
+  const obs = new MutationObserver(() => {
+    if (!bOv.disabled) { btn.disabled = false; btn.textContent = 'Guardar firma y registrar salida'; obs.disconnect(); }
+  });
+  obs.observe(bOv, { attributes: true, attributeFilter: ['disabled'] });
+  enviarCarritoRapido(firmaOverlay);
+}
+
 async function enviarCarritoRapido(overlay){
   let responsable=document.getElementById("carrito_responsable").value;
   if(responsable==="OTRO")responsable=document.getElementById("carrito_responsable_otro").value.trim();
@@ -1841,6 +1982,7 @@ async function enviarCarritoRapido(overlay){
   }
   const obsGeneral=document.getElementById("carrito_obs_general").value.trim();
   if(!responsable||!obra){toastDep("⚠ Completá Responsable y Obra","error");return;}
+  if(carritoRapido.tipo==="SALIDA" && !carritoRapido._firma){ abrirPantallaFirma(overlay); return; }
   const btn=overlay.querySelector("#btn_confirmar_carrito");
   btn.disabled=true;btn.textContent="Enviando...";
   const payload={
@@ -1858,6 +2000,11 @@ async function enviarCarritoRapido(overlay){
   };
   if(!carritoRapido._txid) carritoRapido._txid = (crypto.randomUUID ? crypto.randomUUID() : 'tx-' + Date.now() + '-' + Math.random().toString(36).slice(2));
   payload._txid = carritoRapido._txid;
+  if(carritoRapido._firma){
+    payload.firmante = carritoRapido._firma.firmante;
+    payload.firmante_dni = carritoRapido._firma.dni;
+    payload.firma_base64 = carritoRapido._firma.base64;
+  }
   const ctrl = new AbortController();
   const tid = setTimeout(() => ctrl.abort(), 20000);
   try{
@@ -1875,7 +2022,9 @@ async function enviarCarritoRapido(overlay){
       return;
     }
     overlay.remove();
+    showScreen('screen-stock');
     toastDep("✅ " + carritoRapido.tipo + " registrada correctamente","ok");
+    if (resultado.error_firma) toastDep("⚠ La salida se registró pero NO se pudo guardar la firma. Avisá al administrador.","error");
     vaciarCarritoRapido();
     loadStock();
   }catch(e){
