@@ -1125,7 +1125,7 @@ function renderChips() {
 
   const productosFamilia = stockData.filter(p => p.familia === activeFamilia);
   const marcasReales = [...new Set(
-    productosFamilia.map(p => p.marca).filter(m => m && m.trim() !== '' && m !== 'No especificado')
+    productosFamilia.map(p => p.marca).filter(m => m && m.trim() !== '' && m.trim().toUpperCase() !== 'NO ESPECIFICADO')
   )].sort();
 
   const chipsEstaticos = CHIPS_CONFIG[activeFamilia] || {};
@@ -1780,7 +1780,7 @@ function abrirModalConfirmarCarrito(){
   const listaHtml=carritoRapido.items.map(it=>
   '<div style="text-align:left;font-size:13px;padding:6px 0;border-bottom:1px solid #334155;color:#f8fafc;">' +
     '<div style="font-size:10px;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px;">' + it.familia + '</div>' +
-    it.descripcion + (it.marca && it.marca !== 'No especificado' ? ' — <span style="color:#94a3b8;">' + it.marca + '</span>' : '') + ' — <strong>' + it.cantidad + ' ' + it.unidad + '</strong>' +
+    it.descripcion + (it.marca && it.marca.toUpperCase() !== 'NO ESPECIFICADO' ? ' — <span style="color:#94a3b8;">' + it.marca + '</span>' : '') + ' — <strong>' + it.cantidad + ' ' + it.unidad + '</strong>' +
       '<div style="font-size:11px;color:#64748b;margin-top:2px;">📍 ' + it.ubicacion + '</div>' +
     '</div>'
   ).join("");
@@ -1953,6 +1953,31 @@ const REQUIRED = {
 const UNITS = {
   aceites:['L'], grasas:['kg'], refrigerantes:['L'], liquido_freno:['L'], combustibles:['L'],
 };
+
+// Opciones tomadas de la tabla de stock (editá estas listas cuando haya productos nuevos)
+const OPC_MARCA = ['YPF', 'TOTAL ENERGIES'];
+const OPC_PRODUCTO = {
+  aceites: [
+    'AZOLLA ZS68',
+    'T205-15W40',
+    'RUBIA 7400 15W40',
+    'DYNATRANS ACX 10W',
+    'TRAXIUM AXLE7 85W140',
+    'TRAXIUM AXLE7 80W90'
+  ],
+  grasas: ['MULTIS EP 2'],
+  refrigerantes: ['COOLELF SUPRA 50'],
+  liquido_freno: []
+};
+
+function selectConOtro(fam, campo, lista) {
+  return '<select data-fam="' + fam + '" data-campo="' + campo + '">' +
+    '<option value="">— Seleccioná —</option>' +
+    lista.map(v => '<option value="' + v + '">' + v + '</option>').join('') +
+    '<option value="NO ESPECIFICADO">NO ESPECIFICADO</option>' +
+    '<option value="Otro">OTRO...</option>' +
+  '</select>';
+}
 
 const FAM_NAMES = {
   aceites:       '🛢️ Aceites',
@@ -2260,9 +2285,9 @@ function bloqueLubricante(fam, n, qtyRow) {
       : '';
   return tipoHtml +
     lbl(fam,'producto','Descripción del producto') +
-    '<input type="text" data-fam="' + fam + '" data-campo="producto" placeholder="Ej: AZOLLA ZS68, RUBIA 7400 15W40">' +
+    selectConOtro(fam, 'producto', OPC_PRODUCTO[fam] || []) +
     lbl(fam,'marca','Marca') +
-    '<input type="text" data-fam="' + fam + '" data-campo="marca" placeholder="Ej: TOTAL ENERGIES, YPF">' +
+    selectConOtro(fam, 'marca', OPC_MARCA) +
     '<label>Formato</label>' +
     '<select data-fam="' + fam + '" data-campo="formato"><option value="TACHO">Tacho (con código)</option><option value="BIDÓN">Bidón (sin código, se suma)</option></select>' +
     lbl(fam,'capacidad','Capacidad del envase (' + UNITS[fam][0] + ')') +
@@ -2430,6 +2455,13 @@ function collectItems(fam) {
         data['observaciones'] = el.value;
       }
     });
+    // Si eligió "Otro", se manda el texto escrito (en mayúsculas) y se descarta el campo auxiliar
+    Object.keys(data).filter(k => k.endsWith('_otro')).forEach(k => {
+      const base = k.slice(0, -5);
+      if (data[base] === 'Otro') data[base] = String(data[k] || '').trim().toUpperCase();
+      delete data[k];
+    });
+
     if (data.codigo_numero) data.codigo = (data.codigo_prefijo ? data.codigo_prefijo + '-' : '') + String(data.codigo_numero).padStart(2, '0');
     const fotosItem = fotosPendientes[fam + '_' + n];
     if (n && fotosItem && fotosItem.length) data.fotos_base64 = fotosItem;
