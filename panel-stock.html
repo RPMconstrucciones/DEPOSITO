@@ -1306,6 +1306,27 @@
         .cart-order-bar.tipo-devolucion {
             border-color: var(--devol-fg);
         }
+
+        /* ⬇️ NUEVO: FICHA DE SALIDA (ver + imprimir) */
+        .ficha-title { font-size: 16px; font-weight: 800; margin-bottom: 2px; }
+        .ficha-sub { font-size: 11.5px; color: var(--txt-dim); margin-bottom: 12px; }
+        .ficha-h { font-size: 10.5px; font-weight: 800; color: var(--txt-faint); text-transform: uppercase; letter-spacing: .6px; margin: 12px 0 4px; }
+        .ficha-tbl { width: 100%; min-width: 0; border-collapse: collapse; font-size: 12.5px; }
+        .ficha-tbl th { text-align: left; width: 38%; color: var(--txt-faint); font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px; padding: 6px 8px 6px 0; vertical-align: top; background: none; cursor: default; white-space: normal; }
+        .ficha-tbl td { padding: 6px 0; border-bottom: 1px solid var(--line-soft); background: none; }
+        .ficha-firma { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px; text-align: center; min-height: 70px; display: flex; align-items: center; justify-content: center; color: #64748b; font-size: 12px; }
+        .ficha-firma img { max-width: 100%; max-height: 160px; }
+
+        @media print {
+            .app, .cart-order-bar, .toast, #loginOverlay, .lightbox, #cartelFalla,
+            .overlay:not(#fichaOverlay) { display: none !important; }
+            body { background: #fff !important; }
+            #fichaOverlay { position: static !important; display: block !important; background: #fff !important; backdrop-filter: none; padding: 0 !important; }
+            #fichaOverlay .modal { max-width: none !important; max-height: none !important; overflow: visible !important; border: none !important; background: #fff !important; padding: 0 !important; }
+            #fichaOverlay, #fichaOverlay * { color: #000 !important; border-color: #999 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .ficha-noprint { display: none !important; }
+        }
+        /* ⬆️ FIN NUEVO */
     </style>
 </head>
 
@@ -1552,6 +1573,7 @@
                                     <th data-sort="responsable">Responsable <span class="arrow"></span></th>
                                     <th data-sort="obra">Obra / destino <span class="arrow"></span></th>
                                     <th data-sort="factura">N.º Factura <span class="arrow"></span></th>
+                                    <th style="cursor:default;text-align:center;">Ficha</th> <!-- ⬅️ NUEVO -->
                                 </tr>
                             </thead>
                         </table>
@@ -1870,6 +1892,17 @@
             </div>
         </div>
     </div>
+    <!-- ⬇️ NUEVO: Ficha de salida -->
+    <div class="overlay" id="fichaOverlay">
+        <div class="modal" style="max-width:520px; max-height:92vh; overflow-y:auto;">
+            <div id="fichaPrintArea"></div>
+            <div class="modal-actions ficha-noprint">
+                <button class="btn ghost" id="fichaClose">Cerrar</button>
+                <button class="btn primary" id="fichaPrint">🖨️ Imprimir</button>
+            </div>
+        </div>
+    </div>
+    <!-- ⬆️ FIN NUEVO -->
 
     <!-- Success Confirmation Modal -->
     <div class="overlay" id="successOverlay">
@@ -4354,17 +4387,18 @@
             const totalPages = Math.max(1, Math.ceil(all.length / ps));
             state.movUi.page = Math.min(state.movUi.page, totalPages - 1);
             const list = all.slice(state.movUi.page * ps, state.movUi.page * ps + ps);
+            state.movPageList = list;   // ⬅️ NUEVO
             const body = document.getElementById('movBody');
 
             if (list.length === 0) {
-                body.innerHTML = `<tr class="empty-row"><td colspan="10">No hay movimientos que coincidan con el filtro.</td></tr>`;
+                body.innerHTML = `<tr class="empty-row"><td colspan="11">No hay movimientos que coincidan con el filtro.</td></tr>`;   // ⬅️ 10 → 11
             } else {
-                body.innerHTML = list.map(m => {
+                body.innerHTML = list.map((m, i) => {   // ⬅️ (m, i)
                     const tipoClass = m.tipo === 'ENTRADA' ? 'entrada' : (m.tipo === 'SALIDA' ? 'salida' : 'devolucion');
                     const info = getMovProductInfo(m);
                     const loc = info.ubicacion;
                     return `
-      <tr>
+    <tr>
         <td class="id-tag">${escapeHtml(formatearFechaMov(m.fecha))}</td>
         <td><span class="mov-pill ${tipoClass}">${escapeHtml(m.tipo || '')}</span></td>
         <td>${info.familia && info.familia !== '—' ? `<span class="fam-badge">${escapeHtml(info.familia)}</span>` : '<span style="color:var(--txt-faint);">—</span>'}</td>
@@ -4375,7 +4409,8 @@
         <td class="marca-cell">${escapeHtml(m.responsable || '—')}</td>
         <td class="marca-cell">${escapeHtml(m.obra || '—')}</td>
         <td class="id-tag">${escapeHtml(m.factura || '—')}</td>
-      </tr>`;
+        <td style="text-align:center;">${m.tipo === 'SALIDA' ? `<button class="btn small ficha-btn" data-i="${i}">✍️ Ver</button>` : '<span class="loc-empty">—</span>'}</td>
+    </tr>`;
                 }).join('');
             }
 
@@ -4384,6 +4419,83 @@
             document.getElementById('movPrev').disabled = state.movUi.page <= 0;
             document.getElementById('movNext').disabled = state.movUi.page >= totalPages - 1;
         }
+        // ⬇️ NUEVO ─────────────────────────────────────────
+        // FICHA DE SALIDA (ver + imprimir)
+        let fichaActual = '';
+
+        function movFichaKey(m) {
+            // Agrupa los ítems de un mismo envío. Si el backend manda "envio", se usa; si no, fecha+responsable+obra
+            return m.envio || [m.fecha, m.responsable, m.obra, m.tipo].join('||');
+        }
+
+        async function apiGetFirma(id) {
+            const token = encodeURIComponent(await getIdToken());
+            const res = await fetch(`${CONFIG.WEB_APP_URL}?action=firma&id=${encodeURIComponent(id)}&token=${token}`);
+            const d = await res.json();
+            if (!d.ok) throw new Error(d.error || 'No se pudo cargar la firma');
+            return 'data:image/png;base64,' + d.base64;
+        }
+
+        async function abrirFichaSalida(m) {
+            const key = movFichaKey(m);
+            fichaActual = key;
+            const items = state.mov.filter(x => x.tipo === 'SALIDA' && movFichaKey(x) === key);
+            const fila = (k, v) => (v !== undefined && v !== null && String(v).trim() !== '')
+                ? `<tr><th>${k}</th><td>${escapeHtml(v)}</td></tr>` : '';
+            const prods = items.map(x => {
+                const fam = getMovProductInfo(x).familia;
+                return `<tr><td>${escapeHtml(x.descripcion || '')}${fam && fam !== '—' ? ` <span style="opacity:.6;">(${escapeHtml(fam)})</span>` : ''}</td>
+                        <td style="text-align:right;font-weight:700;white-space:nowrap;">${escapeHtml(String(x.cantidad ?? ''))} ${escapeHtml(x.unidad || '')}</td></tr>`;
+            }).join('');
+
+            document.getElementById('fichaPrintArea').innerHTML = `
+                <div class="ficha-title">RPM Construcciones — Ficha de salida</div>
+                <div class="ficha-sub">${escapeHtml(formatearFechaMov(m.fecha))}${m.zona ? ' · ' + escapeHtml(m.zona) : ''}</div>
+
+                <div class="ficha-h">Datos de la salida</div>
+                <table class="ficha-tbl">
+                    ${fila('Encargado / Responsable', m.responsable)}
+                    ${fila('Obra / destino', m.obra)}
+                    ${fila('Solicitante', m.solicitante)}
+                    ${fila('Equipo / vehículo', m.equipo)}
+                    ${fila('Tipo de servicio', m.tipo_servicio)}
+                    ${fila('Km / horómetro', m.km_hs)}
+                    ${fila('N.º de factura', m.factura)}
+                    ${fila('Observaciones', m.obs_general)}
+                </table>
+
+                <div class="ficha-h">Productos del envío (${items.length})</div>
+                <table class="ficha-tbl">${prods}</table>
+
+                <div class="ficha-h">Retira</div>
+                <table class="ficha-tbl">
+                    ${fila('Nombre y apellido', m.firmante)}
+                    ${fila('DNI', m.firmante_dni)}
+                </table>
+                <div class="ficha-h">Firma</div>
+                <div class="ficha-firma" id="fichaFirma">${m.firma_id ? 'Cargando firma…' : 'Sin firma registrada'}</div>
+            `;
+            state.modalOpen = true;
+            document.getElementById('fichaOverlay').classList.add('show');
+
+            if (m.firma_id && !isDemo) {
+                try {
+                    const src = await apiGetFirma(m.firma_id);
+                    if (fichaActual !== key) return;   // el usuario abrió otra ficha mientras cargaba
+                    document.getElementById('fichaFirma').innerHTML = `<img src="${src}" alt="Firma">`;
+                } catch (e) {
+                    if (fichaActual !== key) return;
+                    document.getElementById('fichaFirma').textContent = 'No se pudo cargar la firma.';
+                }
+            }
+        }
+
+        function cerrarFicha() {
+            fichaActual = '';
+            state.modalOpen = false;
+            document.getElementById('fichaOverlay').classList.remove('show');
+        }
+        // ⬆️ FIN NUEVO ─────────────────────────────────────
 
         function renderAll() {
             renderStats();
@@ -4747,6 +4859,18 @@
         document.getElementById('filterFamiliaMov').addEventListener('change', e => { state.movUi.familia = e.target.value; state.movUi.producto = ''; state.movUi.page = 0; populateMovProductoFilter(); renderMov(); });
         document.getElementById('movPrev').addEventListener('click', () => { state.movUi.page--; renderMov(); });
         document.getElementById('movNext').addEventListener('click', () => { state.movUi.page++; renderMov(); });
+
+        // ⬇️ NUEVO
+        document.getElementById('movBody').addEventListener('click', e => {
+            const b = e.target.closest('.ficha-btn');
+            if (!b) return;
+            const m = (state.movPageList || [])[Number(b.dataset.i)];
+            if (m) abrirFichaSalida(m);
+        });
+        document.getElementById('fichaClose').addEventListener('click', cerrarFicha);
+        document.getElementById('fichaPrint').addEventListener('click', () => window.print());
+        document.getElementById('fichaOverlay').addEventListener('click', e => { if (e.target.id === 'fichaOverlay') cerrarFicha(); });
+        // ⬆️ FIN NUEVO
 
         wireSortHeaders('stickyStockTable', state.stockUi, renderStock);
         wireSortHeaders('stickyMovTable', state.movUi, renderMov);
