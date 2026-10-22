@@ -2689,6 +2689,31 @@
                 if (!p) {
                     p = state.stock.find(sameDescription);
                 }
+                // Algunas salidas históricas guardaron una descripción abreviada
+                // o con separadores distintos. Vincular solo si hay una única
+                // ficha con una coincidencia alta de palabras y números.
+                if (!p) {
+                    const movementWords = normalizeText(m.descripcion).split(/[^a-z0-9]+/).filter(w => w.length > 1);
+                    const scoreDescription = product => {
+                        const productWords = normalizeText(product.descripcion).split(/[^a-z0-9]+/).filter(w => w.length > 1);
+                        if (!movementWords.length || !productWords.length) return 0;
+                        const matched = movementWords.filter(word => productWords.some(candidate =>
+                            candidate === word || wordsMatchWithTypo(word, [candidate])
+                        )).length;
+                        return matched / Math.max(movementWords.length, productWords.length);
+                    };
+                    const rankCandidates = products => products
+                        .map(product => ({ product, score: scoreDescription(product) }))
+                        .filter(result => result.score >= 0.75)
+                        .sort((a, b) => b.score - a.score);
+                    let candidates = m.zona
+                        ? rankCandidates(state.stock.filter(x => normalizeText(x.zona) === normalizeText(m.zona)))
+                        : [];
+                    if (!candidates.length) candidates = rankCandidates(state.stock);
+                    if (candidates.length && (candidates.length === 1 || candidates[0].score > candidates[1].score)) {
+                        p = candidates[0].product;
+                    }
+                }
             }
 
             const familia = (m.familia || (p ? p.familia : '') || '').trim();
