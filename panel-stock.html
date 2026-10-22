@@ -2716,8 +2716,15 @@
                 }
             }
 
-            const familia = (m.familia || (p ? p.familia : '') || '').trim();
-            const marca = (m.marca || (p ? p.marca : '') || '').trim();
+            const usableProductLabel = value => {
+                const label = String(value ?? '').trim();
+                return label && !['—', '-', 'sin marca', 'no especificada', 'no especificado'].includes(normalizeText(label))
+                    ? label : '';
+            };
+            // En algunas filas los campos familia/marca vienen con guion como
+            // marcador vacío. En ese caso usar los datos recuperados de Stock.
+            const familia = usableProductLabel(m.familia) || usableProductLabel(p?.familia) || '—';
+            const marca = usableProductLabel(m.marca) || usableProductLabel(p?.marca) || '—';
 
             let ubi = (m.ubicacion || '').trim();
             if (!ubi && (m.ubicacion_deposito || m.ubicacion_estante || m.ubicacion_columna || m.ubicacion_fila)) {
@@ -2728,8 +2735,8 @@
             }
 
             return {
-                familia: familia || '—',
-                marca: marca || '—',
+                familia,
+                marca,
                 ubicacion: ubi || '—'
             };
         }
@@ -4718,7 +4725,9 @@
         const reporteGrupos = new Map();
         function renderReporteSalidas() {
             const buscar = String(document.getElementById('reporteSearch')?.value || '').trim();
-            const salidas = state.mov.filter(m => String(m.tipo || '').toUpperCase() === 'SALIDA');
+            // Los datos históricos pueden traer espacios al final o variantes
+            // de mayúsculas; normalizarlos evita perder una salida del reporte.
+            const salidas = state.mov.filter(m => normalizeText(m.tipo).trim() === 'salida');
             const grupos = new Map();
             salidas.forEach(m => {
                 const info = getMovProductInfo(m), familia = info.familia || m.familia || '', marca = info.marca || m.marca || '', unidad = m.unidad || '';
