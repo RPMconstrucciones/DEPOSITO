@@ -633,6 +633,13 @@
             border-bottom: none;
         }
 
+        /* Mantiene todo el stock en la tabla y deja que el navegador pinte
+           las filas cercanas al desplazamiento cuando hacen falta. */
+        #stockBody > tr[data-row-id] {
+            content-visibility: auto;
+            contain-intrinsic-size: auto 76px;
+        }
+
         tbody tr:hover td {
             background: var(--hover-bg);
         }
@@ -2278,11 +2285,20 @@
             const url = action === 'stock'
                 ? `${CONFIG.WEB_APP_URL}?action=json&token=${token}`
                 : `${CONFIG.WEB_APP_URL}?action=movimientos&limit=1500&token=${token}`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            const data = await res.json();
-            if (data && data.auth === false) { auth.signOut(); throw new Error('Sesión no válida'); }
-            return data;
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (data && data.auth === false) { auth.signOut(); throw new Error('Sesión no válida'); }
+                return data;
+            } catch (err) {
+                if (err.name === 'AbortError') throw new Error('El servidor tardó más de 20 segundos en responder.');
+                throw err;
+            } finally {
+                clearTimeout(timeoutId);
+            }
         }
 
         function mostrarCartelFallaConexion(msg) {
@@ -2385,30 +2401,56 @@
             if (!auth.currentUser) return;   // ⬅️ NUEVO
             if (state.guardandoFicha) return; // evita sobreescribir mientras se guarda la ficha
             try {
-                if (!silencioso) setStatus('Cargando…', true);
-                const [rStock, rMov] = await Promise.all([apiGet('stock'), apiGet('movimientos')]);
+                if (!silencioso) setStatus('Cargando stock…', true);
+                // Iniciar ambas consultas a la vez, pero mostrar Stock apenas responda,
+                // sin dejarlo esperando al historial completo de movimientos.
+                const movimientosPromise = apiGet('movimientos').catch(error => ({ ok: false, _error: error }));
+                const rStock = await apiGet('stock');
                 if (!rStock.ok) throw new Error(rStock.error || 'Error cargando stock');
                 const nuevoStock = rStock.productos || [];
-                const nuevoMov = (rMov && rMov.ok) ? (rMov.movimientos || []) : [];
-
-                const huboCambios = JSON.stringify(nuevoStock) !== JSON.stringify(state.stock)
-                    || JSON.stringify(nuevoMov) !== JSON.stringify(state.mov);
-
+                const cambioStock = stockListSignature(nuevoStock) !== stockListSignature(state.stock);
                 state.stock = nuevoStock;
-                state.mov = nuevoMov;
+                if (cambioStock) {
+                    rebuildMovementProductIndexes();
+                }
 
-                // Modo silencioso (polling) sin cambios reales → no se toca la tabla en absoluto.
-                if (!silencioso || huboCambios) {
+                // Stock queda visible aunque Movimientos todavía esté cargando.
+                if (!silencioso || cambioStock) {
                     const scrollDiv = document.getElementById('scrollStock');
                     const scrollTopGuardado = scrollDiv ? scrollDiv.scrollTop : 0;
 
                     buildZoneChips();
                     populateFamiliaFilter();
-                    renderAll();
+                    // Mostrar Stock sin recalcular el historial mientras llega
+                    // la lista nueva de movimientos.
+                    renderStats();
+                    populateStockProductoFilter();
+                    renderStock();
+                    window.dispatchEvent(new Event('tableRendered'));
 
                     // Al repintar por un cambio real detectado en silencio, restauramos el scroll
                     // para que no "salte" la pantalla mientras estás mirando la tabla.
                     if (silencioso && scrollDiv) scrollDiv.scrollTop = scrollTopGuardado;
+                }
+
+                if (!silencioso) setStatus('Stock cargado · actualizando movimientos…', true);
+                const rMov = await movimientosPromise;
+                if (!rMov || !rMov.ok) {
+                    console.warn('No se pudieron actualizar los movimientos:', rMov?._error || rMov?.error || 'respuesta inválida');
+                    setStatus('Stock actualizado · movimientos pendientes', true);
+                    if (!silencioso) showToast('El stock cargó; el historial de movimientos está demorando. Podés reintentar con Actualizar.', true);
+                    return;
+                }
+                const nuevoMov = rMov.movimientos || [];
+                const cambioMov = JSON.stringify(nuevoMov) !== JSON.stringify(state.mov);
+                state.mov = nuevoMov;
+                if (cambioMov || cambioStock) {
+                    movProductInfoCache = new WeakMap(); // Invalidar asociaciones cuando cambian Stock o Movimientos.
+                    movProductInfoFastCache = new WeakMap();
+                    const movimientosActuales = state.mov;
+                    precalentarMovimientos(movimientosActuales, () => {
+                        if (state.mov === movimientosActuales) renderAll();
+                    });
                 }
 
                 setStatus(isDemo ? 'Modo demo activo' : ('Actualizado ' + horaAhora()), true);
@@ -2449,39 +2491,43 @@
             const coll = (a, b) => a.localeCompare(b, undefined, { numeric: true });
 
             // Nivel 1: depósitos
-            const deps = Array.from(new Set(state.stock.map(depOf).filter(Boolean))).sort(coll);
-            const sinDep = state.stock.filter(p => !depOf(p)).length;
-            let l1 = chipHtml('dep', '', 'Todos los depósitos', state.stock.length, !state.dep);
-            deps.forEach(d => {
-                l1 += chipHtml('dep', d, 'Depósito ' + d, state.stock.filter(p => depOf(p) === d).length, state.dep === d);
+            const depCounts = new Map();
+            let sinDep = 0;
+            state.stock.forEach(p => {
+                const dep = depOf(p);
+                if (dep) depCounts.set(dep, (depCounts.get(dep) || 0) + 1);
+                else sinDep++;
             });
+            const deps = Array.from(depCounts.keys()).sort(coll);
+            let l1 = chipHtml('dep', '', 'Todos los depósitos', state.stock.length, !state.dep);
+            deps.forEach(d => { l1 += chipHtml('dep', d, 'Depósito ' + d, depCounts.get(d), state.dep === d); });
             if (sinDep) l1 += chipHtml('dep', '__NONE__', 'Sin ubicación', sinDep, state.dep === '__NONE__');
 
             // Nivel 2: zonas
             const baseDep = state.stock.filter(matchDep);
-            const zonas = Array.from(new Set(baseDep.map(p => p.zona).filter(Boolean))).sort(coll);
+            const zonaCounts = new Map();
+            baseDep.forEach(p => { if (p.zona) zonaCounts.set(p.zona, (zonaCounts.get(p.zona) || 0) + 1); });
+            const zonas = Array.from(zonaCounts.keys()).sort(coll);
             if (state.zona && !zonas.includes(state.zona)) state.zona = '';
             
             let l2 = '';
             if (zonas.length > 0) {
                 l2 = chipHtml('zona', '', 'Todas las zonas', baseDep.length, !state.zona);
-                zonas.forEach(z => {
-                    l2 += chipHtml('zona', z, z, baseDep.filter(p => p.zona === z).length, state.zona === z);
-                });
+                zonas.forEach(z => { l2 += chipHtml('zona', z, z, zonaCounts.get(z), state.zona === z); });
             }
 
             // Nivel 3: familias
             const baseZona = zonaFiltrado(state.stock);
-            const fams = Array.from(new Set(baseZona.map(p => p.familia).filter(Boolean))).sort(coll);
+            const familiaCounts = new Map();
+            baseZona.forEach(p => { if (p.familia) familiaCounts.set(p.familia, (familiaCounts.get(p.familia) || 0) + 1); });
+            const fams = Array.from(familiaCounts.keys()).sort(coll);
             if (state.stockUi.familia && !fams.some(f => normalizeText(f) === normalizeText(state.stockUi.familia))) state.stockUi.familia = '';
             if (state.stockUi.familia) state.stockUi.familia = fams.find(f => normalizeText(f) === normalizeText(state.stockUi.familia)) || state.stockUi.familia;
             
             let l3 = '';
             if (fams.length > 0) {
                 l3 = chipHtml('fam', '', 'Todas las familias', baseZona.length, !state.stockUi.familia);
-                fams.forEach(f => {
-                    l3 += chipHtml('fam', f, f, baseZona.filter(p => p.familia === f).length, state.stockUi.familia === f);
-                });
+                fams.forEach(f => { l3 += chipHtml('fam', f, f, familiaCounts.get(f), state.stockUi.familia === f); });
             }
 
             // En modo original se conserva el panel actual; el modo moderno usa grupos desplegables.
@@ -2625,7 +2671,13 @@
             if (x.stock_actual !== undefined) {               // es un producto de stock
                 return String(x.ubicacion_deposito || '').trim().toUpperCase();
             }
-            const u = getMovProductInfo(x).ubicacion;         // es un movimiento: "4 / 3 / 1 / A"
+            // La ubicación histórica suele venir en el movimiento. Leerla acá
+            // evita buscar productos y comparar descripciones por cada salida.
+            let u = String(x.ubicacion || '').trim();
+            if (!u && (x.ubicacion_deposito || x.ubicacion_estante || x.ubicacion_columna || x.ubicacion_fila)) {
+                u = ubicacionStr(x);
+            }
+            if (!u || u === '—') u = getMovProductInfo(x, false).ubicacion; // Respaldo rápido para movimientos antiguos sin ubicación.
             return (!u || u === '—') ? '' : u.split('/')[0].trim().toUpperCase();
         }
 
@@ -2676,25 +2728,82 @@
             return list;
         }
 
-        function getMovProductInfo(m) {
+        let movProductInfoCache = new WeakMap();
+        let movProductInfoFastCache = new WeakMap();
+        let stockProductByNormalizedId = new Map();
+        let stockProductByDescription = new Map();
+        let stockProductByDescriptionAndZone = new Map();
+
+        function chooseMovementProductCandidate(candidates, movement) {
+            if (!candidates || !candidates.length) return null;
+            const usable = value => {
+                const normalized = normalizeText(value).trim();
+                return normalized && !['—', '-', 'sin marca', 'sin familia', 's/ marca', 's/marca'].includes(normalized) ? normalized : '';
+            };
+            const brand = usable(movement.marca), family = usable(movement.familia), zone = usable(movement.zona);
+            if (candidates.length === 1) {
+                return !brand || usable(candidates[0].marca) === brand ? candidates[0] : null;
+            }
+            const ranked = candidates.map(product => {
+                let score = 0;
+                if (brand) score += usable(product.marca) === brand ? 8 : -8;
+                if (family) score += usable(product.familia) === family ? 4 : -4;
+                if (zone) score += usable(product.zona) === zone ? 2 : -2;
+                return { product, score };
+            }).sort((a, b) => b.score - a.score);
+            return ranked[0].score >= 0 && ranked[0].score > ranked[1].score ? ranked[0].product : null;
+        }
+
+        function rebuildMovementProductIndexes() {
+            stockProductByNormalizedId = new Map();
+            stockProductByDescription = new Map();
+            stockProductByDescriptionAndZone = new Map();
+            state.stock.forEach(product => {
+                const id = normalizeText(product.id);
+                if (id && !stockProductByNormalizedId.has(id)) stockProductByNormalizedId.set(id, product);
+                const description = normalizeText(product.descripcion).replace(/[^a-z0-9]/g, '');
+                if (!description) return;
+                if (!stockProductByDescription.has(description)) stockProductByDescription.set(description, []);
+                stockProductByDescription.get(description).push(product);
+                const key = `${description}|${normalizeText(product.zona)}`;
+                if (!stockProductByDescriptionAndZone.has(key)) stockProductByDescriptionAndZone.set(key, []);
+                stockProductByDescriptionAndZone.get(key).push(product);
+            });
+        }
+
+        function getMovProductInfo(m, allowFuzzy = true) {
+            const cache = allowFuzzy ? movProductInfoCache : movProductInfoFastCache;
+            const cached = cache.get(m);
+            if (cached) return cached;
+
+            const usableProductLabel = value => {
+                const label = String(value ?? '').trim();
+                return label && !['—', '-', 'sin marca', 'no especificada', 'no especificado', 's/ marca', 's/marca'].includes(normalizeText(label))
+                    ? label : '';
+            };
             let p = null;
+            const tieneFamilia = m.familia && !['—', '-'].includes(String(m.familia).trim());
+            const tieneMarca = m.marca && !['—', '-'].includes(String(m.marca).trim());
+            const tieneUbicacion = Boolean(String(m.ubicacion || '').trim() || m.ubicacion_deposito || m.ubicacion_estante || m.ubicacion_columna || m.ubicacion_fila);
+            // Si el movimiento ya trae familia, marca y ubicación, no hace falta
+            // cotejar su descripción contra todo el catálogo de stock.
+            const necesitaProducto = !tieneFamilia || !tieneMarca || !tieneUbicacion;
             const productIds = [m.producto_id, m.productoId, m.id_producto, m.idProducto, m.productId, m.product_id, m.codigo_producto, m.product?.id, m.item?.id, m.id]
                 .filter(v => v != null && String(v).trim() !== '')
                 .map(v => normalizeText(v));
-            if (productIds.length) p = state.stock.find(x => productIds.includes(normalizeText(x.id)));
+            for (const productId of productIds) {
+                p = stockProductByNormalizedId.get(productId);
+                if (p) break;
+            }
             if (!p && m.descripcion) {
                 const descNorm = normalizeText(m.descripcion).replace(/[^a-z0-9]/g, '');
-                const sameDescription = x => normalizeText(x.descripcion).replace(/[^a-z0-9]/g, '') === descNorm;
-                if (m.zona) {
-                    p = state.stock.find(x => sameDescription(x) && normalizeText(x.zona) === normalizeText(m.zona));
-                }
-                if (!p) {
-                    p = state.stock.find(sameDescription);
-                }
+                const exactCandidates = (m.zona && stockProductByDescriptionAndZone.get(`${descNorm}|${normalizeText(m.zona)}`))
+                    || stockProductByDescription.get(descNorm);
+                p = chooseMovementProductCandidate(exactCandidates, m);
                 // Algunas salidas históricas guardaron una descripción abreviada
                 // o con separadores distintos. Vincular solo si hay una única
                 // ficha con una coincidencia alta de palabras y números.
-                if (!p) {
+                if (allowFuzzy && !p) {
                     const movementWords = normalizeText(m.descripcion).split(/[^a-z0-9]+/).filter(w => w.length > 1);
                     const scoreDescription = product => {
                         const productWords = normalizeText(product.descripcion).split(/[^a-z0-9]+/).filter(w => w.length > 1);
@@ -2705,24 +2814,26 @@
                         return matched / Math.max(movementWords.length, productWords.length);
                     };
                     const rankCandidates = products => products
-                        .map(product => ({ product, score: scoreDescription(product) }))
-                        .filter(result => result.score >= 0.75)
-                        .sort((a, b) => b.score - a.score);
+                        .map(product => {
+                            const brandSpecified = usableProductLabel(m.marca);
+                            const familySpecified = usableProductLabel(m.familia);
+                            const brandMatches = brandSpecified && normalizeText(product.marca) === normalizeText(brandSpecified);
+                            const familyMatches = familySpecified && normalizeText(product.familia) === normalizeText(familySpecified);
+                            const metadataCompatible = !brandSpecified || brandMatches;
+                            return { product, score: scoreDescription(product), metadataScore: (brandMatches ? 0.08 : 0) + (familySpecified ? (familyMatches ? 0.04 : -0.04) : 0), metadataCompatible };
+                        })
+                        .filter(result => result.score >= 0.75 && result.metadataCompatible)
+                        .sort((a, b) => (b.score + b.metadataScore) - (a.score + a.metadataScore));
                     let candidates = m.zona
                         ? rankCandidates(state.stock.filter(x => normalizeText(x.zona) === normalizeText(m.zona)))
                         : [];
                     if (!candidates.length) candidates = rankCandidates(state.stock);
-                    if (candidates.length && (candidates.length === 1 || candidates[0].score > candidates[1].score)) {
+                    if (candidates.length && (candidates.length === 1 || candidates[0].score + candidates[0].metadataScore > candidates[1].score + candidates[1].metadataScore)) {
                         p = candidates[0].product;
                     }
                 }
             }
 
-            const usableProductLabel = value => {
-                const label = String(value ?? '').trim();
-                return label && !['—', '-', 'sin marca', 'no especificada', 'no especificado'].includes(normalizeText(label))
-                    ? label : '';
-            };
             // En algunas filas los campos familia/marca vienen con guion como
             // marcador vacío. En ese caso usar los datos recuperados de Stock.
             const familia = usableProductLabel(m.familia) || usableProductLabel(p?.familia) || '—';
@@ -2736,25 +2847,49 @@
                 ubi = ubicacionStr(p);
             }
 
-            return {
+            const info = {
                 familia,
                 marca,
-                ubicacion: ubi || '—'
+                ubicacion: ubi || '—',
+                product: p,
+                productId: p ? p.id : '',
+                familiaActual: usableProductLabel(p?.familia) || familia
             };
+            cache.set(m, info);
+            return info;
+        }
+
+        // Resolver el historial gradualmente para que los movimientos antiguos
+        // también coincidan con los filtros sin congelar la pantalla.
+        let movWarmupGeneration = 0;
+        function precalentarMovimientos(list, onComplete) {
+            const generation = ++movWarmupGeneration;
+            let i = 0;
+            const lote = () => {
+                if (generation !== movWarmupGeneration || list !== state.mov) return;
+                const limite = performance.now() + 8;
+                while (i < list.length && (i === 0 || performance.now() < limite)) {
+                    getMovProductInfo(list[i], true);
+                    i++;
+                }
+                if (i < list.length) setTimeout(lote, 0);
+                else if (onComplete) onComplete();
+            };
+            setTimeout(lote, 0);
         }
 
         function movFiltrado() {
             const ui = state.movUi;
             let list = zonaFiltrado(state.mov);
             if (ui.tipo) list = list.filter(m => m.tipo === ui.tipo);
-            if (ui.familia) list = list.filter(m => normalizeText(getMovProductInfo(m).familia) === normalizeText(ui.familia));
-            if (ui.producto) list = list.filter(m => movProductoKey(m) === ui.producto);
+            if (ui.familia) list = list.filter(m => normalizeText(getMovProductInfo(m, true).familiaActual) === normalizeText(ui.familia));
+            if (ui.producto) list = list.filter(m => movProductoKey(m, true) === ui.producto);
             if (ui.search) {
                 list = list.filter(m => {
-                    const info = getMovProductInfo(m);
+                    const info = getMovProductInfo(m, true);
                     const itemConInfo = {
                         ...m,
-                        familia: info.familia !== '—' ? info.familia : '',
+                        familia: info.familiaActual !== '—' ? info.familiaActual : '',
                         marca: info.marca !== '—' ? info.marca : '',
                         ubicacion: info.ubicacion !== '—' ? info.ubicacion : ''
                     };
@@ -2762,10 +2897,10 @@
                 });
             }
             list = list.slice().sort((a, b) => {
-                const infoA = getMovProductInfo(a);
-                const infoB = getMovProductInfo(b);
-                let va = a[ui.sortKey] ?? (ui.sortKey === 'familia' ? infoA.familia : ui.sortKey === 'marca' ? infoA.marca : ui.sortKey === 'ubicacion' ? infoA.ubicacion : '');
-                let vb = b[ui.sortKey] ?? (ui.sortKey === 'familia' ? infoB.familia : ui.sortKey === 'marca' ? infoB.marca : ui.sortKey === 'ubicacion' ? infoB.ubicacion : '');
+                const infoA = getMovProductInfo(a, true);
+                const infoB = getMovProductInfo(b, true);
+                let va = a[ui.sortKey] ?? (ui.sortKey === 'familia' ? infoA.familiaActual : ui.sortKey === 'marca' ? infoA.marca : ui.sortKey === 'ubicacion' ? infoA.ubicacion : '');
+                let vb = b[ui.sortKey] ?? (ui.sortKey === 'familia' ? infoB.familiaActual : ui.sortKey === 'marca' ? infoB.marca : ui.sortKey === 'ubicacion' ? infoB.ubicacion : '');
                 if (ui.sortKey === 'fecha') { va = fechaAOrden(a.fecha); vb = fechaAOrden(b.fecha); }
                 if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * ui.sortDir;
                 return String(va || '').localeCompare(String(vb || ''), undefined, { numeric: true }) * ui.sortDir;
@@ -2811,12 +2946,23 @@
         // ============================================================
         // RENDER — STOCK TABLE
         // ============================================================
+        const stockImageObserver = 'IntersectionObserver' in window
+            ? new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const img = entry.target;
+                    if (img.dataset.full && !img.hasAttribute('src')) img.src = img.dataset.full;
+                    stockImageObserver.unobserve(img);
+                });
+            }, { rootMargin: '240px 0px' })
+            : null;
+
         function buildStockRowHtml(p) {
             const loc = ubicacionStr(p);
             const isSel = state.selectedIds.has(p.id);
             const imgs = (p.imagen || '').split('||').map(x => x.trim()).filter(Boolean);
             const imgHtml = imgs.length > 0
-                ? `<div class="thumbs-wrap">${imgs.map(src => `<img class="thumb" src="${escapeAttr(src)}" data-full="${escapeAttr(src)}" alt="">`).join('')}</div>`
+                ? `<div class="thumbs-wrap">${imgs.map(src => `<img class="thumb" loading="lazy" decoding="async" data-full="${escapeAttr(src)}" alt="">`).join('')}</div>`
                 : `<div class="thumb-empty">—</div>`;
             const estadoClass = p.estado === 'REPONER' ? 'reponer' : 'ok';
             const className = isSel ? 'row-selected' : '';
@@ -2840,7 +2986,22 @@
         <td style="text-align:center;">${p.stock_minimo || 0}</td>
         <td><button class="stock-btn" data-id="${escapeAttr(p.id)}">${p.stock_actual}</button><span class="stock-min">${escapeHtml(p.unidad || 'un')}</span></td>
         <td><span class="estado-pill ${estadoClass}">${escapeHtml(p.estado)}</span></td>`;
-            return { className, innerHtml, sig: JSON.stringify(p) + '|' + isSel };
+            return { className, innerHtml };
+        }
+
+        function stockRowSignature(p, isSel = state.selectedIds.has(p.id)) {
+            // Firma breve: JSON.stringify(p) copiaba también las fotos en base64
+            // cada vez que se redibujaba la tabla.
+            const image = String(p.imagen || '');
+            const imageSignature = image ? `${image.length}:${image.slice(0, 64)}:${image.slice(-64)}` : '';
+            return [p.id, p.zona, p.familia, p.descripcion, p.ult_obs, p.marca,
+                p.ubicacion_deposito, p.ubicacion_estante, p.ubicacion_columna, p.ubicacion_fila,
+                p.stock_minimo, p.stock_actual, p.unidad, p.estado, imageSignature, isSel]
+                .map(value => String(value ?? '')).join('\u001f');
+        }
+
+        function stockListSignature(products) {
+            return products.map(product => stockRowSignature(product, false)).join('\u001e');
         }
 
         function wireStockRowEvents(tr) {
@@ -2877,6 +3038,8 @@
 
             tr.querySelectorAll('.thumb').forEach(img => {
                 img.addEventListener('click', () => openLightbox(img.dataset.full));
+                if (stockImageObserver) stockImageObserver.observe(img);
+                else if (img.dataset.full) img.src = img.dataset.full;
             });
         }
 
@@ -2927,32 +3090,41 @@
                 });
 
                 let cursor = body.firstChild;
+                let pendingRows = document.createDocumentFragment();
+                const insertPendingRows = () => {
+                    if (pendingRows.firstChild) body.insertBefore(pendingRows, cursor);
+                    pendingRows = document.createDocumentFragment();
+                };
                 list.forEach(p => {
-                    const { className, innerHtml, sig } = buildStockRowHtml(p);
+                    const sig = stockRowSignature(p);
                     let tr = existing.get(p.id);
                     if (tr) {
                         existing.delete(p.id);
+                        insertPendingRows();
                         if (tr !== cursor) {
                             body.insertBefore(tr, cursor);
                         } else {
                             cursor = cursor.nextSibling;
                         }
                         if (tr.dataset.rowSig !== sig) {
+                            const { className, innerHtml } = buildStockRowHtml(p);
                             tr.innerHTML = innerHtml;
                             tr.className = className;
                             tr.dataset.rowSig = sig;
                             wireStockRowEvents(tr);
                         }
                     } else {
+                        const { className, innerHtml } = buildStockRowHtml(p);
                         tr = document.createElement('tr');
                         tr.dataset.rowId = p.id;
                         tr.dataset.rowSig = sig;
                         tr.className = className;
                         tr.innerHTML = innerHtml;
-                        body.insertBefore(tr, cursor);
+                        pendingRows.appendChild(tr);
                         wireStockRowEvents(tr);
                     }
                 });
+                insertPendingRows();
                 existing.forEach(tr => tr.remove());
             }
 
@@ -4632,16 +4804,17 @@
             return str;
         }
 
-        function movProductoKey(m) {
-            const info = getMovProductInfo(m);
-            return [m.zona || '', info.familia, info.marca, (m.descripcion || '').trim()].join('||');
+        function movProductoKey(m, allowFuzzy = true) {
+            const info = getMovProductInfo(m, allowFuzzy);
+            if (info.productId) return 'ID:' + info.productId;
+            return [m.zona || '', info.familiaActual, info.marca, (m.descripcion || '').trim()].join('||');
         }
 
         function populateMovFamiliaFilter() {
             const sel = document.getElementById('filterFamiliaMov');
             if (!sel) return;
             const fams = Array.from(new Set(zonaFiltrado(state.mov)
-                .map(m => getMovProductInfo(m).familia)
+                .map(m => getMovProductInfo(m, true).familiaActual)
                 .filter(f => f && f !== '—')))
                 .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
             const html = '<option value="">Todas las familias</option>' +
@@ -4655,14 +4828,14 @@
             const sel = document.getElementById('filterProducto');
             if (!sel) return;
             const grupos = new Map(); // familia -> Map(clave -> texto)
-            zonaFiltrado(state.mov).filter(m => !state.movUi.familia || getMovProductInfo(m).familia === state.movUi.familia).forEach(m => {
+            zonaFiltrado(state.mov).filter(m => !state.movUi.familia || getMovProductInfo(m, true).familiaActual === state.movUi.familia).forEach(m => {
                 if (!m.descripcion) return;
-                const info = getMovProductInfo(m);
-                const key = movProductoKey(m);
-                const fam = info.familia !== '—' ? info.familia : 'Sin familia';
+                const info = getMovProductInfo(m, true);
+                const key = movProductoKey(m, true);
+                const fam = info.familiaActual !== '—' ? info.familiaActual : 'Sin familia';
                 if (!grupos.has(fam)) grupos.set(fam, new Map());
                 if (!grupos.get(fam).has(key)) {
-                    let label = (m.descripcion || '').trim();
+                    let label = (info.product?.descripcion || m.descripcion || '').trim();
                     if (info.marca && info.marca !== '—') label += ' — ' + info.marca;
                     if (!state.zona && m.zona) label += ' · ' + m.zona;
                     grupos.get(fam).set(key, label);
@@ -4705,7 +4878,7 @@
     <tr>
         <td class="id-tag">${escapeHtml(formatearFechaMov(m.fecha))}</td>
         <td><span class="mov-pill ${tipoClass}">${escapeHtml(m.tipo || '')}</span></td>
-        <td>${info.familia && info.familia !== '—' ? `<span class="fam-badge">${escapeHtml(info.familia)}</span>` : '<span style="color:var(--txt-faint);">—</span>'}</td>
+        <td>${info.familiaActual && info.familiaActual !== '—' ? `<span class="fam-badge">${escapeHtml(info.familiaActual)}</span>` : '<span style="color:var(--txt-faint);">—</span>'}</td>
         <td class="desc-cell">${escapeHtml(m.descripcion || '')}${m.obs_item ? `<div class="obs-tag" style="font-weight:400;">${escapeHtml(m.obs_item)}</div>` : ''}</td>
         <td class="marca-cell">${escapeHtml(info.marca)}</td>
         <td>${loc && loc !== '—' ? `<span class="loc-tag">${escapeHtml(loc)}</span>` : `<span class="loc-empty">—</span>`}</td>
@@ -4715,7 +4888,7 @@
         <td class="id-tag">${escapeHtml(m.factura || '—')}</td>
         <td style="text-align:center;">${m.tipo === 'SALIDA' ? `<button class="btn small ficha-btn" data-i="${i}">✍️ Ver</button>` : '<span class="loc-empty">—</span>'}</td>
     </tr>`;
-                });
+                }).join('');
             }
 
             document.getElementById('movCount').textContent = `${all.length} movimiento${all.length === 1 ? '' : 's'}`;
@@ -4732,9 +4905,17 @@
             const salidas = state.mov.filter(m => normalizeText(m.tipo).trim() === 'salida');
             const grupos = new Map();
             salidas.forEach(m => {
-                const info = getMovProductInfo(m), familia = info.familia || m.familia || '', marca = info.marca || m.marca || '', unidad = m.unidad || '';
-                const key = [familia, m.descripcion || '', marca, unidad].map(v => String(v).trim().toLocaleLowerCase()).join('|');
-                if (!grupos.has(key)) grupos.set(key, { familia, descripcion: m.descripcion || '', marca, unidad, cantidad: 0, movimientos: [] });
+                const info = getMovProductInfo(m), producto = info.product;
+                const familia = info.familia || m.familia || producto?.familia || '';
+                const marca = info.marca || m.marca || producto?.marca || '';
+                const descripcion = producto?.descripcion || m.descripcion || '';
+                const unidad = m.unidad || producto?.unidad || '';
+                // Mantener la agrupación visible que tenía el historial: familia,
+                // descripción, marca y unidad. La ficha resuelta aporta una
+                // descripción canónica sin cambiar la forma de presentar las filas.
+                const key = [familia, descripcion, marca, unidad]
+                    .map(v => String(v).trim().toLocaleLowerCase()).join('|');
+                if (!grupos.has(key)) grupos.set(key, { familia, descripcion, marca, unidad, cantidad: 0, movimientos: [] });
                 const g = grupos.get(key); g.cantidad += Number(m.cantidad) || 0; g.movimientos.push(m);
             });
             const lista = Array.from(grupos.values()).filter(g => {
