@@ -2471,7 +2471,8 @@
             // Nivel 3: familias
             const baseZona = zonaFiltrado(state.stock);
             const fams = Array.from(new Set(baseZona.map(p => p.familia).filter(Boolean))).sort(coll);
-            if (state.stockUi.familia && !fams.includes(state.stockUi.familia)) state.stockUi.familia = '';
+            if (state.stockUi.familia && !fams.some(f => normalizeText(f) === normalizeText(state.stockUi.familia))) state.stockUi.familia = '';
+            if (state.stockUi.familia) state.stockUi.familia = fams.find(f => normalizeText(f) === normalizeText(state.stockUi.familia)) || state.stockUi.familia;
             
             let l3 = '';
             if (fams.length > 0) {
@@ -2544,8 +2545,8 @@
         // FILTER / SORT HELPERS
         // ============================================================
         function normalizeText(str) {
-            if (!str) return '';
-            return str.normalize("NFD")
+            if (str == null) return '';
+            return String(str).normalize("NFD")
                 .replace(/[\u0300-\u036f]/g, "")
                 .toLowerCase();
         }
@@ -2611,7 +2612,7 @@
         function stockFiltrado() {
             const ui = state.stockUi;
             let list = zonaFiltrado(state.stock);
-            if (ui.familia) list = list.filter(p => p.familia === ui.familia);
+            if (ui.familia) list = list.filter(p => normalizeText(p.familia) === normalizeText(ui.familia));
             if (ui.estado) list = list.filter(p => p.estado === ui.estado);
             if (ui.producto) list = list.filter(p => p.id === ui.producto);
             if (ui.search) {
@@ -5591,6 +5592,7 @@
 </body>
 
 </html>
+
 
 
 
