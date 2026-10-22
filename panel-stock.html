@@ -2676,7 +2676,7 @@
 
         function getMovProductInfo(m) {
             let p = null;
-            const productIds = [m.producto_id, m.id_producto, m.idProducto, m.productId, m.id]
+            const productIds = [m.producto_id, m.productoId, m.id_producto, m.idProducto, m.productId, m.product_id, m.codigo_producto, m.product?.id, m.item?.id, m.id]
                 .filter(v => v != null && String(v).trim() !== '')
                 .map(v => normalizeText(v));
             if (productIds.length) p = state.stock.find(x => productIds.includes(normalizeText(x.id)));
@@ -4692,7 +4692,7 @@
         const reporteSalidaPorId = new Map();
         const reporteGrupos = new Map();
         function renderReporteSalidas() {
-            const buscar = String(document.getElementById('reporteSearch')?.value || '').trim().toLowerCase();
+            const buscar = String(document.getElementById('reporteSearch')?.value || '').trim();
             const salidas = state.mov.filter(m => String(m.tipo || '').toUpperCase() === 'SALIDA');
             const grupos = new Map();
             salidas.forEach(m => {
@@ -4701,7 +4701,13 @@
                 if (!grupos.has(key)) grupos.set(key, { familia, descripcion: m.descripcion || '', marca, unidad, cantidad: 0, movimientos: [] });
                 const g = grupos.get(key); g.cantidad += Number(m.cantidad) || 0; g.movimientos.push(m);
             });
-            const lista = Array.from(grupos.values()).filter(g => `${g.familia} ${g.descripcion} ${g.marca} ${g.movimientos.map(m => `${m.responsable || ''} ${m.obra || ''}`).join(' ')}`.toLowerCase().includes(buscar))
+            const lista = Array.from(grupos.values()).filter(g => {
+                const busquedaGrupo = {
+                    ...g,
+                    responsablesObras: g.movimientos.map(m => `${m.responsable || ''} ${m.obra || ''}`).join(' ')
+                };
+                return matchesSearch(busquedaGrupo, buscar, ['familia', 'descripcion', 'marca', 'responsablesObras']);
+            })
                 .sort((a, b) => a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'base' }));
             reporteSalidaPorId.clear();
             reporteGrupos.clear();
