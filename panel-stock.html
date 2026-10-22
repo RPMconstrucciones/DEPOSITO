@@ -2551,6 +2551,32 @@
                 .toLowerCase();
         }
 
+        // Tolera errores tipográficos chicos en palabras, sin volver imprecisos
+        // los códigos cortos, números o consultas de una sola letra.
+        function wordsMatchWithTypo(queryWord, targetWords) {
+            if (queryWord.length < 4) return false;
+            const maxDistance = queryWord.length >= 8 ? 2 : 1;
+            return targetWords.some(targetWord => {
+                if (Math.abs(targetWord.length - queryWord.length) > maxDistance) return false;
+                const previous = Array.from({ length: targetWord.length + 1 }, (_, i) => i);
+                for (let i = 1; i <= queryWord.length; i++) {
+                    const current = [i];
+                    let rowMin = i;
+                    for (let j = 1; j <= targetWord.length; j++) {
+                        current[j] = Math.min(
+                            current[j - 1] + 1,
+                            previous[j] + 1,
+                            previous[j - 1] + (queryWord[i - 1] === targetWord[j - 1] ? 0 : 1)
+                        );
+                        rowMin = Math.min(rowMin, current[j]);
+                    }
+                    if (rowMin > maxDistance) return false;
+                    for (let j = 0; j <= targetWord.length; j++) previous[j] = current[j];
+                }
+                return previous[targetWord.length] <= maxDistance;
+            });
+        }
+
         function matchesSearch(item, query, fields) {
             if (!query) return true;
             const rawQuery = normalizeText(query).trim();
@@ -2559,6 +2585,7 @@
             const textFields = fields.map(f => item[f] || '').filter(Boolean);
             const combinedText = textFields.join(' ');
             const targetNorm = normalizeText(combinedText);
+            const targetWords = targetNorm.split(/[^a-z0-9]+/).filter(Boolean);
 
             // Texto del producto y de la búsqueda limpios de espacios y símbolos
             const targetAlphaNum = targetNorm.replace(/[^a-z0-9]/g, '');
@@ -2576,11 +2603,12 @@
                 const allTokensMatch = queryTokens.every(token => {
                     if (targetNorm.includes(token)) return true;
                     if (targetAlphaNum.includes(token)) return true;
+                    if (wordsMatchWithTypo(token, targetWords)) return true;
 
                     // Si el término combina letras y números juntos (ej: "curvac10a" o "termicacurvac"), descomponer por bloques
                     const subChunks = token.match(/[a-z]+|\d+/g);
                     if (subChunks && subChunks.length > 1) {
-                        return subChunks.every(chunk => targetAlphaNum.includes(chunk));
+                        return subChunks.every(chunk => targetAlphaNum.includes(chunk) || wordsMatchWithTypo(chunk, targetWords));
                     }
                     return false;
                 });
@@ -2648,16 +2676,18 @@
 
         function getMovProductInfo(m) {
             let p = null;
-            if (m.id) {
-                p = state.stock.find(x => x.id === m.id);
-            }
+            const productIds = [m.producto_id, m.id_producto, m.idProducto, m.productId, m.id]
+                .filter(v => v != null && String(v).trim() !== '')
+                .map(v => normalizeText(v));
+            if (productIds.length) p = state.stock.find(x => productIds.includes(normalizeText(x.id)));
             if (!p && m.descripcion) {
-                const descNorm = (m.descripcion || '').trim().toLowerCase();
+                const descNorm = normalizeText(m.descripcion).replace(/[^a-z0-9]/g, '');
+                const sameDescription = x => normalizeText(x.descripcion).replace(/[^a-z0-9]/g, '') === descNorm;
                 if (m.zona) {
-                    p = state.stock.find(x => (x.descripcion || '').trim().toLowerCase() === descNorm && x.zona === m.zona);
+                    p = state.stock.find(x => sameDescription(x) && normalizeText(x.zona) === normalizeText(m.zona));
                 }
                 if (!p) {
-                    p = state.stock.find(x => (x.descripcion || '').trim().toLowerCase() === descNorm);
+                    p = state.stock.find(sameDescription);
                 }
             }
 
@@ -2683,7 +2713,7 @@
             const ui = state.movUi;
             let list = zonaFiltrado(state.mov);
             if (ui.tipo) list = list.filter(m => m.tipo === ui.tipo);
-            if (ui.familia) list = list.filter(m => getMovProductInfo(m).familia === ui.familia);
+            if (ui.familia) list = list.filter(m => normalizeText(getMovProductInfo(m).familia) === normalizeText(ui.familia));
             if (ui.producto) list = list.filter(m => movProductoKey(m) === ui.producto);
             if (ui.search) {
                 list = list.filter(m => {
