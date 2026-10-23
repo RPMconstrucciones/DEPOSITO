@@ -2284,13 +2284,14 @@
                 if (action === 'movimientos') return { ok: true, movimientos: DEMO_MOV };
             }
             const token = encodeURIComponent(await getIdToken());
+            const cacheBuster = `&_=${Date.now()}`;
             const url = action === 'stock'
-                ? `${CONFIG.WEB_APP_URL}?action=json&token=${token}`
-                : `${CONFIG.WEB_APP_URL}?action=movimientos&limit=1500&token=${token}`;
+                ? `${CONFIG.WEB_APP_URL}?action=json&token=${token}${cacheBuster}`
+                : `${CONFIG.WEB_APP_URL}?action=movimientos&limit=1500&token=${token}${cacheBuster}`;
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 20000);
             try {
-                const res = await fetch(url, { signal: controller.signal });
+                const res = await fetch(url, { signal: controller.signal, cache: 'no-store' });
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
                 if (data && data.auth === false) { auth.signOut(); throw new Error('Sesión no válida'); }
@@ -5064,6 +5065,14 @@
         }
 
         async function imprimirHistorialAcumulado(g) {
+            // Leer primero la versión más reciente de la planilla antes de armar el resumen impreso.
+            await cargarTodo(true);
+            renderReporteSalidas();
+            const grupoActualizado = Array.from(reporteGrupos.values()).find(actual =>
+                actual.descripcion === g.descripcion && actual.marca === g.marca &&
+                actual.familia === g.familia && actual.unidad === g.unidad
+            );
+            if (grupoActualizado) g = grupoActualizado;
             const unicas = new Map();
             g.movimientos.forEach(m => { const id = String(m.id_pedido || '').trim().toUpperCase(); if (id) unicas.set(id, m); });
             if (!unicas.size) { showToast('No hay IDs de salida para preparar el historial.'); return; }
@@ -5096,8 +5105,8 @@
 
         async function apiGetFichaSalida(idPedido) {
             const token = encodeURIComponent(await getIdToken());
-            const url = `${CONFIG.WEB_APP_URL}?action=ficha-salida&id=${encodeURIComponent(idPedido)}&token=${token}`;
-            const res = await fetch(url);
+            const url = `${CONFIG.WEB_APP_URL}?action=ficha-salida&id=${encodeURIComponent(idPedido)}&token=${token}&_=${Date.now()}`;
+            const res = await fetch(url, { cache: 'no-store' });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
             if (data && data.auth === false) { auth.signOut(); throw new Error('Sesión no válida'); }
