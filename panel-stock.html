@@ -1342,8 +1342,17 @@
         .historial-registro-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 5px; margin-bottom: 5px; border-bottom: 1px solid #e2e8f0; font-weight: 800; }
         .historial-registro-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; }
         .historial-registro-datos > div { overflow-wrap: anywhere; }
-        .historial-registro-datos .historial-producto { grid-column: 1 / -1; }
+        .historial-registro-datos .historial-producto,
+        .historial-registro-datos .historial-firma-linea { grid-column: 1 / -1; }
         .historial-firma-linea { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+        .historial-registros-tabla { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 10px; font-family: Arial, sans-serif; }
+        .historial-registros-tabla th,
+        .historial-registros-tabla td { border: 1px solid #cbd5e1; padding: 7px 6px; text-align: left; vertical-align: top; white-space: normal !important; overflow-wrap: anywhere; word-break: normal; }
+        .historial-registros-tabla th { background: #e5e7eb !important; color: #000 !important; font-size: 12px; text-transform: uppercase; }
+        .historial-registros-tabla td { color: #000 !important; background: #fff !important; font-size: 13px; }
+        .historial-registros-tabla tbody tr { break-inside: avoid; page-break-inside: avoid; }
+        .historial-registros-tabla .historial-celda-cantidad { text-align: center; font-weight: 800; white-space: nowrap; }
+        .historial-registros-tabla .historial-celda-firma { text-align: center; }
         #fichaPrintArea.historial-impresion { background: #fff; color: #111827; padding: 14px; border-radius: 8px; }
         #fichaPrintArea.historial-impresion .historial-titulo,
         #fichaPrintArea.historial-impresion .historial-descripcion,
@@ -1358,9 +1367,9 @@
             #fichaOverlay .modal { max-width: none !important; max-height: none !important; overflow: visible !important; border: none !important; background: #fff !important; padding: 0 !important; }
             #fichaOverlay, #fichaOverlay * { color: #000 !important; border-color: #999 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .ficha-noprint { display: none !important; }
-            @page { size: A4; margin: 8mm; }
+            @page { size: A4 portrait; margin: 8mm; }
             #fichaOverlay .modal { width: 100% !important; }
-            #fichaPrintArea.historial-impresion { font-size: 12.5px !important; line-height: 1.35 !important; padding: 0 !important; }
+            #fichaPrintArea.historial-impresion { font-family: Arial, sans-serif !important; font-size: 13px !important; line-height: 1.35 !important; padding: 0 !important; color: #000 !important; }
             #fichaPrintArea.historial-impresion .historial-membrete { margin-bottom: 10px; padding-bottom: 8px; }
             #fichaPrintArea.historial-impresion .historial-logo { width: 170px; }
             #fichaPrintArea.historial-impresion .historial-cabecera { padding: 13px 15px; margin-bottom: 12px; }
@@ -1377,6 +1386,16 @@
             #fichaPrintArea.historial-impresion .historial-registro-datos { font-size: 12px; gap: 7px 15px; }
             #fichaPrintArea.historial-impresion .historial-firma-linea { min-height: 74px; margin-top: 9px; gap: 13px; align-items: center; }
             #fichaPrintArea.historial-impresion .historial-firma { display: block; width: 155px; height: 68px; object-fit: contain; object-position: left center; }
+            #fichaPrintArea.historial-impresion .historial-registros-tabla { margin-top: 12px; }
+            #fichaPrintArea.historial-impresion .historial-registros-tabla,
+            #fichaPrintArea.historial-impresion .historial-registros-tabla tbody,
+            #fichaPrintArea.historial-impresion .historial-registros-tabla tr,
+            #fichaPrintArea.historial-impresion .historial-registros-tabla td { color: #000 !important; background: #fff !important; font-family: Arial, sans-serif !important; }
+            #fichaPrintArea.historial-impresion .historial-registros-tabla th { color: #000 !important; background: #e5e7eb !important; font-family: Arial, sans-serif !important; font-size: 12px !important; padding: 8px 6px; }
+            #fichaPrintArea.historial-impresion .historial-registros-tabla td { font-size: 13px !important; padding: 8px 6px; white-space: normal !important; overflow-wrap: anywhere; word-break: normal; }
+            #fichaPrintArea.historial-impresion .historial-registros-tabla th { white-space: normal !important; overflow-wrap: anywhere; word-break: normal; }
+            #fichaPrintArea.historial-impresion .historial-registros-tabla .historial-celda-cantidad { white-space: normal; }
+            #fichaPrintArea.historial-impresion .historial-registros-tabla .historial-firma { width: 105px; height: 50px; margin: 0 auto; }
         }
         /* ⬆️ FIN NUEVO */
     </style>
@@ -5113,8 +5132,8 @@
                     const cantidad = relacionados.length ? relacionados.reduce((s, x) => s + (Number(x.cantidad) || 0), 0) : (Number(m.cantidad) || 0);
                     return { id, m, ficha, cantidad };
                 });
-                const filas = registros.map(({ id, m, ficha, cantidad }) => `<section class="historial-registro"><div class="historial-registro-cab"><span>${escapeHtml(ficha.fecha || m.fecha || '')} · ${escapeHtml(id)}</span><span class="historial-tipo">SALIDA</span></div><div class="historial-registro-datos"><div><b>Cantidad:</b> ${escapeHtml(String(cantidad))} ${escapeHtml(g.unidad)}</div>${ficha.responsable || m.responsable ? `<div><b>Encargado:</b> ${escapeHtml(ficha.responsable || m.responsable)}</div>` : ''}${ficha.firmante ? `<div><b>Retiró:</b> ${escapeHtml(ficha.firmante)}</div>` : ''}${String(ficha.dni || '').trim() ? `<div><b>DNI:</b> ${escapeHtml(ficha.dni)}</div>` : ''}${ficha.obra || m.obra ? `<div><b>Obra / destino:</b> ${escapeHtml(ficha.obra || m.obra)}</div>` : ''}${ficha.solicitante ? `<div><b>Solicitante:</b> ${escapeHtml(ficha.solicitante)}</div>` : ''}${ficha.equipo ? `<div><b>Equipo:</b> ${escapeHtml(ficha.equipo)}</div>` : ''}</div>${ficha.firma_img ? `<div class="historial-firma-linea"><b>Firma:</b><img class="historial-firma" src="${ficha.firma_img}" alt="Firma de ${escapeHtml(ficha.firmante || 'quien retira')}"></div>` : ''}</section>`).join('');
-                area.innerHTML = `<div class="historial-membrete"><img class="historial-logo" src="${RPM_LOGO_DATA}" alt="RPM Construcciones"></div><div class="historial-cabecera"><div class="historial-kicker">Control de depósito</div><div class="historial-titulo">Historial de salidas</div><div class="historial-descripcion">Cada registro corresponde a una salida del producto.</div></div><div class="historial-resumen"><div><small>Producto / descripción</small><strong>${escapeHtml(g.descripcion)}${g.marca ? ' · ' + escapeHtml(g.marca) : ''}</strong></div><div><small>Total retirado</small><strong>${escapeHtml(String(Math.round(g.cantidad * 1000) / 1000))} ${escapeHtml(g.unidad)}</strong></div><div><small>Stock actual</small><strong>${stockActual}</strong></div><div><small>Cantidad de salidas</small><strong>${fichas.length}</strong></div></div>${filas}`;
+                const filas = registros.map(({ id, m, ficha, cantidad }) => `<tr><td>${escapeHtml(ficha.fecha || m.fecha || '')}<br><b>${escapeHtml(id)}</b></td><td>${escapeHtml(ficha.solicitante || '—')}</td><td>${escapeHtml(ficha.firmante || '—')}${String(ficha.dni || '').trim() ? `<br>DNI ${escapeHtml(ficha.dni)}` : ''}</td><td>${escapeHtml(ficha.responsable || m.responsable || '—')}</td><td class="historial-celda-cantidad">${escapeHtml(String(cantidad))} ${escapeHtml(g.unidad)}</td><td>${escapeHtml(ficha.obra || m.obra || '—')}</td><td>${escapeHtml(ficha.equipo || '—')}</td><td class="historial-celda-firma">${ficha.firma_img ? `<img class="historial-firma" src="${ficha.firma_img}" alt="Firma de ${escapeHtml(ficha.firmante || 'quien retira')}">` : '—'}</td></tr>`).join('');
+                area.innerHTML = `<div class="historial-membrete"><img class="historial-logo" src="${RPM_LOGO_DATA}" alt="RPM Construcciones"></div><div class="historial-cabecera"><div class="historial-kicker">Control de depósito</div><div class="historial-titulo">Historial de salidas</div><div class="historial-descripcion">Cada fila corresponde a una salida del producto.</div></div><div class="historial-resumen"><div><small>Producto / descripción</small><strong>${escapeHtml(g.descripcion)}${g.marca ? ' · ' + escapeHtml(g.marca) : ''}</strong></div><div><small>Total retirado</small><strong>${escapeHtml(String(Math.round(g.cantidad * 1000) / 1000))} ${escapeHtml(g.unidad)}</strong></div><div><small>Stock actual</small><strong>${escapeHtml(stockActual)}</strong></div><div><small>Cantidad de salidas</small><strong>${fichas.length}</strong></div></div><table class="historial-registros-tabla"><colgroup><col style="width:9%"><col style="width:15%"><col style="width:15%"><col style="width:12%"><col style="width:8%"><col style="width:18%"><col style="width:11%"><col style="width:12%"></colgroup><thead><tr><th>Fecha / envío</th><th>Solicitante</th><th>Retira</th><th>Encargado que<br>entrega</th><th>Cantidad</th><th>Obra / destino</th><th>Equipo</th><th>Firma</th></tr></thead><tbody>${filas}</tbody></table>`;
             } catch (e) {
                 area.innerHTML = `<div class="ficha-title">No se pudo preparar el historial</div><div class="ficha-firma">${escapeHtml(e.message || 'Error al cargar las fichas.')}</div>`;
             }
@@ -5191,6 +5210,21 @@
             fichaActual = '';
             state.modalOpen = false;
             document.getElementById('fichaOverlay').classList.remove('show');
+        }
+        function imprimirFichaActual() {
+            const area = document.getElementById('fichaPrintArea');
+            let estiloPaginaHistorial = null;
+            if (area.classList.contains('historial-impresion')) {
+                estiloPaginaHistorial = document.createElement('style');
+                estiloPaginaHistorial.textContent = '@page { size: A4 landscape; margin: 8mm; }';
+                document.head.appendChild(estiloPaginaHistorial);
+            }
+            const limpiarEstiloPagina = () => {
+                if (estiloPaginaHistorial) estiloPaginaHistorial.remove();
+                window.removeEventListener('afterprint', limpiarEstiloPagina);
+            };
+            window.addEventListener('afterprint', limpiarEstiloPagina);
+            window.print();
         }
         // ⬆️ FIN NUEVO ─────────────────────────────────────
 
@@ -5603,7 +5637,7 @@
             if (m) abrirFichaSalida(m);
         });
         document.getElementById('fichaClose').addEventListener('click', cerrarFicha);
-        document.getElementById('fichaPrint').addEventListener('click', () => window.print());
+        document.getElementById('fichaPrint').addEventListener('click', imprimirFichaActual);
         document.getElementById('fichaOverlay').addEventListener('click', e => { if (e.target.id === 'fichaOverlay') cerrarFicha(); });
         // ⬆️ FIN NUEVO
 
