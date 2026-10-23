@@ -2262,6 +2262,8 @@
         const state = {
             stock: [],
             mov: [],
+            movBase: [],
+            movExtra: [],
             zona: '',           // '' = todas
             dep: '',            // '' = todos, '__NONE__' = sin ubicación, o '1','2','5A'...
             activeTab: 'stock',
@@ -2300,6 +2302,109 @@
                 clearTimeout(timeoutId);
             }
         }
+
+        // FIX búsqueda servidor: consulta movimientos anteriores al límite normal de 1500.
+        function claveMovimiento(m) {
+            return JSON.stringify([
+                m.fecha, m.tipo, m.zona, m.descripcion, m.cantidad,
+                m.responsable, m.obra, m.factura, m.familia, m.marca,
+                m.obs_item, m.id_pedido, m.envio, m.unidad, m.obs_general
+            ]);
+        }
+
+        function fusionarMovimientos(base, extras) {
+            const disponibles = new Map();
+            base.forEach(m => {
+                const clave = claveMovimiento(m);
+                disponibles.set(clave, (disponibles.get(clave) || 0) + 1);
+            });
+
+            const resultado = base.slice();
+            extras.forEach(m => {
+                const clave = claveMovimiento(m);
+                const cantidadBase = disponibles.get(clave) || 0;
+                if (cantidadBase > 0) {
+                    disponibles.set(clave, cantidadBase - 1);
+                } else {
+                    resultado.push(m);
+                }
+            });
+            return resultado;
+        }
+
+        async function apiBuscarMovimientos(q, tipo = '') {
+            if (isDemo) {
+                const lista = state.movBase.filter(m =>
+                    matchesSearch(m, q, [
+                        'tipo', 'zona', 'descripcion', 'responsable', 'obra',
+                        'factura', 'familia', 'marca', 'obs_item', 'id_pedido',
+                        'envio', 'unidad', 'obs_general'
+                    ]) && (!tipo || normalizeText(m.tipo).startsWith(normalizeText(tipo)))
+                );
+                return { ok: true, movimientos: lista, total: lista.length, truncado: false };
+            }
+
+            const url = new URL(CONFIG.WEB_APP_URL);
+            url.searchParams.set('action', 'movimientos-buscar');
+            url.searchParams.set('q', q);
+            if (tipo) url.searchParams.set('tipo', tipo);
+            url.searchParams.set('token', await getIdToken());
+
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (data && data.auth === false) {
+                    auth.signOut();
+                    throw new Error('Sesión no válida');
+                }
+                if (!data.ok) throw new Error(data.error || 'No se pudieron buscar los movimientos');
+                return data;
+            } finally {
+                clearTimeout(timeoutId);
+            }
+        }
+
+        let solicitudBusquedaMovimientos = 0;
+        async function buscarMovimientosServidor(q, tipo = '') {
+            const solicitud = ++solicitudBusquedaMovimientos;
+            q = String(q || '').trim();
+
+            // El reporte acumulado necesita todas las salidas, incluso si el buscador está vacío.
+            const cargarTodasLasSalidas = normalizeText(tipo).trim() === 'salida';
+            if (q.length < 3 && !cargarTodasLasSalidas) {
+                state.movExtra = [];
+                state.mov = fusionarMovimientos(state.movBase, state.movExtra);
+                renderMov();
+                renderReporteSalidas();
+                return;
+            }
+
+            // Mostrar de inmediato lo que ya está cargado mientras responde la búsqueda histórica.
+            state.movExtra = [];
+            state.mov = fusionarMovimientos(state.movBase, state.movExtra);
+            renderMov();
+            renderReporteSalidas();
+
+            try {
+                const data = await apiBuscarMovimientos(q, tipo);
+                if (solicitud !== solicitudBusquedaMovimientos) return;
+                state.movExtra = data.movimientos || [];
+                state.mov = fusionarMovimientos(state.movBase, state.movExtra);
+                renderMov();
+                renderReporteSalidas();
+                if (data.truncado) {
+                    showToast('La búsqueda encontró más de 5000 movimientos; se muestran los 5000 más recientes.', true);
+                }
+            } catch (err) {
+                if (solicitud !== solicitudBusquedaMovimientos) return;
+                console.error('Error buscando movimientos:', err);
+                showToast('No se pudo completar la búsqueda histórica. Revisá la conexión e intentá de nuevo.', true);
+            }
+        }
+        // FIN FIX búsqueda servidor
 
         function mostrarCartelFallaConexion(msg) {
             let el = document.getElementById('cartelFalla');
@@ -2442,8 +2547,9 @@
                     return;
                 }
                 const nuevoMov = rMov.movimientos || [];
-                const cambioMov = JSON.stringify(nuevoMov) !== JSON.stringify(state.mov);
-                state.mov = nuevoMov;
+                const cambioMov = JSON.stringify(nuevoMov) !== JSON.stringify(state.movBase);
+                state.movBase = nuevoMov;
+                state.mov = fusionarMovimientos(state.movBase, state.movExtra);
                 if (cambioMov || cambioStock) {
                     movProductInfoCache = new WeakMap(); // Invalidar asociaciones cuando cambian Stock o Movimientos.
                     movProductInfoFastCache = new WeakMap();
@@ -2667,6 +2773,18 @@
             return false;
         }
 
+        // FIX búsqueda: si la consulta coincide exactamente con una familia,
+        // limitar los resultados a esa familia para evitar ropa u otros textos
+        // que también contengan la palabra (por ejemplo, "térmica").
+        function enfocarFamiliaExacta(list, query, obtenerFamilia = item => item.familia) {
+            const consulta = normalizeText(query).trim();
+            if (!consulta) return list;
+            const coincidencias = list.filter(item =>
+                normalizeText(obtenerFamilia(item) || '').trim() === consulta
+            );
+            return coincidencias.length ? coincidencias : list;
+        }
+
         function depOf(x) {
             if (x.stock_actual !== undefined) {               // es un producto de stock
                 return String(x.ubicacion_deposito || '').trim().toUpperCase();
@@ -2699,6 +2817,7 @@
             if (ui.producto) list = list.filter(p => p.id === ui.producto);
             if (ui.search) {
                 list = list.filter(p => matchesSearch(p, ui.search, ['descripcion', 'marca', 'familia', 'id']));
+                list = enfocarFamiliaExacta(list, ui.search);
             }
             list = list.slice().sort((a, b) => {
                 if (ui.sortKey === 'seleccion') {
@@ -2895,6 +3014,7 @@
                     };
                     return matchesSearch(itemConInfo, ui.search, ['descripcion', 'responsable', 'obra', 'familia', 'marca', 'ubicacion', 'factura', 'obs_item']);
                 });
+                list = enfocarFamiliaExacta(list, ui.search, m => getMovProductInfo(m, true).familiaActual);
             }
             list = list.slice().sort((a, b) => {
                 const infoA = getMovProductInfo(a, true);
@@ -4918,7 +5038,7 @@
                 if (!grupos.has(key)) grupos.set(key, { familia, descripcion, marca, unidad, cantidad: 0, movimientos: [] });
                 const g = grupos.get(key); g.cantidad += Number(m.cantidad) || 0; g.movimientos.push(m);
             });
-            const lista = Array.from(grupos.values()).filter(g => {
+            let lista = Array.from(grupos.values()).filter(g => {
                 const busquedaGrupo = {
                     ...g,
                     responsablesObras: g.movimientos.map(m => `${m.responsable || ''} ${m.obra || ''}`).join(' ')
@@ -4926,6 +5046,7 @@
                 return matchesSearch(busquedaGrupo, buscar, ['familia', 'descripcion', 'marca', 'responsablesObras']);
             })
                 .sort((a, b) => a.descripcion.localeCompare(b.descripcion, 'es', { sensitivity: 'base' }));
+            lista = enfocarFamiliaExacta(lista, buscar);
             reporteSalidaPorId.clear();
             reporteGrupos.clear();
             const body = document.getElementById('reporteBody');
@@ -5391,6 +5512,11 @@
                 document.getElementById('panel-mov').style.display = state.activeTab === 'mov' ? '' : 'none';
                 document.getElementById('panel-reporte').style.display = state.activeTab === 'reporte' ? '' : 'none';
                 renderAll();
+                if (state.activeTab === 'mov') {
+                    buscarMovimientosServidor(state.movUi.search, state.movUi.tipo);
+                } else if (state.activeTab === 'reporte') {
+                    buscarMovimientosServidor(document.getElementById('reporteSearch').value, 'SALIDA');
+                }
             });
         });
         document.querySelectorAll('.modern-nav-button').forEach(btn => {
@@ -5418,14 +5544,22 @@
         document.getElementById('filterProductoStock').addEventListener('change', e => { state.stockUi.producto = e.target.value; renderStock(); });
         document.getElementById('filterEstado').addEventListener('change', e => { state.stockUi.estado = e.target.value; renderStock(); });
 
-        document.getElementById('reporteSearch').addEventListener('input', debounceInput(renderReporteSalidas));
+        // FIX búsqueda servidor: conecta los buscadores con el historial completo.
+        document.getElementById('reporteSearch').addEventListener('input', debounceInput(e => {
+            buscarMovimientosServidor(e.target.value, 'SALIDA');
+        }));
         document.getElementById('reporteBody').addEventListener('click', e => { const p = e.target.closest('.historial-imprimir-btn'); if (p) { const g = reporteGrupos.get(p.dataset.group); if (g) imprimirHistorialAcumulado(g); return; } const b = e.target.closest('.ficha-reporte-btn'); if (b) { const m = reporteSalidaPorId.get(b.dataset.key); if (m) abrirFichaSalida(m); } });
         document.getElementById('movSearch').addEventListener('input', debounceInput(e => {
             state.movUi.search = e.target.value;
             state.movUi.page = 0;
-            renderMov();
+            buscarMovimientosServidor(e.target.value, state.movUi.tipo);
         }));
-        document.getElementById('filterTipo').addEventListener('change', e => { state.movUi.tipo = e.target.value; state.movUi.page = 0; renderMov(); });
+        document.getElementById('filterTipo').addEventListener('change', e => {
+            state.movUi.tipo = e.target.value;
+            state.movUi.page = 0;
+            buscarMovimientosServidor(state.movUi.search, state.movUi.tipo);
+        });
+        // FIN FIX búsqueda servidor
         document.getElementById('filterProducto').addEventListener('change', e => { state.movUi.producto = e.target.value; state.movUi.page = 0; renderMov(); });
         document.getElementById('filterFamiliaMov').addEventListener('change', e => { state.movUi.familia = e.target.value; state.movUi.producto = ''; state.movUi.page = 0; populateMovProductoFilter(); renderMov(); });
         document.getElementById('movPrev').addEventListener('click', () => { state.movUi.page--; renderMov(); });
