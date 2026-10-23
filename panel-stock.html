@@ -1358,17 +1358,25 @@
             #fichaOverlay .modal { max-width: none !important; max-height: none !important; overflow: visible !important; border: none !important; background: #fff !important; padding: 0 !important; }
             #fichaOverlay, #fichaOverlay * { color: #000 !important; border-color: #999 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .ficha-noprint { display: none !important; }
-            @page { size: A4; margin: 7mm; }
+            @page { size: A4; margin: 8mm; }
             #fichaOverlay .modal { width: 100% !important; }
-            #fichaPrintArea.historial-impresion { font-size: 9px !important; line-height: 1.15 !important; }
-            .historial-impresion .ficha-title { font-size: 14px !important; }
-            #fichaPrintArea.historial-impresion { padding: 0 !important; }
-            #fichaPrintArea.historial-impresion .historial-logo { width: 138px; }
-            #fichaPrintArea.historial-impresion .historial-registro { background: #fff !important; color: #111827 !important; padding: 5px 7px; margin: 4px 0; }
+            #fichaPrintArea.historial-impresion { font-size: 11px !important; line-height: 1.3 !important; padding: 0 !important; }
+            #fichaPrintArea.historial-impresion .historial-membrete { margin-bottom: 9px; padding-bottom: 7px; }
+            #fichaPrintArea.historial-impresion .historial-logo { width: 160px; }
+            #fichaPrintArea.historial-impresion .historial-cabecera { padding: 12px 14px; margin-bottom: 11px; }
+            #fichaPrintArea.historial-impresion .historial-kicker { font-size: 10px; }
+            #fichaPrintArea.historial-impresion .historial-titulo { font-size: 23px !important; }
+            #fichaPrintArea.historial-impresion .historial-descripcion { font-size: 11px !important; }
+            #fichaPrintArea.historial-impresion .historial-resumen { gap: 9px; margin: 10px 0 12px; }
+            #fichaPrintArea.historial-impresion .historial-resumen > div { padding: 9px 10px; }
+            #fichaPrintArea.historial-impresion .historial-resumen small { font-size: 9px; }
+            #fichaPrintArea.historial-impresion .historial-resumen strong { font-size: 12px !important; }
+            #fichaPrintArea.historial-impresion .historial-registro { background: #fff !important; color: #111827 !important; padding: 8px 10px; margin: 7px 0; }
             #fichaPrintArea.historial-impresion .historial-registro * { color: #111827 !important; }
-            #fichaPrintArea.historial-impresion .historial-registro-cab { font-size: 9px; }
-            #fichaPrintArea.historial-impresion .historial-registro-datos { font-size: 8px; }
-            #fichaPrintArea.historial-impresion .historial-firma { display: block; width: 82px; height: 30px; object-fit: contain; }
+            #fichaPrintArea.historial-impresion .historial-registro-cab { font-size: 11px; padding-bottom: 7px; margin-bottom: 7px; }
+            #fichaPrintArea.historial-impresion .historial-registro-datos { font-size: 10.5px; gap: 6px 14px; }
+            #fichaPrintArea.historial-impresion .historial-firma-linea { min-height: 64px; margin-top: 8px; gap: 12px; align-items: center; }
+            #fichaPrintArea.historial-impresion .historial-firma { display: block; width: 135px; height: 58px; object-fit: contain; object-position: left center; }
         }
         /* ⬆️ FIN NUEVO */
     </style>
@@ -5065,25 +5073,38 @@
         }
 
         async function imprimirHistorialAcumulado(g) {
-            // Leer primero la versión más reciente de la planilla antes de armar el resumen impreso.
+            const area = document.getElementById('fichaPrintArea');
+            area.classList.add('historial-impresion');
+            area.innerHTML = `<div class="ficha-title">RPM Construcciones — Historial de salidas</div><div class="ficha-firma">Actualizando datos de la planilla y preparando el historial…</div>`;
+            state.modalOpen = true;
+            document.getElementById('fichaOverlay').classList.add('show');
+
+            // Leer la planilla justo antes de imprimir y volver a resolver el grupo actualizado.
             await cargarTodo(true);
             renderReporteSalidas();
-            const grupoActualizado = Array.from(reporteGrupos.values()).find(actual =>
+            const idsOriginales = new Set(g.movimientos.map(m => String(m.id_pedido || '').trim().toUpperCase()).filter(Boolean));
+            const gruposActualizados = Array.from(reporteGrupos.values());
+            const grupoActualizado = gruposActualizados.find(actual =>
                 actual.descripcion === g.descripcion && actual.marca === g.marca &&
                 actual.familia === g.familia && actual.unidad === g.unidad
-            );
-            if (grupoActualizado) g = grupoActualizado;
+            ) || gruposActualizados
+                .map(actual => ({ actual, coincidencias: actual.movimientos.reduce((n, m) => n + (idsOriginales.has(String(m.id_pedido || '').trim().toUpperCase()) ? 1 : 0), 0) }))
+                .sort((a, b) => b.coincidencias - a.coincidencias)[0]?.actual;
+            if (!grupoActualizado) {
+                area.innerHTML = `<div class="ficha-title">No se pudo actualizar el historial</div><div class="ficha-firma">No se encontraron movimientos actuales para este producto. Actualizá el panel y volvé a intentarlo.</div>`;
+                return;
+            }
+            g = grupoActualizado;
             const unicas = new Map();
             g.movimientos.forEach(m => { const id = String(m.id_pedido || '').trim().toUpperCase(); if (id) unicas.set(id, m); });
-            if (!unicas.size) { showToast('No hay IDs de salida para preparar el historial.'); return; }
+            if (!unicas.size) {
+                area.innerHTML = `<div class="ficha-title">No se puede imprimir el historial</div><div class="ficha-firma">Las salidas actualizadas no tienen un número de envío asociado.</div>`;
+                return;
+            }
             const normStockKey = v => String(v || '').trim().toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const stockItem = state.stock.find(p => normStockKey(p.descripcion) === normStockKey(g.descripcion) && normStockKey(p.marca) === normStockKey(g.marca) && normStockKey(p.familia) === normStockKey(g.familia) && normStockKey(p.unidad) === normStockKey(g.unidad));
             const stockActual = stockItem ? `${escapeHtml(String(stockItem.stock_actual ?? 0))} ${escapeHtml(stockItem.unidad || g.unidad)}` : 'No disponible';
-            const area = document.getElementById('fichaPrintArea');
-            area.classList.add('historial-impresion');
             area.innerHTML = `<div class="ficha-title">RPM Construcciones — Historial acumulado de salidas</div><div class="ficha-sub">${escapeHtml(g.descripcion)}${g.marca ? ' · ' + escapeHtml(g.marca) : ''} · Total retirado: ${escapeHtml(String(Math.round(g.cantidad * 1000) / 1000))} ${escapeHtml(g.unidad)} · ${unicas.size} salidas</div><div class="ficha-firma">Preparando historial y firmas…</div>`;
-            state.modalOpen = true;
-            document.getElementById('fichaOverlay').classList.add('show');
             try {
                 const fichas = await Promise.all(Array.from(unicas.entries()).map(async ([id, m]) => ({ id, m, ficha: await apiGetFichaSalida(id) })));
                 fichas.sort((a, b) => String(a.ficha.fecha || a.m.fecha || '').localeCompare(String(b.ficha.fecha || b.m.fecha || '')));
