@@ -1399,175 +1399,199 @@
         }
         /* ⬆️ FIN NUEVO */
     </style>
-<style id="modernViewStyles">
-    .view-mode-toggle{width:32px;height:32px;justify-content:center;font-size:16px;padding:0}
+
+<style id="sidebarStyles">
     .filter-title-modern{display:none}
-    #modernSidebar{display:none}
-    body.modern-view{height:100%;overflow:hidden}
-    body.modern-view .app{display:grid;grid-template-columns:236px minmax(0,1fr);grid-template-rows:auto auto auto auto auto minmax(0,1fr);gap:0 16px;height:100vh;max-width:none;margin:0;overflow:hidden;padding:14px}
-    body.modern-view #modernSidebar{grid-column:1;grid-row:1/7;display:flex;flex-direction:column;min-height:0;padding:20px 13px 14px;background:#173a29;color:#fff;border:1px solid #214c37;border-radius:18px;box-shadow:0 12px 30px rgba(24,58,39,.16)}
-    body.modern-view .modern-brand{display:flex;align-items:center;gap:11px;padding:2px 7px 20px;border-bottom:1px solid rgba(255,255,255,.14)}
-    body.modern-view .modern-logo{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:#f17420;color:#fff;font-size:14px;font-weight:850;letter-spacing:.03em;box-shadow:0 5px 13px rgba(241,116,32,.25)}
-    body.modern-view .modern-brand-name{font-size:13px;font-weight:750;line-height:1.2;color:#fff}
-    body.modern-view .modern-brand-sub{font-size:10px;color:#c0d2c6;margin-top:3px}
-    body.modern-view .modern-nav-title{padding:22px 9px 8px;color:#b5cabb;font-size:9px;font-weight:750;letter-spacing:.13em;text-transform:uppercase}
-    body.modern-view .modern-navigation{display:flex;flex-direction:column;gap:5px}
-    body.modern-view .modern-nav-button{display:flex;align-items:center;gap:11px;width:100%;padding:11px 10px;border:1px solid transparent;border-radius:10px;background:transparent;color:#dbe8df;text-align:left;font:600 12px var(--sans);cursor:pointer;transition:background .16s ease,color .16s ease,border-color .16s ease}
-    body.modern-view .modern-nav-button:hover{background:rgba(255,255,255,.08);color:#fff}
-    body.modern-view .modern-nav-button.active{background:#fff;color:#173a29;border-color:#fff;box-shadow:0 3px 9px rgba(5,25,14,.12)}
-    body.modern-view .modern-nav-icon{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:rgba(255,255,255,.1);font-size:13px}
-    body.modern-view .modern-nav-button.active .modern-nav-icon{background:#e5f1e8;color:#197043}
-    body.modern-view .modern-sidebar-spacer{flex:1;min-height:16px}
-    body.modern-view .modern-scope-card{padding:12px;border:1px solid rgba(255,255,255,.13);border-radius:12px;background:rgba(255,255,255,.07)}
-    body.modern-view .modern-scope-label{display:block;color:#b7cdbd;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
-    body.modern-view .modern-scope-value{display:block;color:#fff;font-size:11px;font-weight:650;line-height:1.4;overflow-wrap:anywhere}
-    body.modern-view #themeSelectorContainer{grid-column:2;grid-row:1;align-self:center}
-    body.modern-view .topbar{grid-column:2;grid-row:2;margin:0 0 12px}
-    body.modern-view #demoBanner{grid-column:2;grid-row:3;margin-bottom:10px}
-    body.modern-view #zoneRow{grid-column:2;grid-row:4;min-width:0}
-    body.modern-view #statsRow{grid-column:2;grid-row:5}
-    body.modern-view .tabs{display:none}
-    body.modern-view #panel-stock,body.modern-view #panel-mov,body.modern-view #panel-reporte{grid-column:2;grid-row:6;min-height:0;overflow:auto;padding:0 2px 4px 0}
-    body.modern-view {
-        --bg: #f2f7f3;
-        --bg-elev: #ffffff;
-        --bg-card: #ffffff;
-        --line: #d5e2d9;
-        --line-soft: #e7eee9;
-        --txt: #172b20;
-        --txt-dim: #3f5849;
-        --txt-faint: #5c7466;
-        --accent: #bd4c0b;
-        --accent-soft: #ffeadb;
-        --amber: #a95008;
-        --amber-soft: #fff0d7;
-        --ok-fg: #137846;
-        --ok-bg: #e2f3e8;
-        --bad-fg: #a92722;
-        --bad-bg: #fbe4e1;
-        --devol-bg: #e6efff;
-        --devol-fg: #204d9a;
-        --hover-bg: #f0f6f1;
-        background: var(--bg);
-        color: var(--txt);
+
+    /* ---------- BARRA LATERAL ---------- */
+    :root{--side-w:236px}
+    body.side-collapsed{--side-w:76px}
+    body{padding-left:var(--side-w)}
+    .tabs{display:none}
+    .side{position:fixed;top:0;left:0;bottom:0;width:var(--side-w);z-index:50;display:flex;flex-direction:column;padding:16px 12px 14px;background:var(--bg-elev);border-right:1px solid var(--line);transition:width .15s ease-out;overflow:hidden}
+    .side-brand{display:flex;align-items:center;gap:8px;padding-bottom:16px;border-bottom:1px solid var(--line-soft)}
+    .side-logo{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:10px;padding:7px 10px}
+    .side-logo img{display:block;width:100%;max-width:124px;height:auto}
+    .side-logo-mini{display:none;width:40px;height:40px;place-items:center;border-radius:11px;background:var(--accent);color:#fff;font-size:13px;font-weight:800;letter-spacing:.03em}
+    .side-toggle{flex:none;width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:var(--bg-card);color:var(--txt-dim);font-size:11px;cursor:pointer;transition:background .15s ease,color .15s ease,border-color .15s ease}
+    .side-toggle:hover{color:var(--accent);border-color:var(--accent)}
+    .side-toggle i{transition:transform .25s ease}
+    .side-title{padding:18px 8px 8px;color:var(--txt-faint);font-size:9px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap}
+    .side-nav{display:flex;flex-direction:column;gap:4px}
+    .side-btn{display:flex;align-items:center;gap:11px;width:100%;padding:10px;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--txt-dim);text-align:left;font:600 13px var(--sans);cursor:pointer;white-space:nowrap;transition:background .16s ease,color .16s ease,border-color .16s ease}
+    .side-btn:hover{background:var(--hover-bg);color:var(--txt)}
+    .side-btn.active{background:var(--accent-soft);color:var(--txt);border-color:var(--accent)}
+    .side-ico{flex:none;width:26px;height:26px;display:grid;place-items:center;border-radius:8px;background:var(--bg-card);font-size:12px}
+    .side-btn.active .side-ico{background:var(--accent);color:#fff}
+    .side-footer{margin-top:auto;padding-top:12px;border-top:1px solid var(--line)}
+    .side-logout:hover{background:var(--bad-bg);color:var(--bad-fg)}
+    .side-logout:hover .side-ico{background:transparent}
+
+    @media(min-width:701px){
+        body.side-collapsed .side{padding:16px 8px 14px;align-items:center}
+        body.side-collapsed .side-brand{flex-direction:column-reverse;gap:10px;width:100%}
+        body.side-collapsed .side-logo{display:none}
+        body.side-collapsed .side-logo-mini{display:grid}
+        body.side-collapsed .side-toggle i{transform:rotate(180deg)}
+        body.side-collapsed .side-title{display:none}
+        body.side-collapsed .side-nav,body.side-collapsed .side-footer{width:100%;align-items:center}
+        body.side-collapsed .side-btn{justify-content:center;width:44px;height:42px;padding:0}
+        body.side-collapsed .side-btn>span:last-child{display:none}
+        body.side-collapsed .side-footer{display:flex;justify-content:center}
     }
-    body.modern-view .app{max-width:1440px;padding:22px 24px 60px}
-    body.modern-view .brand-title{color:var(--txt);letter-spacing:-.5px}
-    body.modern-view .brand-title .dim{color:#557061}
-    body.modern-view .topbar{align-items:center;padding:16px 18px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 24px rgba(35,69,48,.07)}
-    body.modern-view .brand-eyebrow{color:#587466}
-    body.modern-view .status-line{color:#52695c}
-    body.modern-view .pulse{background:#18824c}
-    body.modern-view .btn{background:#fff;color:#23392c;border-color:#cbd9cf;box-shadow:0 1px 2px rgba(24,47,32,.04)}
-    body.modern-view .btn:hover{background:#f6faf7;border-color:#9fb9a7}
-    body.modern-view .btn.primary{background:#bd4c0b;border-color:#a93f05;color:#fff}
-    body.modern-view .btn.primary:hover{background:#a94108;border-color:#923808}
-    body.modern-view .btn.ghost{background:#f5f9f6;color:#314a3b;border-color:#d5e2d9}
-    body.modern-view .btn.ghost:hover{background:#eaf3ed}
-    body.modern-view #themeSelectorContainer{margin-bottom:12px!important}
-    body.modern-view #themeDropdownBtn{background:#fff!important;color:#314a3b!important;border-color:#d5e2d9!important;border-radius:10px!important;box-shadow:0 2px 8px rgba(35,69,48,.05)}
-    body.modern-view #themeDropdownMenu{background:#fff!important;border-color:#d5e2d9!important;box-shadow:0 12px 30px rgba(22,45,30,.14)!important}
-    body.modern-view .ts-opt{color:#314a3b}
-    body.modern-view .ts-opt:hover{background:#f0f6f1;color:#172b20}
-    body.modern-view .view-mode-toggle{width:34px;height:34px;border:1px solid #d5e2d9;border-radius:10px;background:#fff;color:#a9440a;font-size:17px;box-shadow:0 2px 8px rgba(35,69,48,.06)}
-    body.modern-view .view-mode-toggle:hover{background:#fff4e8;border-color:#e8b287}
-    body.modern-view .filter-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:14px;background:#eaf2ec;border:1px solid #d8e5dc;border-radius:16px;margin:0 0 16px;box-shadow:0 4px 14px rgba(35,69,48,.04)}
-    body.modern-view .filter-step{min-width:0;gap:9px;padding:12px 13px;background:#fff;border:1px solid #dbe6de;border-radius:12px;box-shadow:0 2px 8px rgba(35,69,48,.035)}
-    body.modern-view .filter-step.sub{padding-left:13px;border-left:1px solid #dbe6de}
-    body.modern-view .filter-step-families{grid-column:1/-1}
-    body.modern-view .filter-step-label{font-size:11px;color:#344f3e;letter-spacing:.07em}
-    body.modern-view .filter-title-default{display:none}
-    body.modern-view .filter-title-modern{display:inline}
-    body.modern-view .filter-context{font-size:11px;font-weight:500;letter-spacing:0;color:#667b6d;text-transform:none;margin-left:5px}
-    body.modern-view .zone-line{gap:7px;align-items:flex-start}
-    body.modern-view .zone-line-scrollable{max-height:150px;padding:2px 4px 2px 0}
-    body.modern-view .zone-chip{padding:6px 11px;background:#f4f8f5;border:1px solid #dbe6de;border-radius:9px;color:#314a3b;font-size:12px;box-shadow:none}
-    body.modern-view .zone-chip:hover{background:#eaf3ed;color:#172b20;border-color:#abc1b1}
-    body.modern-view .zone-chip[data-level="dep"].active{background:#e3f3e8;border-color:#358357;color:#174b2d;box-shadow:inset 0 0 0 1px rgba(53,131,87,.08)}
-    body.modern-view .zone-chip[data-level="zona"].active{background:#fff0df;border-color:#c65a17;color:#713208;box-shadow:inset 0 0 0 1px rgba(198,90,23,.08)}
-    body.modern-view .zone-chip[data-level="fam"].active{background:#e7f2eb;border-color:#648f72;color:#244b31;box-shadow:inset 0 0 0 1px rgba(100,143,114,.08)}
-    body.modern-view .zone-chip.active::after{display:none}
-    body.modern-view .zone-chip .count{color:#52695c;opacity:1;font-variant-numeric:tabular-nums}
-    body.modern-view .zone-chip.active .count{color:inherit}
-    body.modern-view .stats{gap:12px;margin-bottom:16px}
-    body.modern-view .stat{background:#fff;border:1px solid #dce7df;border-radius:13px;box-shadow:0 3px 12px rgba(35,69,48,.045);padding:15px 17px}
-    body.modern-view .stat-num{color:#1e3628}
-    body.modern-view .stat-label{color:#526b5c}
-    body.modern-view .tabs{gap:5px;border-bottom:1px solid #d8e4dc;margin-bottom:14px}
-    body.modern-view .tab-btn{color:#607568;padding:10px 13px;margin:0;border-radius:9px 9px 0 0}
-    body.modern-view .tab-btn.active{color:#17633a;border-bottom-color:#21824b;background:#e7f2ea}
-    body.modern-view .toolbar{background:#fff;border:1px solid #dce7df;border-radius:12px;padding:12px;box-shadow:0 3px 12px rgba(35,69,48,.04)}
-    body.modern-view .toolbar input,body.modern-view .toolbar select{background:#fff;color:#243b2e;border-color:#cbd9cf}
-    body.modern-view .table-wrap{background:#fff;border:1px solid #d8e4dc;border-radius:13px;box-shadow:0 4px 16px rgba(35,69,48,.045)}
-    body.modern-view table{color:#20372a}
-    body.modern-view th{background:#edf4ef;color:#304b3a;border-color:#dce7df}
-    body.modern-view td{border-color:#e7eee9}
-    body.modern-view tr:hover td{background:#f4f9f5}
-    body.modern-view .table-footer{color:#52695c;border-color:#e0e9e3}
-    body.modern-view .modal,body.modern-view .modal-content{background:#fff;color:#20372a;border-color:#d8e4dc}
-    body.modern-view input,body.modern-view select,body.modern-view textarea{color:#20372a;border-color:#cbd9cf}
-    body.modern-view input::placeholder,body.modern-view textarea::placeholder{color:#718578}
-    @media(max-width:980px){body.modern-view .filter-panel{grid-template-columns:repeat(2,minmax(0,1fr))}body.modern-view .filter-step-families{grid-column:1/-1}}
-    @media(max-width:980px){body.modern-view .app{grid-template-columns:190px minmax(0,1fr);column-gap:12px}}
-    @media(max-width:700px){body.modern-view{height:auto;min-height:100%;overflow:auto}body.modern-view .app{display:flex;flex-direction:column;gap:10px;height:auto;min-height:100vh;overflow:visible;padding:10px}body.modern-view #modernSidebar{display:flex;min-height:0;padding:12px;border-radius:14px}body.modern-view .modern-brand{padding:0 2px 10px}body.modern-view .modern-nav-title{display:none}body.modern-view .modern-navigation{flex-direction:row;overflow-x:auto;padding-top:10px}body.modern-view .modern-nav-button{width:auto;flex:none;padding:8px 10px}body.modern-view .modern-nav-button span:last-child{white-space:nowrap}body.modern-view .modern-sidebar-spacer,body.modern-view .modern-scope-card{display:none}body.modern-view #themeSelectorContainer,body.modern-view .topbar,body.modern-view #demoBanner,body.modern-view #zoneRow,body.modern-view #statsRow,body.modern-view #panel-stock,body.modern-view #panel-mov,body.modern-view #panel-reporte{width:100%;overflow:visible}body.modern-view .topbar{padding:14px;border-radius:13px}body.modern-view .filter-panel{grid-template-columns:minmax(0,1fr);padding:10px;gap:9px}body.modern-view .filter-step-families{grid-column:auto}body.modern-view .filter-step{padding:11px}body.modern-view .stats{gap:8px}body.modern-view .stat{padding:12px}}
-    body.modern-view{--bg:#f3f5f7;--bg-elev:#fff;--bg-card:#fff;--line:#d7dfe5;--line-soft:#e8edf0;--txt:#1c2933;--txt-dim:#435563;--txt-faint:#617381;--accent:#bd4c0b;--accent-soft:#ffecdf;--amber:#a95008;--amber-soft:#fff0d7;--ok-fg:#137846;--ok-bg:#e2f3e8;--bad-fg:#a92722;--bad-bg:#fbe4e1;--devol-bg:#e6efff;--devol-fg:#204d9a;--hover-bg:#f1f4f6;background:var(--bg);color:var(--txt)}
-    body.modern-view .app{transition:grid-template-columns .24s ease}
-    body.modern-view #modernSidebar{background:#fff;color:#243440;border-color:#d8e0e6;box-shadow:0 10px 28px rgba(23,41,54,.09)}
-    body.modern-view .modern-brand{position:relative;padding-right:35px;border-bottom-color:#e4e9ed}
-    body.modern-view .modern-brand-name{color:#1f2e39}
-    body.modern-view .modern-brand-sub{color:#637482}
-    body.modern-view .modern-nav-title{color:#687987}
-    body.modern-view .modern-nav-button{color:#445664}
-    body.modern-view .modern-nav-button:hover{background:#f4f6f8;color:#1c2933}
-    body.modern-view .modern-nav-button.active{background:#fff2e9;color:#873b0b;border-color:#f0c4a5;box-shadow:none}
-    body.modern-view .modern-nav-icon{background:#f0f3f5;color:#516371}
-    body.modern-view .modern-nav-button.active .modern-nav-icon{background:#ffe6d3;color:#a4430b}
-    body.modern-view .modern-sidebar-toggle{position:absolute;right:1px;top:50%;transform:translateY(-50%);width:28px;height:28px;border:1px solid #d8e0e6;border-radius:8px;background:#f7f9fa;color:#3a4c59;font-size:18px;line-height:1;cursor:pointer;transition:background .15s ease,border-color .15s ease}
-    body.modern-view .modern-sidebar-toggle:hover{background:#fff0e5;border-color:#e7b18c;color:#9b410d}
-    body.modern-view .modern-scope-card{background:#f7f9fa;border-color:#e1e7eb}
-    body.modern-view .modern-scope-label{color:#667784}
-    body.modern-view .modern-scope-value{color:#263943}
-    body.modern-view.modern-sidebar-collapsed .app{grid-template-columns:72px minmax(0,1fr)}
-    body.modern-view.modern-sidebar-collapsed #modernSidebar{align-items:center;padding:12px 7px}
-    body.modern-view.modern-sidebar-collapsed .modern-brand{justify-content:center;width:100%;padding:36px 0 12px}
-    body.modern-view.modern-sidebar-collapsed .modern-brand-copy,body.modern-view.modern-sidebar-collapsed .modern-nav-title,body.modern-view.modern-sidebar-collapsed .modern-sidebar-spacer,body.modern-view.modern-sidebar-collapsed .modern-scope-card{display:none}
-    body.modern-view.modern-sidebar-collapsed .modern-logo{width:38px;height:38px;font-size:11px}
-    body.modern-view.modern-sidebar-collapsed .modern-sidebar-toggle{top:8px;right:4px;transform:none;width:24px;height:24px;font-size:15px}
-    body.modern-view.modern-sidebar-collapsed .modern-sidebar-toggle span{display:inline-block;transform:rotate(180deg)}
-    body.modern-view.modern-sidebar-collapsed .modern-navigation{width:100%;align-items:center}
-    body.modern-view.modern-sidebar-collapsed .modern-nav-button{justify-content:center;width:46px;height:44px;padding:0}
-    body.modern-view.modern-sidebar-collapsed .modern-nav-button>span:last-child{display:none}
-    body.modern-view.modern-sidebar-collapsed .modern-nav-icon{width:27px;height:27px}
-    body.modern-view.modern-sidebar-collapsed .modern-sidebar-toggle span{transform:none}
-    body.modern-view .filter-panel{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px;background:#e9edf0;border-color:#dce3e8;border-radius:14px;box-shadow:0 3px 12px rgba(23,41,54,.04)}
-    body.modern-view .filter-step{align-self:start;padding:12px;background:#fff;border-color:#dce3e8;border-radius:11px;box-shadow:0 2px 7px rgba(23,41,54,.035)}
-    body.modern-view .filter-step.sub{padding-left:12px;border-left:1px solid #dce3e8}
-    body.modern-view .filter-step-families{grid-column:auto}
-    body.modern-view .filter-step>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;list-style:none}
-    body.modern-view .filter-step>summary::-webkit-details-marker{display:none}
-    body.modern-view .filter-chevron{flex:none;width:23px;height:23px;display:grid;place-items:center;border:1px solid #e0e6ea;border-radius:7px;background:#f6f8f9;color:#526371;font-size:14px;transition:transform .16s ease,background .16s ease}
-    body.modern-view .filter-step[open] .filter-chevron{transform:rotate(180deg);background:#fff0e5;border-color:#f0c8ac;color:#a4430b}
-    body.modern-view .filter-content{margin-top:10px}
-    body.modern-view .filter-step-label{color:#344854;letter-spacing:.04em}
-    body.modern-view .filter-context{color:#647582}
-    body.modern-view .filter-content>.zone-line{max-height:210px;overflow:auto;align-content:flex-start;padding:2px 3px 2px 0}
-    body.modern-view .zone-line-scrollable{max-height:210px}
-    body.modern-view .zone-chip{background:#f4f6f8;border-color:#dce3e8;color:#354a57;border-radius:8px}
-    body.modern-view .zone-chip:hover{background:#edf1f4;color:#1c2933;border-color:#bdcbd4}
-    body.modern-view .zone-chip[data-level="dep"].active{background:#263b49;border-color:#263b49;color:#fff;box-shadow:0 2px 6px rgba(38,59,73,.16)}
-    body.modern-view .zone-chip[data-level="zona"].active{background:#bd4c0b;border-color:#a94108;color:#fff;box-shadow:0 2px 6px rgba(189,76,11,.17)}
-    body.modern-view .zone-chip[data-level="fam"].active{background:#fff0e5;border-color:#d7773c;color:#753308;box-shadow:inset 0 0 0 1px rgba(189,76,11,.06)}
-    body.modern-view .zone-chip.active .count{color:inherit}
-    body.modern-view .stat{border-color:#dce3e8;box-shadow:0 3px 12px rgba(23,41,54,.04)}
-    body.modern-view .stat-num{color:#1c2933}
-    body.modern-view .stat-label{color:#596d7a}
-    body.modern-view .tab-btn.active{color:#9e410e;border-bottom-color:#bd4c0b;background:#fff1e7}
-    body.modern-view .toolbar,body.modern-view .table-wrap{border-color:#dce3e8;box-shadow:0 3px 12px rgba(23,41,54,.04)}
-    body.modern-view th{background:#edf1f4;color:#30434f;border-color:#dce3e8}
-    body.modern-view tr:hover td{background:#f5f7f8}
-    @media(max-width:1100px){body.modern-view .filter-panel{grid-template-columns:repeat(2,minmax(0,1fr))}body.modern-view .filter-step-families{grid-column:1/-1}}
-    @media(max-width:700px){body.modern-view.modern-sidebar-collapsed #modernSidebar{align-items:stretch}body.modern-view.modern-sidebar-collapsed .modern-brand{justify-content:flex-start;width:100%;padding:36px 0 12px}body.modern-view.modern-sidebar-collapsed .modern-brand-copy,body.modern-view.modern-sidebar-collapsed .modern-scope-card{display:none}body.modern-view.modern-sidebar-collapsed .modern-navigation{width:100%;align-items:initial}body.modern-view.modern-sidebar-collapsed .modern-nav-button{width:auto;height:auto;justify-content:flex-start;padding:8px 10px}body.modern-view.modern-sidebar-collapsed .modern-nav-button>span:last-child{display:inline}body.modern-view.modern-sidebar-collapsed .modern-logo{width:38px;height:38px}body.modern-view.modern-sidebar-collapsed .modern-sidebar-toggle{top:8px;right:4px;transform:none}body.modern-view .filter-panel{grid-template-columns:minmax(0,1fr)}body.modern-view .filter-step-families{grid-column:auto}}
+    @media(max-width:700px){
+        body,body.side-collapsed{padding-left:0}
+        .side{position:static;width:auto;padding:10px 12px;border-right:none;border-bottom:1px solid var(--line);overflow:visible}
+        .side-toggle,.side-title,.side-footer{display:none}
+        .side-brand{padding-bottom:10px}
+        .side-nav{flex-direction:row;overflow-x:auto;padding-top:10px}
+        .side-btn{width:auto;flex:none;padding:8px 10px}
+    }
 </style>
+<style id="glassStyles">
+    /* ---------- EFECTO CRISTAL (GLASS) ---------- */
+    :root{
+        --glass-bg:color-mix(in srgb,var(--bg-elev) 50%,transparent);
+        --glass-strong:color-mix(in srgb,var(--bg-elev) 90%,transparent);
+        --glass-line:color-mix(in srgb,var(--txt) 12%,transparent);
+        --glass-shadow:0 4px 30px rgba(0,0,0,.2);
+    }
+
+    /* Luces de fondo */
+    body::before{
+        content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+        background:
+            radial-gradient(45% 45% at 0% 0%,color-mix(in srgb,var(--ok-fg) 20%,transparent),transparent 70%),
+            radial-gradient(45% 45% at 100% 100%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 70%),
+            radial-gradient(30% 30% at 55% 35%,color-mix(in srgb,var(--devol-fg) 10%,transparent),transparent 70%);
+    }
+
+    /* Barra lateral flotante */
+    .side{top:12px;left:12px;bottom:12px;width:calc(var(--side-w) - 12px);z-index:40;border-radius:24px;border:1px solid var(--glass-line);background:var(--glass-bg);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--glass-shadow)}
+    .side-brand{border-bottom-color:var(--glass-line)}
+    .side-footer{border-top-color:var(--glass-line)}
+    .side-toggle{background:color-mix(in srgb,var(--txt) 6%,transparent);border-color:var(--glass-line)}
+    .side-ico{background:color-mix(in srgb,var(--txt) 6%,transparent)}
+    .side-btn.active{background:color-mix(in srgb,var(--txt) 10%,transparent);color:var(--accent);border-color:var(--glass-line)}
+    .side-btn.active .side-ico{box-shadow:0 0 14px color-mix(in srgb,var(--accent) 45%,transparent)}
+
+    /* Tarjetas de estadísticas */
+    .stats{gap:16px}
+    .stat{position:relative;overflow:hidden;display:flex;flex-direction:column;padding:16px;border-radius:16px;background:var(--glass-bg);border:1px solid var(--glass-line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--glass-shadow);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
+    .stat:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--accent) 45%,transparent);box-shadow:0 10px 36px rgba(0,0,0,.28)}
+    .stat-label{margin-top:0;position:relative;z-index:1}
+    .stat-num{position:relative;z-index:1;margin-top:4px;font-family:var(--sans);font-size:30px;font-weight:700;letter-spacing:0;line-height:1.1}
+    .stat-bg-ico{position:absolute;right:-6px;top:-6px;font-size:62px;color:color-mix(in srgb,var(--txt) 6%,transparent);pointer-events:none}
+    .stat-blue .stat-num{color:var(--devol-fg)}
+    .stat-green .stat-num{color:var(--ok-fg)}
+    .stat.bad{border-color:color-mix(in srgb,var(--bad-fg) 45%,transparent);background:color-mix(in srgb,var(--bad-fg) 12%,transparent)}
+    .stat.bad .stat-label{color:var(--bad-fg)}
+    .stat.bad .stat-num{color:var(--bad-fg)}
+    .stat.bad .stat-bg-ico{color:color-mix(in srgb,var(--bad-fg) 10%,transparent)}
+
+    /* Panel de filtros y botones de zona */
+    .filter-panel{background:var(--glass-bg);border:1px solid var(--glass-line);border-radius:20px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--glass-shadow)}
+    .filter-step.sub{border-left-color:var(--glass-line)}
+    .zone-chip{background:color-mix(in srgb,var(--txt) 5%,transparent);border-color:var(--glass-line)}
+    .zone-chip:hover{background:color-mix(in srgb,var(--txt) 10%,transparent)}
+
+    /* Buscador y selectores */
+    .search-box input,select.filter-select{background:color-mix(in srgb,var(--bg) 60%,transparent);border:1px solid var(--glass-line);border-radius:12px}
+    .search-box input:focus,select.filter-select:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent)}
+
+    /* Tabla */
+    .table-wrap{background:var(--glass-bg);border:1px solid var(--glass-line);border-radius:20px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--glass-shadow)}
+    .sticky-top-bar{background:var(--glass-strong);border-top-left-radius:20px;border-top-right-radius:20px}
+    .top-scrollbar-wrap{border-top-left-radius:20px;border-top-right-radius:20px}
+
+    /* Ventanas emergentes */
+    .overlay{background:rgba(0,0,0,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+    .modal{background:var(--glass-strong);border:1px solid var(--glass-line);border-radius:20px;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 25px 50px -12px rgba(0,0,0,.5)}
+
+    @media(max-width:700px){
+        .side{top:auto;left:auto;bottom:auto;width:auto;margin:10px 10px 0}
+    }
+
+    /* ---------- BARRA DE FILTROS (estilo cristal) ---------- */
+    .toolbar{gap:12px;padding:14px 16px;margin-bottom:14px;background:var(--glass-bg);border:1px solid var(--glass-line);border-radius:20px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--glass-shadow)}
+    .search-box input{padding:10px 14px 10px 40px}
+    .search-box::before{left:14px}
+    select.filter-select{padding:10px 12px;font-size:13px;font-weight:500}
+    select.filter-select option{background:var(--bg-elev);color:var(--txt)}
+    #filterFamilia{min-width:150px}
+    #filterEstado{width:140px}
+
+    /* ---------- TABLA DE STOCK (estilo cristal) ---------- */
+    #stickyStockTable thead th{background:transparent}
+    #stockTable tbody td{background:transparent;border-bottom:1px solid color-mix(in srgb,var(--txt) 6%,transparent)}
+    #stockTable tbody tr:hover td{background:color-mix(in srgb,var(--txt) 5%,transparent)}
+
+    /* Foto */
+    .thumb{width:32px;height:32px;border-radius:8px;border:1px solid color-mix(in srgb,var(--txt) 20%,transparent);box-shadow:0 4px 10px rgba(0,0,0,.3);transition:border-color .2s ease}
+    .thumb:hover{border-color:var(--ok-fg)}
+    .thumb-empty{width:32px;height:32px;border-radius:8px;border:1px solid var(--glass-line);background:color-mix(in srgb,var(--txt) 5%,transparent);color:var(--txt-faint);font-size:12px}
+
+    /* Familia */
+    .fam-badge{padding:4px 8px;border-radius:6px;font-size:12px;font-weight:600;color:var(--txt);background:color-mix(in srgb,var(--txt) 6%,transparent);border:1px solid var(--glass-line);box-shadow:0 1px 2px rgba(0,0,0,.2)}
+
+    /* Estado */
+    .estado-pill{display:inline-block;padding:6px 10px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.4px;border:1px solid transparent}
+    .estado-pill.ok{background:color-mix(in srgb,var(--ok-fg) 10%,transparent);color:var(--ok-fg);border-color:color-mix(in srgb,var(--ok-fg) 30%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--ok-fg) 20%,transparent)}
+    .estado-pill.reponer{background:color-mix(in srgb,var(--bad-fg) 10%,transparent);color:var(--bad-fg);border-color:color-mix(in srgb,var(--bad-fg) 30%,transparent);box-shadow:0 0 10px color-mix(in srgb,var(--bad-fg) 20%,transparent)}
+    #stockTable td:nth-child(9),#stickyStockTable th:nth-child(9),
+    #stockTable td:nth-child(10),#stickyStockTable th:nth-child(10){text-align:center}
+
+    /* Acciones: lápiz */
+    #stickyStockTable th:nth-child(10){cursor:default}
+    #stickyStockTable th:nth-child(10):hover{color:var(--txt-faint)}
+    .act-edit{width:32px;height:32px;display:inline-grid;place-items:center;border-radius:50%;border:1px solid var(--glass-line);background:color-mix(in srgb,var(--txt) 5%,transparent);color:var(--devol-fg);font-size:11px;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:background .2s ease,border-color .2s ease,transform .2s ease}
+    .act-edit:hover{background:color-mix(in srgb,var(--devol-fg) 20%,transparent);border-color:color-mix(in srgb,var(--devol-fg) 50%,transparent);transform:scale(1.08)}
+
+    /* ---------- BARRA + TABLA EN UNA SOLA TARJETA ---------- */
+    .table-wrap{overflow:clip}
+    .table-wrap > .toolbar{margin:0;padding:16px;gap:12px;border:none;border-bottom:1px solid var(--glass-line);border-radius:0;background:color-mix(in srgb,var(--txt) 4%,transparent);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+    .table-wrap > .sticky-top-bar{border-radius:0;background:color-mix(in srgb,var(--bg-elev) 92%,var(--bg))}
+    .table-wrap > .sticky-top-bar .top-scrollbar-wrap{border-radius:0}
+    .table-wrap > .toolbar .search-box input,
+    .table-wrap > .toolbar select.filter-select{background:color-mix(in srgb,var(--bg-card) 85%,var(--bg));border-radius:12px}
+
+    /* ---------- FILTROS EN CASCADA (Depósito > Zona > Familia) ---------- */
+    .filter-panel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:16px 20px}
+    .filter-step{gap:8px}
+    .filter-step-label{font-size:12px;font-weight:600;color:var(--txt-dim);text-transform:none;letter-spacing:0}
+    .zone-select{width:100%;padding:11px 40px 11px 14px;font-size:13.5px;font-weight:500;color:var(--txt);background-color:color-mix(in srgb,var(--bg) 60%,transparent);border:1px solid var(--glass-line);border-radius:12px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");background-repeat:no-repeat;background-position:right 14px center;background-size:14px;transition:border-color .2s ease,box-shadow .2s ease}
+    .zone-select:focus{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 20%,transparent)}
+    .zone-select:disabled{opacity:.5;cursor:not-allowed}
+    .zone-select option{background:var(--bg-elev);color:var(--txt)}
+    @media(max-width:900px){.filter-panel{grid-template-columns:1fr}}
+
+    /* 3 tarjetas de estadísticas */
+    .stats{grid-template-columns:repeat(3,1fr)}
+    @media(max-width:720px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+    /* ---------- LOGO ADAPTABLE AL TEMA ---------- */
+    .side-logo{background:color-mix(in srgb,var(--accent) 8%,var(--bg-card))}
+    .side-logo img{mix-blend-mode:multiply}
+    html[data-tone="dark"] .side-logo{background:color-mix(in srgb,var(--accent) 10%,var(--bg-card))}
+    html[data-tone="dark"] .side-logo img{filter:invert(1) hue-rotate(180deg);mix-blend-mode:screen}
+
+    /* ---------- BOTÓN CONTRAER DEBAJO DEL LOGO ---------- */
+    .side-brand{flex-direction:column;align-items:stretch;gap:8px}
+    .side-toggle{width:100%;height:24px;border-radius:8px}
+    @media(min-width:701px){
+        body.side-collapsed .side-brand{flex-direction:column;align-items:center}
+        body.side-collapsed .side-toggle{width:40px}
+    }
+
+    /* ---------- BOTONES SUPERIORES (estilo cristal) ---------- */
+    .header-actions{gap:10px;align-items:center}
+    .glass-btn{padding:9px 14px;font-size:12.5px;font-weight:600;border-radius:12px;background:color-mix(in srgb,var(--txt) 5%,transparent);border:1px solid var(--glass-line);color:var(--txt-dim);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+    .glass-btn:hover{background:color-mix(in srgb,var(--txt) 10%,transparent);border-color:var(--glass-line);color:var(--txt)}
+    .glass-btn i{font-size:12px}
+    .glass-btn-accent{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+    .glass-btn-accent:hover{background:color-mix(in srgb,var(--accent) 12%,transparent);border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:var(--accent)}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
@@ -1586,16 +1610,21 @@
 
     <div class="app">
 
-        <aside id="modernSidebar" class="modern-sidebar" aria-label="Navegación del panel">
-            <div class="modern-brand"><div class="modern-logo">RPM</div><div class="modern-brand-copy"><div class="modern-brand-name">RPM Construcciones</div><div class="modern-brand-sub">Control de inventario</div></div><button type="button" id="modernSidebarToggle" class="modern-sidebar-toggle" aria-label="Contraer menú" aria-expanded="true" title="Contraer menú"><span aria-hidden="true">‹</span></button></div>
-            <div class="modern-nav-title">Espacios de trabajo</div>
-            <nav class="modern-navigation" aria-label="Secciones del panel">
-                <button type="button" class="modern-nav-button active" data-modern-tab="stock"><span class="modern-nav-icon">▦</span><span>Stock general</span></button>
-                <button type="button" class="modern-nav-button" data-modern-tab="mov"><span class="modern-nav-icon">⇄</span><span>Movimientos</span></button>
-                <button type="button" class="modern-nav-button" data-modern-tab="reporte"><span class="modern-nav-icon">▤</span><span>Salidas acumuladas</span></button>
+        <aside id="sideBar" class="side" aria-label="Navegación del panel">
+            <div class="side-brand">
+                <div class="side-logo"><img id="sideLogoImg" alt="RPM Construcciones"></div>
+                <div class="side-logo-mini">RPM</div>
+                <button type="button" id="sideToggle" class="side-toggle" aria-expanded="true" title="Contraer menú"><i class="fa-solid fa-chevron-left"></i></button>
+            </div>
+            <div class="side-title">Espacios de trabajo</div>
+            <nav class="side-nav" aria-label="Secciones del panel">
+                <button type="button" class="side-btn active" data-side-tab="stock"><span class="side-ico"><i class="fa-solid fa-boxes-stacked"></i></span><span>Stock general</span></button>
+                <button type="button" class="side-btn" data-side-tab="mov"><span class="side-ico"><i class="fa-solid fa-right-left"></i></span><span>Movimientos</span></button>
+                <button type="button" class="side-btn" data-side-tab="reporte"><span class="side-ico"><i class="fa-solid fa-clock-rotate-left"></i></span><span>Salidas acumuladas</span></button>
             </nav>
-            <div class="modern-sidebar-spacer"></div>
-            <div class="modern-scope-card"><span class="modern-scope-label">Vista actual</span><span class="modern-scope-value" id="modernScopeLabel">Todos los depósitos</span></div>
+            <div class="side-footer">
+                <button type="button" id="sideLogout" class="side-btn side-logout"><span class="side-ico"><i class="fa-solid fa-arrow-right-from-bracket"></i></span><span>Cerrar sesión</span></button>
+            </div>
         </aside>
 
         <!-- SELECTOR DE DISEÑO -->
@@ -1617,6 +1646,10 @@
                     <div
                         style="font-size:9.5px;font-weight:700;color:var(--txt-faint);letter-spacing:0.8px;text-transform:uppercase;margin:2px 0 1px 4px;">
                         — Paletas Claras —</div>
+                    <button type="button" class="ts-opt"
+                        onclick="applyTheme('naranjaBlanco');document.getElementById('themeDropdownMenu').classList.remove('ts-open')"><span
+                            class="ts-dot" style="background:#ffffff;border:2px solid #f97316;"></span> Naranja y Blanco
+                        (Claro)</button>
                     <button type="button" class="ts-opt"
                         onclick="applyTheme('lightBlue');document.getElementById('themeDropdownMenu').classList.remove('ts-open')"><span
                             class="ts-dot" style="background:#ffffff;border:2px solid #2563eb;"></span> Blanco y Azul
@@ -1703,17 +1736,14 @@
                         id="statusText">Conectando…</span></div>
             </div>
             <div class="header-actions">
-                <a href="buscador-stock.html" class="btn small" id="btnBuscadorStock"
-                    title="Ir al Buscador General de Stock">🔍 Buscador Stock</a>
-                <button class="btn primary small" id="btnNewProduct">➕ Nuevo Producto</button>
-                <button class="btn ghost small" id="btnRefresh">↻ Actualizar</button>
-                <button class="btn small" id="btnExport">📊 Exportar Excel</button>
-                <button class="btn small ghost" id="btnExportAll"
-                    title="Exporta todos los materiales, ignorando filtros y selección">📦 Exportar todo</button>
-                <!-- ⬇️ NUEVO -->
-                <button class="btn small ghost" id="btnLogout">Salir</button>
-                <!-- ⬆️ FIN NUEVO -->
-                <button type="button" class="btn small view-mode-toggle" id="viewModeToggle" aria-label="Activar diseño moderno" aria-pressed="false" title="Activar diseño moderno">◐</button>
+                <a href="buscador-stock.html" class="btn small glass-btn" id="btnBuscadorStock"
+                    title="Ir al Buscador General de Stock"><i class="fa-solid fa-magnifying-glass"></i> Buscador Stock</a>
+                <button class="btn small glass-btn glass-btn-accent" id="btnNewProduct"><i class="fa-solid fa-plus"></i> Nuevo producto</button>
+                <button class="btn small glass-btn" id="btnRefresh" title="Actualizar"><i class="fa-solid fa-rotate-right"></i> Actualizar</button>
+                <button class="btn small glass-btn" id="btnExport"><i class="fa-solid fa-file-excel"></i> Exportar</button>
+                <button class="btn small glass-btn" id="btnExportAll"
+                    title="Exporta todos los materiales, ignorando filtros y selección"><i class="fa-solid fa-boxes-packing"></i> Exportar todo</button>
+                <button id="btnLogout" style="display:none" aria-hidden="true"></button>
             </div>
         </div>
 
@@ -1735,23 +1765,20 @@
 
         <!-- STOCK PANEL -->
         <div id="panel-stock">
+            <div class="table-wrap">
             <div class="toolbar">
                 <div class="search-box"><input type="text" id="stockSearch"
-                        placeholder="Buscar por descripción, marca, familia o ID…"></div>
-                <select class="filter-select" id="filterFamilia">
-                    <option value="">Todas las familias</option>
-                </select>
+                        placeholder="Buscar por descripción, marca, ID…"></div>
                 <select class="filter-select" id="filterProductoStock"
-                    style="order:5; flex:1 1 100%; width:100%; padding:11px 12px; font-size:13.5px;">
-                    <option value="">Todos los productos</option>
+                    style="flex:1 1 200px; min-width:200px;">
+                    <option value="">Productos</option>
                 </select>
                 <select class="filter-select" id="filterEstado">
-                    <option value="">Todos los estados</option>
+                    <option value="">Estados</option>
                     <option value="OK">OK</option>
                     <option value="REPONER">Reponer</option>
                 </select>
             </div>
-            <div class="table-wrap">
                 <div class="sticky-top-bar">
                     <div class="top-scrollbar-wrap" id="topScrollStock">
                         <div class="top-scrollbar-inner"></div>
@@ -1771,6 +1798,7 @@
                                     <th data-sort="stock_minimo">Mín. <span class="arrow"></span></th>
                                     <th data-sort="stock_actual">Stock <span class="arrow"></span></th>
                                     <th data-sort="estado">Estado <span class="arrow"></span></th>
+                                    <th style="text-align:center;">Acciones</th>
                                 </tr>
                             </thead>
                         </table>
@@ -2633,93 +2661,71 @@
                 else sinDep++;
             });
             const deps = Array.from(depCounts.keys()).sort(coll);
-            let l1 = chipHtml('dep', '', 'Todos los depósitos', state.stock.length, !state.dep);
-            deps.forEach(d => { l1 += chipHtml('dep', d, 'Depósito ' + d, depCounts.get(d), state.dep === d); });
-            if (sinDep) l1 += chipHtml('dep', '__NONE__', 'Sin ubicación', sinDep, state.dep === '__NONE__');
+            if (state.dep && state.dep !== '__NONE__' && !deps.includes(state.dep)) state.dep = '';
 
-            // Nivel 2: zonas
+            // Nivel 2: zonas (solo las del depósito elegido)
             const baseDep = state.stock.filter(matchDep);
             const zonaCounts = new Map();
             baseDep.forEach(p => { if (p.zona) zonaCounts.set(p.zona, (zonaCounts.get(p.zona) || 0) + 1); });
             const zonas = Array.from(zonaCounts.keys()).sort(coll);
             if (state.zona && !zonas.includes(state.zona)) state.zona = '';
-            
-            let l2 = '';
-            if (zonas.length > 0) {
-                l2 = chipHtml('zona', '', 'Todas las zonas', baseDep.length, !state.zona);
-                zonas.forEach(z => { l2 += chipHtml('zona', z, z, zonaCounts.get(z), state.zona === z); });
-            }
 
-            // Nivel 3: familias
+            // Nivel 3: familias (solo las de la zona elegida)
             const baseZona = zonaFiltrado(state.stock);
             const familiaCounts = new Map();
             baseZona.forEach(p => { if (p.familia) familiaCounts.set(p.familia, (familiaCounts.get(p.familia) || 0) + 1); });
             const fams = Array.from(familiaCounts.keys()).sort(coll);
             if (state.stockUi.familia && !fams.some(f => normalizeText(f) === normalizeText(state.stockUi.familia))) state.stockUi.familia = '';
             if (state.stockUi.familia) state.stockUi.familia = fams.find(f => normalizeText(f) === normalizeText(state.stockUi.familia)) || state.stockUi.familia;
-            
-            let l3 = '';
-            if (fams.length > 0) {
-                l3 = chipHtml('fam', '', 'Todas las familias', baseZona.length, !state.stockUi.familia);
-                fams.forEach(f => { l3 += chipHtml('fam', f, f, familiaCounts.get(f), state.stockUi.familia === f); });
-            }
 
-            // En modo original se conserva el panel actual; el modo moderno usa grupos desplegables.
-            let html = `<div class="filter-panel">`;
-            const labelDepositos = `<span class="filter-title-default">1. SELECCIONAR DEPÓSITO</span><span class="filter-title-modern">Depósitos</span>`;
-            html += filterStepHtml('dep', 'filter-step-deposits', labelDepositos, `<div class="zone-line">${l1}</div>`);
+            // Opciones de cada desplegable
+            const opt = (value, label, count, selected) =>
+                `<option value="${escapeAttr(value)}"${selected ? ' selected' : ''}>${escapeHtml(label)} (${count})</option>`;
+            let optDep = opt('', 'Todos los depósitos', state.stock.length, !state.dep);
+            deps.forEach(d => { optDep += opt(d, 'Depósito ' + d, depCounts.get(d), state.dep === d); });
+            if (sinDep) optDep += opt('__NONE__', 'Sin ubicación', sinDep, state.dep === '__NONE__');
+            let optZona = opt('', 'Todas las zonas', baseDep.length, !state.zona);
+            zonas.forEach(z => { optZona += opt(z, z, zonaCounts.get(z), state.zona === z); });
+            let optFam = opt('', 'Todas las familias', baseZona.length, !state.stockUi.familia);
+            fams.forEach(f => { optFam += opt(f, f, familiaCounts.get(f), state.stockUi.familia === f); });
 
-            if (l2) {
-                const nombreDep = state.dep ? (state.dep === '__NONE__' ? 'Sin ubicación' : `Depósito ${state.dep}`) : 'Todos los depósitos';
-                const labelZonas = `<span class="filter-title-default">2. FILTRAR POR ZONA <span style="color:var(--txt-faint); margin-left:6px; font-weight:normal; text-transform:none;">(en ${escapeHtml(nombreDep)})</span></span><span class="filter-title-modern">Zonas<span class="filter-context">· ${escapeHtml(nombreDep)}</span></span>`;
-                html += filterStepHtml('zona', 'filter-step-zones sub', labelZonas, `<div class="zone-line">${l2}</div>`);
-            }
+            row.innerHTML = `
+                <div class="filter-panel">
+                    <div class="filter-step">
+                        <label class="filter-step-label" for="selDeposito">1. Seleccionar depósito</label>
+                        <select id="selDeposito" class="zone-select">${optDep}</select>
+                    </div>
+                    <div class="filter-step">
+                        <label class="filter-step-label" for="selZona">2. Filtrar por zona</label>
+                        <select id="selZona" class="zone-select"${zonas.length ? '' : ' disabled'}>${optZona}</select>
+                    </div>
+                    <div class="filter-step">
+                        <label class="filter-step-label" for="selFamilia">3. Filtrar por familia</label>
+                        <select id="selFamilia" class="zone-select"${fams.length ? '' : ' disabled'}>${optFam}</select>
+                    </div>
+                </div>`;
 
-            if (l3) {
-                let nombreZona = state.zona ? `Zona: ${state.zona}` : 'Todas las zonas';
-                let stepNum = l2 ? '3' : '2';
-                const labelFamilias = `<span class="filter-title-default">${stepNum}. FILTRAR POR FAMILIA <span style="color:var(--txt-faint); margin-left:6px; font-weight:normal; text-transform:none;">(${escapeHtml(nombreZona)})</span></span><span class="filter-title-modern">Familias<span class="filter-context">· ${escapeHtml(nombreZona)}</span></span>`;
-                html += filterStepHtml('fam', 'filter-step-families sub', labelFamilias, `<div class="zone-line zone-line-scrollable">${l3}</div>`);
-            }
-
-            html += `</div>`;
-            row.innerHTML = html;
-            row.querySelectorAll('details[data-filter-level]').forEach(details => {
-                details.addEventListener('toggle', () => { modernFilterOpen[details.dataset.filterLevel] = details.open; });
-            });
-            const scopeLabel = document.getElementById('modernScopeLabel');
-            if (scopeLabel) {
-                const scopeParts = [];
-                if (state.dep) scopeParts.push(state.dep === '__NONE__' ? 'Sin ubicación' : 'Depósito ' + state.dep);
-                if (state.zona) scopeParts.push(state.zona);
-                if (state.stockUi.familia) scopeParts.push(state.stockUi.familia);
-                scopeLabel.textContent = scopeParts.join(' · ') || 'Todos los depósitos';
-            }
-
-            row.onclick = e => {
-                const btn = e.target.closest('.zone-chip');
-                if (!btn) return;
-                const v = btn.dataset.value;
-                if (btn.dataset.level === 'dep') { state.dep = v; state.zona = ''; state.stockUi.familia = ''; }
-                else if (btn.dataset.level === 'zona') { state.zona = v; state.stockUi.familia = ''; }
-                else { state.stockUi.familia = v; }
+            row.onclick = null;
+            row.onchange = e => {
+                const t = e.target;
+                if (t.id === 'selDeposito') { state.dep = t.value; state.zona = ''; state.stockUi.familia = ''; }
+                else if (t.id === 'selZona') { state.zona = t.value; state.stockUi.familia = ''; }
+                else if (t.id === 'selFamilia') { state.stockUi.familia = t.value; }
+                else return;
                 state.movUi.familia = state.stockUi.familia;
                 state.stockUi.producto = '';
                 state.movUi.producto = '';
                 state.movUi.page = 0;
                 buildZoneChips();
                 populateFamiliaFilter();
+                populateStockProductoFilter();
                 renderAll();
             };
         }
 
         function populateFamiliaFilter() {
-            const sel = document.getElementById('filterFamilia');
             const familias = Array.from(new Set(zonaFiltrado(state.stock).map(p => p.familia).filter(Boolean))).sort();
-            sel.innerHTML = '<option value="">Todas las familias</option>' +
-                familias.map(f => `<option value="${escapeAttr(f)}">${escapeHtml(f)}</option>`).join('');
             if (!familias.includes(state.stockUi.familia)) state.stockUi.familia = '';
-            sel.value = state.stockUi.familia;
         }
 
 
@@ -3084,10 +3090,9 @@
             const familias = new Set(list.map(p => p.familia)).size;
 
             document.getElementById('statsRow').innerHTML = `
-    <div class="stat"><div class="stat-num">${totalProductos}</div><div class="stat-label">Productos</div></div>
-    <div class="stat"><div class="stat-num">${totalUnidades.toLocaleString('es-AR')}</div><div class="stat-label">Unidades en stock</div></div>
-    <div class="stat ${aReponer > 0 ? 'bad' : ''}"><div class="stat-num">${aReponer}</div><div class="stat-label">A reponer</div></div>
-    <div class="stat"><div class="stat-num">${familias}</div><div class="stat-label">Familias</div></div>
+    <div class="stat"><i class="fa-solid fa-boxes-stacked stat-bg-ico"></i><div class="stat-label">Productos</div><div class="stat-num">${totalProductos}</div></div>
+    <div class="stat ${aReponer > 0 ? 'bad' : ''}"><i class="fa-solid fa-triangle-exclamation stat-bg-ico"></i><div class="stat-label">A reponer</div><div class="stat-num">${aReponer}</div></div>
+    <div class="stat stat-green"><i class="fa-solid fa-tags stat-bg-ico"></i><div class="stat-label">Familias</div><div class="stat-num">${familias}</div></div>
   `;
         }
 
@@ -3125,7 +3130,6 @@
                 ${p.ult_obs ? `Observaciones: ${escapeHtml(p.ult_obs)}` : '<span class="obs-vacia">Sin observaciones</span>'}
             </div>
             <div>
-                <button class="btn-edit-desc" data-id="${escapeAttr(p.id)}" title="Editar ficha completa del producto">[Editar ficha]</button>
                 ${isSel ? '<span class="pin-badge">📌 Fijo</span>' : ''}
             </div>
         </td>
@@ -3133,7 +3137,8 @@
         <td>${loc ? `<span class="loc-tag">${escapeHtml(loc)}</span>` : `<span class="loc-empty">sin ubicación</span>`}</td>
         <td style="text-align:center;">${p.stock_minimo || 0}</td>
         <td><button class="stock-btn" data-id="${escapeAttr(p.id)}">${p.stock_actual}</button><span class="stock-min">${escapeHtml(p.unidad || 'un')}</span></td>
-        <td><span class="estado-pill ${estadoClass}">${escapeHtml(p.estado)}</span></td>`;
+        <td><span class="estado-pill ${estadoClass}">${escapeHtml(p.estado)}</span></td>
+        <td style="text-align:center;"><button type="button" class="act-edit" data-id="${escapeAttr(p.id)}" title="Editar ficha completa del producto"><i class="fa-solid fa-pen"></i></button></td>`;
             return { className, innerHtml };
         }
 
@@ -3175,7 +3180,7 @@
                 }
             });
 
-            const editBtn = tr.querySelector('.btn-edit-desc');
+            const editBtn = tr.querySelector('.act-edit');
             if (editBtn) editBtn.addEventListener('click', e => {
                 e.stopPropagation();
                 openEditProductModal(editBtn.dataset.id);
@@ -3207,7 +3212,7 @@
                     grupos.get(fam).push({ id: p.id, label });
                 });
             const coll = (a, b) => a.localeCompare(b, undefined, { numeric: true });
-            let html = '<option value="">Todos los productos</option>';
+            let html = '<option value="">Productos</option>';
             Array.from(grupos.keys()).sort(coll).forEach(fam => {
                 html += `<optgroup label="${escapeAttr(fam)}">`;
                 grupos.get(fam)
@@ -5571,7 +5576,7 @@
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
                 state.activeTab = btn.dataset.tab;
-                document.querySelectorAll('.modern-nav-button').forEach(b => b.classList.toggle('active', b.dataset.modernTab === state.activeTab));
+                document.querySelectorAll('.side-btn[data-side-tab]').forEach(b => b.classList.toggle('active', b.dataset.sideTab === state.activeTab));
                 document.getElementById('panel-stock').style.display = state.activeTab === 'stock' ? '' : 'none';
                 document.getElementById('panel-mov').style.display = state.activeTab === 'mov' ? '' : 'none';
                 document.getElementById('panel-reporte').style.display = state.activeTab === 'reporte' ? '' : 'none';
@@ -5583,8 +5588,8 @@
                 }
             });
         });
-        document.querySelectorAll('.modern-nav-button').forEach(btn => {
-            btn.addEventListener('click', () => document.querySelector(`.tab-btn[data-tab="${btn.dataset.modernTab}"]`)?.click());
+        document.querySelectorAll('.side-btn[data-side-tab]').forEach(btn => {
+            btn.addEventListener('click', () => document.querySelector(`.tab-btn[data-tab="${btn.dataset.sideTab}"]`)?.click());
         });
 
         function debounceInput(handler, delay = 180) {
@@ -5598,13 +5603,6 @@
             state.stockUi.search = e.target.value;
             renderStock();
         }));
-        document.getElementById('filterFamilia').addEventListener('change', e => {
-            state.stockUi.familia = e.target.value;
-            state.stockUi.producto = '';
-            buildZoneChips();
-            populateStockProductoFilter();
-            renderStock();
-        });
         document.getElementById('filterProductoStock').addEventListener('change', e => { state.stockUi.producto = e.target.value; renderStock(); });
         document.getElementById('filterEstado').addEventListener('change', e => { state.stockUi.estado = e.target.value; renderStock(); });
 
@@ -5751,6 +5749,27 @@
         // SISTEMA DE PALETAS DE COLORES
         // =========================================================================
         const THEMES = {
+            naranjaBlanco: {
+                '--bg': '#F4F7F9',
+                '--bg-elev': '#ffffff',
+                '--bg-card': '#ffffff',
+                '--line': '#e5e7eb',
+                '--line-soft': '#f3f4f6',
+                '--txt': '#111827',
+                '--txt-dim': '#4b5563',
+                '--txt-faint': '#9ca3af',
+                '--accent': '#f97316',
+                '--accent-soft': '#fff7ed',
+                '--amber': '#d97706',
+                '--amber-soft': '#fffbeb',
+                '--ok-fg': '#16a34a',
+                '--ok-bg': '#f0fdf4',
+                '--bad-fg': '#dc2626',
+                '--bad-bg': '#fef2f2',
+                '--devol-bg': '#ffedd5',
+                '--devol-fg': '#ea580c',
+                '--hover-bg': '#f9fafb',
+            },
             maestroSlate: {
                 '--bg': '#0f172a',
                 '--bg-elev': '#1e293b',
@@ -5922,6 +5941,7 @@
         };
 
         const THEME_NAMES = {
+            naranjaBlanco: 'Naranja y Blanco (Claro)',
             corporateNavy: 'Azul Marino (Claro)',
             lightBlue: 'Blanco y Azul (Claro)',
             nordLight: 'Gris Claro Suave',
@@ -5940,6 +5960,9 @@
                 root.style.setProperty(prop, theme[prop]);
             });
             showToast('Diseño: ' + (THEME_NAMES[key] || key));
+            const bgHex = (theme['--bg'] || '#000000').replace('#', '');
+            const lum = (parseInt(bgHex.substr(0, 2), 16) * 299 + parseInt(bgHex.substr(2, 2), 16) * 587 + parseInt(bgHex.substr(4, 2), 16) * 114) / 1000;
+            root.dataset.tone = lum < 128 ? 'dark' : 'light';
             // Actualizar puntos de vista previa
             const dotsContainer = document.getElementById('themeActiveDots');
             if (dotsContainer) {
@@ -6027,38 +6050,25 @@
         setupTopScrollSync('topScrollStock', 'theadWrapStock', 'scrollStock', 'stockTable', 'stickyStockTable');
         setupTopScrollSync('topScrollMov', 'theadWrapMov', 'scrollMov', 'movTable', 'stickyMovTable');
 
-        // Alternar entre la apariencia original y la propuesta moderna sin tocar la lógica del panel.
-        const viewModeToggle = document.getElementById('viewModeToggle');
-        const modernSidebarToggle = document.getElementById('modernSidebarToggle');
-        function setModernSidebarCollapsed(collapsed) {
-            document.body.classList.toggle('modern-sidebar-collapsed', collapsed);
-            modernSidebarToggle.setAttribute('aria-expanded', String(!collapsed));
-            modernSidebarToggle.setAttribute('aria-label', collapsed ? 'Expandir menú' : 'Contraer menú');
-            modernSidebarToggle.title = collapsed ? 'Expandir menú' : 'Contraer menú';
-            modernSidebarToggle.querySelector('span').textContent = collapsed ? '›' : '‹';
-            document.querySelectorAll('.modern-nav-button').forEach(btn => { btn.title = collapsed ? btn.textContent.trim() : ''; });
-            try { localStorage.setItem('panel_modern_sidebar_collapsed', collapsed ? '1' : '0'); } catch (_) { }
-            window.dispatchEvent(new Event('resize'));
-        }
-        let modernSidebarCollapsed = false;
-        try { modernSidebarCollapsed = localStorage.getItem('panel_modern_sidebar_collapsed') === '1'; } catch (_) { }
-        setModernSidebarCollapsed(modernSidebarCollapsed);
-        modernSidebarToggle.addEventListener('click', () => setModernSidebarCollapsed(!document.body.classList.contains('modern-sidebar-collapsed')));
-        function setModernView(enabled) {
-            document.body.classList.toggle('modern-view', enabled);
-            document.querySelectorAll('.modern-nav-button').forEach(btn => btn.classList.toggle('active', btn.dataset.modernTab === state.activeTab));
-            viewModeToggle.setAttribute('aria-pressed', String(enabled));
-            viewModeToggle.setAttribute('aria-label', enabled ? 'Volver al diseño original' : 'Activar diseño moderno');
-            viewModeToggle.title = enabled ? 'Volver al diseño original' : 'Activar diseño moderno';
-            viewModeToggle.textContent = enabled ? '◑' : '◐';
-            try { localStorage.setItem('panel_modern_view', enabled ? '1' : '0'); } catch (_) { }
-            buildZoneChips();
-            window.dispatchEvent(new Event('resize'));
-        }
-        let modernViewEnabled = false;
-        try { modernViewEnabled = localStorage.getItem('panel_modern_view') === '1'; } catch (_) { }
-        setModernView(modernViewEnabled);
-        viewModeToggle.addEventListener('click', () => setModernView(!document.body.classList.contains('modern-view')));
+        // Barra lateral: logo, contraer/expandir y cerrar sesión
+        (function initSidebar() {
+            const logoImg = document.getElementById('sideLogoImg');
+            if (logoImg && RPM_LOGO_DATA) logoImg.src = RPM_LOGO_DATA;
+            const toggle = document.getElementById('sideToggle');
+            function setSideCollapsed(collapsed) {
+                document.body.classList.toggle('side-collapsed', collapsed);
+                toggle.setAttribute('aria-expanded', String(!collapsed));
+                toggle.title = collapsed ? 'Expandir menú' : 'Contraer menú';
+                document.querySelectorAll('.side-btn').forEach(btn => { btn.title = collapsed ? btn.textContent.trim() : ''; });
+                try { localStorage.setItem('panel_side_collapsed', collapsed ? '1' : '0'); } catch (_) { }
+                requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+            }
+            let startCollapsed = false;
+            try { startCollapsed = localStorage.getItem('panel_side_collapsed') === '1'; } catch (_) { }
+            setSideCollapsed(startCollapsed);
+            toggle.addEventListener('click', () => setSideCollapsed(!document.body.classList.contains('side-collapsed')));
+            document.getElementById('sideLogout').addEventListener('click', () => document.getElementById('btnLogout').click());
+        })();
 
         // Inicializar puntos con tema por defecto al cargar
         applyTheme('maestroSlate');
@@ -6066,6 +6076,11 @@
 </body>
 
 </html>
+
+
+
+
+
 
 
 
