@@ -187,127 +187,127 @@ const ORDEN_DESCRIPCION = {
 };
 
 const FAMILIAS = {
-  termicas:      'Térmica',
-  disyuntores:   'Disyuntor Diferencial',
-  guardamotores: 'Guardamotor',
-  borneras:      'Bornera Fija',
-  borneras_barra:'Bornera de Barra',
-  fusibles:      'Fusible',
-  portafusibles: 'Portafusible',
-  fuentes:       'Fuente de Alimentación',
-  fuentes_led:   'Fuente Especial LED Lineal',
-  dmx:           'Decodificador DMX',
-  lamparas:      'Lámpara / Foco',
-  contactores:   'Contactor',
-  pulsadores:    'Pulsador',
-  ojosbuey:      'Ojo de Buey',
-  bloqueaux:     'Bloque de Contacto Auxiliar',
-  terminales:    'Terminal',
-  filtros:       'Filtro',
-  aceites:       'Aceite / Lubricante',
-  grasas:        'Grasa',
-  refrigerantes: 'Líquido Refrigerante',
-  liquido_freno: 'Líquido de Freno',
-  combustibles:  'Combustible',
-  pinturas:      'Pintura / Recubrimiento',
-  selladores:    'Sellador / Adhesivo',
-  aerosoles:     'Aerosol Técnico',
-  cintas:        'Cinta',
-  abrasivos:     'Abrasivo (Disco/Lija)',
-  mechas:        'Mecha / Accesorio',
-  electrodos:    'Electrodo',
-  precintos:     'Precinto',
-  herramientas_pintura: 'Herramientas de Pintura',
-  varios:        'Varios / Ferretería',
-  aplique_ext:   'Aplique Exterior',
-  empotrable:    'Empotrable / Estaca',
-  aplique_int:   'Aplique Interior',
-  colgante:      'Colgante Industrial',
-  proyector_hid: 'Proyector HID',
-  reflector_led: 'Reflector LED',
-  reflector_rgb: 'Reflector RGB DMX',
-  banador:       'Bañador / Wallwasher',
-  tira_led:      'Tira LED',
-  led_e27:       'Lámpara LED E27',
-  dicroica_led:  'Dicroica LED',
-  tubo_fluor:    'Tubo Fluorescente',
-  bajo_consumo:  'Bajo Consumo / PLC',
-  sodio:         'Sodio / Mercurio',
-  dicroica_halogena: 'Dicroica / Halógena',
-  guantes:       'Guantes',
-  anteojos:      'Anteojos / Antiparras',
-  protectores:   'Protector Facial / Auditivo',
-  cascos:        'Casco de Seguridad',
-  botas:         'Botas de Goma',
-  botines:       'Botines de Seguridad',
-  botines_mujer: 'Botín Capri Gray PU (Mujer)',
-  bolsos:        'Bolso / Porta Herramienta',
-  arneses:       'Equipos de Altura y Sujeción',
-  eslingas:      'Eslinga de Faja',
-  criquets:      'Criquet Tensor',
-  camisas:       'Camisa de Trabajo',
-  pantalones:    'Pantalón de Trabajo',
-  camperas:      'Campera de Trabajo',
-  mamelucos:     'Mameluco',
-  chalecos:      'Chaleco Fluorescente',
-  delantales:    'Delantal / Saco Soldador',
-  capas:         'Capa de Lluvia',
-  canopvc:       'Caño Eléctrico PVC',
-  canohierro:    'Caño Hierro / Chapa',
-  canosanit:     'Caño PVC Sanitario',
-  gabmetalico:   'Gabinete Metálico',
-  gabestanco:    'Gabinete Estanco',
-  gabmedidor:    'Gabinete de Medidor',
-  cajapaso:      'Caja de Paso',
-  cajaembutir:   'Caja de Embutir',
-  conectores:    'Conector de Cañería',
-  curvas:        'Curva 90°',
-  uniones:       'Unión / Cupla',
-  prensas:       'Prensa Cable / Pipeta',
-  mecanismos:    'Llave / Toma / Bastidor',
-  pat:           'Equipo PAT',
-  unipolar:      'Cable Unipolar',
-  ttr:           'Cable TTR',
-  subterraneo:   'Cable Subterráneo',
-  alta_potencia: 'Cable de Alta Potencia Morado',
-  preen:         'Cable Preensamblado',
-  conc:          'Cable Concéntrico',
-  desnudo:       'Cable Desnudo',
-  especial:      'Cable Especial',
-  termcu:        'Terminal de Cobre',
-  termal:        'Terminal de Aluminio',
-  puntera:       'Puntera Aislada',
-  empalme:       'Empalme',
-  herraje:       'Herraje de Línea',
-  prensa:        'Prensacable',
-  herr_portatiles: 'Herramienta Portátil',
-  maq_banco:     'Maquinaria de Banco',
-  corte_manual:  'Herramienta de Corte Manual',
-  maq_pesada:    'Maquinaria de Obra Pesada',
-  generadores:   'Grupo Electrógeno',
-  compresores:   'Compresor de Aire',
-  mano:          'Herramienta de Mano',
-  llaves:        'Llave',
-  medicion:      'Instrumento de Medición',
-  albanileria:   'Herramienta de Albañilería',
-  escaleras:     'Escalera',
-  excavacion:    'Herramienta de Excavación',
-  varios_panol:  'Varios de Pañol',
-  adhesivos:     'Adhesivo / Alambre',
-  senalizacion:  'Señalización',
-  gabinetes: 'Gabinete',
-  cajas:     'Caja',
-  embutidos:     'Artefactos para embutir',
-  alumbrado:     'Alumbrado público',
-  reflectores:   'Reflectores',
-  proyectores:   'Proyectores',
-  apliques:      'Apliques / Pared / Piso',
-  especiales:    'Especiales / Colgantes',
-  rotos:         'Rotos / Para revisión',
+  termicas:      'TÉRMICA',
+  disyuntores:   'DISYUNTOR DIFERENCIAL',
+  guardamotores: 'GUARDAMOTOR',
+  borneras:      'BORNERA FIJA',
+  borneras_barra:'BORNERA DE BARRA',
+  fusibles:      'FUSIBLE',
+  portafusibles: 'PORTAFUSIBLE',
+  fuentes:       'FUENTE DE ALIMENTACIÓN',
+  fuentes_led:   'FUENTE ESPECIAL LED LINEAL',
+  dmx:           'DECODIFICADOR DMX',
+  lamparas:      'LÁMPARA / FOCO',
+  contactores:   'CONTACTOR',
+  pulsadores:    'PULSADOR',
+  ojosbuey:      'OJO DE BUEY',
+  bloqueaux:     'BLOQUE DE CONTACTO AUXILIAR',
+  terminales:    'TERMINAL',
+  filtros:       'FILTRO',
+  aceites:       'ACEITE / LUBRICANTE',
+  grasas:        'GRASA',
+  refrigerantes: 'LÍQUIDO REFRIGERANTE',
+  liquido_freno: 'LÍQUIDO DE FRENO',
+  combustibles:  'COMBUSTIBLE',
+  pinturas:      'PINTURA / RECUBRIMIENTO',
+  selladores:    'SELLADOR / ADHESIVO',
+  aerosoles:     'AEROSOL TÉCNICO',
+  cintas:        'CINTA',
+  abrasivos:     'ABRASIVO (DISCO/LIJA)',
+  mechas:        'MECHA / ACCESORIO',
+  electrodos:    'ELECTRODO',
+  precintos:     'PRECINTO',
+  herramientas_pintura: 'HERRAMIENTAS DE PINTURA',
+  varios:        'VARIOS / FERRETERÍA',
+  aplique_ext:   'APLIQUE EXTERIOR',
+  empotrable:    'EMPOTRABLE / ESTACA',
+  aplique_int:   'APLIQUE INTERIOR',
+  colgante:      'COLGANTE INDUSTRIAL',
+  proyector_hid: 'PROYECTOR HID',
+  reflector_led: 'REFLECTOR LED',
+  reflector_rgb: 'REFLECTOR RGB DMX',
+  banador:       'BAÑADOR / WALLWASHER',
+  tira_led:      'TIRA LED',
+  led_e27:       'LÁMPARA LED E27',
+  dicroica_led:  'DICROICA LED',
+  tubo_fluor:    'TUBO FLUORESCENTE',
+  bajo_consumo:  'BAJO CONSUMO / PLC',
+  sodio:         'SODIO / MERCURIO',
+  dicroica_halogena: 'DICROICA / HALÓGENA',
+  guantes:       'GUANTES',
+  anteojos:      'ANTEOJOS / ANTIPARRAS',
+  protectores:   'PROTECTOR FACIAL / AUDITIVO',
+  cascos:        'CASCO DE SEGURIDAD',
+  botas:         'BOTAS DE GOMA',
+  botines:       'BOTINES DE SEGURIDAD',
+  botines_mujer: 'BOTÍN CAPRI GRAY PU (MUJER)',
+  bolsos:        'BOLSO / PORTA HERRAMIENTA',
+  arneses:       'EQUIPOS DE ALTURA Y SUJECIÓN',
+  eslingas:      'ESLINGA DE FAJA',
+  criquets:      'CRIQUET TENSOR',
+  camisas:       'CAMISA DE TRABAJO',
+  pantalones:    'PANTALÓN DE TRABAJO',
+  camperas:      'CAMPERA DE TRABAJO',
+  mamelucos:     'MAMELUCO',
+  chalecos:      'CHALECO FLUORESCENTE',
+  delantales:    'DELANTAL / SACO SOLDADOR',
+  capas:         'CAPA DE LLUVIA',
+  canopvc:       'CAÑO ELÉCTRICO PVC',
+  canohierro:    'CAÑO HIERRO / CHAPA',
+  canosanit:     'CAÑO PVC SANITARIO',
+  gabmetalico:   'GABINETE METÁLICO',
+  gabestanco:    'GABINETE ESTANCO',
+  gabmedidor:    'GABINETE DE MEDIDOR',
+  cajapaso:      'CAJA DE PASO',
+  cajaembutir:   'CAJA DE EMBUTIR',
+  conectores:    'CONECTOR DE CAÑERÍA',
+  curvas:        'CURVA 90°',
+  uniones:       'UNIÓN / CUPLA',
+  prensas:       'PRENSA CABLE / PIPETA',
+  mecanismos:    'LLAVE / TOMA / BASTIDOR',
+  pat:           'EQUIPO PAT',
+  unipolar:      'CABLE UNIPOLAR',
+  ttr:           'CABLE TTR',
+  subterraneo:   'CABLE SUBTERRÁNEO',
+  alta_potencia: 'CABLE DE ALTA POTENCIA MORADO',
+  preen:         'CABLE PREENSAMBLADO',
+  conc:          'CABLE CONCÉNTRICO',
+  desnudo:       'CABLE DESNUDO',
+  especial:      'CABLE ESPECIAL',
+  termcu:        'TERMINAL DE COBRE',
+  termal:        'TERMINAL DE ALUMINIO',
+  puntera:       'PUNTERA AISLADA',
+  empalme:       'EMPALME',
+  herraje:       'HERRAJE DE LÍNEA',
+  prensa:        'PRENSACABLE',
+  herr_portatiles: 'HERRAMIENTA PORTÁTIL',
+  maq_banco:     'MAQUINARIA DE BANCO',
+  corte_manual:  'HERRAMIENTA DE CORTE MANUAL',
+  maq_pesada:    'MAQUINARIA DE OBRA PESADA',
+  generadores:   'GRUPO ELECTRÓGENO',
+  compresores:   'COMPRESOR DE AIRE',
+  mano:          'HERRAMIENTA DE MANO',
+  llaves:        'LLAVE',
+  medicion:      'INSTRUMENTO DE MEDICIÓN',
+  albanileria:   'HERRAMIENTA DE ALBAÑILERÍA',
+  escaleras:     'ESCALERA',
+  excavacion:    'HERRAMIENTA DE EXCAVACIÓN',
+  varios_panol:  'VARIOS DE PAÑOL',
+  adhesivos:     'ADHESIVO / ALAMBRE',
+  senalizacion:  'SEÑALIZACIÓN',
+  gabinetes:     'GABINETE',
+  cajas:         'CAJA',
+  embutidos:     'ARTEFACTOS PARA EMBUTIR',
+  alumbrado:     'ALUMBRADO PÚBLICO',
+  reflectores:   'REFLECTORES',
+  proyectores:   'PROYECTORES',
+  apliques:      'APLIQUES / PARED / PISO',
+  especiales:    'ESPECIALES / COLGANTES',
+  rotos:         'ROTOS / PARA REVISIÓN',
   // ── Instalación Eléctrica (formulario nuevo) ──
-  modulos:       'Módulo para Embutir',
-  cajas_ie:      'Caja para Embutir (Módulos)',
-  canieria:      'Accesorio de Cañería',
+  modulos:       'MÓDULO PARA EMBUTIR',
+  cajas_ie:      'CAJA PARA EMBUTIR (MÓDULOS)',
+  canieria:      'ACCESORIO DE CAÑERÍA',
   // ── Insumos libres ──
   grampas:            'GRAMPA',   // se reemplaza por el tipo elegido (ver A-4)
   mordaza_jabalina:   'MORDAZA PARA JABALINA',
@@ -325,11 +325,11 @@ const FAM_LUBRICANTES  = ['aceites', 'grasas', 'refrigerantes', 'liquido_freno']
 function R2(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 function familiaAceite(tipo) {
   const t = String(tipo || '').toLowerCase();
-  if (/transm/.test(t))           return 'Aceite de Transmisión Hidráulica';
-  if (/hidr/.test(t))             return 'Aceite Hidráulico';
-  if (/motor/.test(t))            return 'Aceite Motor';
-  if (/diferencial|ejes/.test(t)) return 'Aceite de Diferencial de Ejes';
-  return 'Aceite / Lubricante';
+  if (/transm/.test(t))           return 'ACEITE DE TRANSMISIÓN HIDRÁULICA';
+  if (/hidr/.test(t))             return 'ACEITE HIDRÁULICO';
+  if (/motor/.test(t))            return 'ACEITE MOTOR';
+  if (/diferencial|ejes/.test(t)) return 'ACEITE DE DIFERENCIAL DE EJES';
+  return 'ACEITE / LUBRICANTE';
 }
 
 // ============================================================
@@ -969,7 +969,6 @@ function sanitizarPayloadMayusculas(obj, clavePadre) {
     'idtoken': true,
     'accion': true,
     'action': true,
-    'tipo': true,
     '_txid': true,
     'firma_base64': true,
     'foto_base64': true,
@@ -1012,6 +1011,30 @@ function sanitizarPayloadMayusculas(obj, clavePadre) {
   }
 
   return obj;
+}
+
+// ============================================================
+// CONVERSIÓN OBLIGATORIA A MAYÚSCULAS PARA ESCRITURA EN HOJAS
+// ============================================================
+function limpiarFilaMayusculas_(fila, esHojaStock) {
+  if (!Array.isArray(fila)) return fila;
+  return fila.map(function(val, idx) {
+    if (val === null || val === undefined) return '';
+    if (typeof val !== 'string') return val;
+    var s = val.trim();
+    if (!s) return '';
+    if (s.charAt(0) === '=') return val;
+    if (/^https?:\/\//i.test(s)) return val;
+    if (esHojaStock && (idx + 1) === DEP_COL_STOCK.IMAGEN) return val;
+    return s.toUpperCase();
+  });
+}
+
+function limpiarMatrizMayusculas_(matriz, esHojaStock) {
+  if (!Array.isArray(matriz)) return matriz;
+  return matriz.map(function(f) {
+    return limpiarFilaMayusculas_(f, esHojaStock);
+  });
 }
 
 function doPost(e) {
@@ -1078,7 +1101,7 @@ function doPost(e) {
       respuesta = crearProductoNuevo(data, ss);
     } else if (data.accion === 'herr-movimiento') {
       respuesta = herr_procesarMovimiento(data, ss);
-    } else if (data.tipo === 'Traslado') {
+    } else if (String(data.tipo || '').trim().toUpperCase() === 'TRASLADO') {
       respuesta = procesarTraslado(data, ss);
     } else {
       respuesta = procesarDeposito(data, ss);
@@ -1120,13 +1143,13 @@ function procesarDeposito(data, ss) {
   dep_inicializarHojaMovimientos(hojaMov);
   dep_inicializarHojaStock(hojaStock);
 
-  const tipo         = data.tipo_movimiento || '';
+  const tipo         = String(data.tipo_movimiento || '').trim().toUpperCase();
   const fecha        = dep_normalizarFecha(data.fecha);
-  const responsable  = data.responsable     || '';
-  const obra         = data.obra            || '';
-  const zona         = data.zona            || 'Sin zona';
-  const obsGenerales = data.observaciones   || '';
-  const factura      = String(data.factura || '').trim();
+  const responsable  = String(data.responsable     || '').trim().toUpperCase();
+  const obra         = String(data.obra            || '').trim().toUpperCase();
+  const zona         = String(data.zona            || 'SIN ZONA').trim().toUpperCase();
+  const obsGenerales = String(data.observaciones   || '').trim().toUpperCase();
+  const factura      = String(data.factura || '').trim().toUpperCase();
 
   const idPedido = dep_generarIdPedido(hojaMov, tipo);
   const nroEnvio = dep_generarNroEnvio();
@@ -1155,55 +1178,55 @@ function procesarDeposito(data, ss) {
         item.soporte = 'RIEL DIN';
       }
       if (item.rieldim && String(item.rieldim).trim() !== '') {
-        item.rieldim = item.rieldim + ' módulos';
+        item.rieldim = String(item.rieldim).trim().toUpperCase() + ' MÓDULOS';
       }
        const FAMILIAS_CABLE = ['unipolar','ttr','subterraneo','preen','conc','desnudo','especial','alta_potencia'];
       if (FAMILIAS_CABLE.includes(key) && item.presentacion && String(item.presentacion).trim() !== '') {
-        item.presentacion = 'Presentación ' + String(item.presentacion).trim();
+        item.presentacion = 'PRESENTACIÓN ' + String(item.presentacion).trim().toUpperCase();
       }
       if ((key === 'alumbrado' || key === 'gabinetes' || key === 'cajas') && (item.largo || item.ancho || item.alto)) {
         const partes = [item.largo, item.ancho, item.alto].filter(v => v && String(v).trim() !== '');
         if (partes.length > 0) {
-          item.dimensiones = partes.join('x') + ' mm';
+          item.dimensiones = partes.join('X').toUpperCase() + ' MM';
         }
       }
       if (key === 'embutidos' || key === 'apliques' || key === 'especiales' || key === 'rotos') {
         if (item.diametro || item.diametro_alto) {
           const partes = [item.diametro, item.diametro_alto].filter(v => v && String(v).trim() !== '');
-          if (partes.length > 0) item.dimensiones = 'Ø' + partes.join(' x ') + ' mm';
+          if (partes.length > 0) item.dimensiones = 'Ø' + partes.join(' X ').toUpperCase() + ' MM';
         } else if (item.lado || item.lado_alto) {
           const partes = [item.lado, item.lado_alto].filter(v => v && String(v).trim() !== '');
-          if (partes.length > 0) item.dimensiones = partes.join('x') + ' mm';
+          if (partes.length > 0) item.dimensiones = partes.join('X').toUpperCase() + ' MM';
         } else if (item.largo || item.ancho || item.alto) {
           const partes = [item.largo, item.ancho, item.alto].filter(v => v && String(v).trim() !== '');
-          if (partes.length > 0) item.dimensiones = partes.join('x') + ' mm';
+          if (partes.length > 0) item.dimensiones = partes.join('X').toUpperCase() + ' MM';
         }
       }
-      let familiaFinal = nombreFamilia;
-      if (key === 'grampas' && item.tipo) familiaFinal = String(item.tipo).trim();
-      if (key === 'terminales' && item.tipo_terminal) familiaFinal = String(item.tipo_terminal).trim();
-      if (key === 'filtros') familiaFinal = familiaFiltro(item.tipo);
-      if (key === 'lamparas') familiaFinal = familiaLampara(item);
-      if (key === 'aceites') familiaFinal = familiaAceite(item.tipo_aceite);
-      let marca = item.marca || 'No especificado';
+      let familiaFinal = String(nombreFamilia || '').trim().toUpperCase();
+      if (key === 'grampas' && item.tipo) familiaFinal = String(item.tipo).trim().toUpperCase();
+      if (key === 'terminales' && item.tipo_terminal) familiaFinal = String(item.tipo_terminal).trim().toUpperCase();
+      if (key === 'filtros') familiaFinal = String(familiaFiltro(item.tipo)).trim().toUpperCase();
+      if (key === 'lamparas') familiaFinal = String(familiaLampara(item)).trim().toUpperCase();
+      if (key === 'aceites') familiaFinal = String(familiaAceite(item.tipo_aceite)).trim().toUpperCase();
+      let marca = String(item.marca || 'NO ESPECIFICADO').trim().toUpperCase();
       if (key === 'filtros' && item.codigo) {
-        marca = marca + ' | ' + item.codigo;
+        marca = marca + ' | ' + String(item.codigo).trim().toUpperCase();
       }
       const cantidad     = Number(item.cantidad) || 0;
-      const unidad       = item.unidad        || 'un';
-      const obs          = item.observaciones || '';
+      const unidad       = String(item.unidad || 'UN').trim().toUpperCase();
+      const obs          = String(item.observaciones || '').trim().toUpperCase();
 
       if (item.nro_bobina && String(item.nro_bobina).trim() !== '') {
-        item.nro_bobina = 'N° bobina ' + String(item.nro_bobina).trim();
+        item.nro_bobina = 'N° BOBINA ' + String(item.nro_bobina).trim().toUpperCase();
       }
       if (item.codigo_bobina && String(item.codigo_bobina).trim() !== '') {
-        item.codigo_bobina = 'Cód. ' + String(item.codigo_bobina).trim();
+        item.codigo_bobina = 'CÓD. ' + String(item.codigo_bobina).trim().toUpperCase();
       }
       if (item.peso_bobina && String(item.peso_bobina).trim() !== '') {
-        item.peso_bobina = String(item.peso_bobina).trim() + 'kg';
+        item.peso_bobina = String(item.peso_bobina).trim().toUpperCase() + 'KG';
       }
 
-      const descripcion  = armarDescripcion(key, item);
+      const descripcion  = String(armarDescripcion(key, item) || '').toUpperCase();
       let imagenUrl = '';
       if (item.fotos_base64 && Array.isArray(item.fotos_base64) && item.fotos_base64.length > 0) {
         const urls = item.fotos_base64.map((b64, idx) => {
@@ -1215,19 +1238,19 @@ function procesarDeposito(data, ss) {
       }
 
       const ubicacion = {
-        deposito: item.deposito || '',
-        estante:  item.estante  || '',
-        columna:  item.columna  || '',
-        fila:     item.fila     || ''
+        deposito: String(item.deposito || '').trim().toUpperCase(),
+        estante:  String(item.estante  || '').trim().toUpperCase(),
+        columna:  String(item.columna  || '').trim().toUpperCase(),
+        fila:     String(item.fila     || '').trim().toUpperCase()
       };
 
-      hojaMov.appendRow([
+      hojaMov.appendRow(limpiarFilaMayusculas_([
         idPedido, fecha, tipo, responsable, obra, zona,
         familiaFinal, marca, descripcion,
         cantidad, unidad, obs, obsGenerales, nroEnvio,
         ubicacion.deposito, ubicacion.estante, ubicacion.columna, ubicacion.fila,
         factura
-      ]);
+      ], false));
       if (factura) {
         const celdaFactura = hojaMov.getRange(hojaMov.getLastRow(), DEP_COL_MOV.NRO_FACTURA);
         celdaFactura.setNumberFormat('@');
@@ -1241,39 +1264,39 @@ function procesarDeposito(data, ss) {
   if (data.producto_nuevo && data.producto_nuevo.descripcion && data.producto_nuevo.descripcion.trim() !== '') {
     const pn       = data.producto_nuevo;
     const cantidad = Number(pn.cantidad) || 0;
-    const pnMarca  = String(pn.marca || '').trim() || 'No especificado';
-    const unidad   = pn.unidad           || 'un';
+    const pnMarca  = String(pn.marca || 'NO ESPECIFICADO').trim().toUpperCase();
+    const unidad   = String(pn.unidad || 'UN').trim().toUpperCase();
 
     let pnDimensiones = '';
     if (pn.diametro || pn.diametro_alto) {
       const partes = [pn.diametro, pn.diametro_alto].filter(v => v && String(v).trim() !== '');
-      if (partes.length > 0) pnDimensiones = 'Ø' + partes.join(' x ') + ' mm';
+      if (partes.length > 0) pnDimensiones = 'Ø' + partes.join(' X ').toUpperCase() + ' MM';
     } else if (pn.lado || pn.lado_alto) {
       const partes = [pn.lado, pn.lado_alto].filter(v => v && String(v).trim() !== '');
-      if (partes.length > 0) pnDimensiones = partes.join('x') + ' mm';
+      if (partes.length > 0) pnDimensiones = partes.join('X').toUpperCase() + ' MM';
     } else if (pn.largo || pn.ancho || pn.alto) {
       const partes = [pn.largo, pn.ancho, pn.alto].filter(v => v && String(v).trim() !== '');
-      if (partes.length > 0) pnDimensiones = partes.join('x') + ' mm';
+      if (partes.length > 0) pnDimensiones = partes.join('X').toUpperCase() + ' MM';
     }
-    const pnDescripcionFinal = pn.descripcion.trim()
-      + (pn.presentacion ? ' | Presentación ' + pn.presentacion : '')
+    const pnDescripcionFinal = String(pn.descripcion || '').trim().toUpperCase()
+      + (pn.presentacion ? ' | PRESENTACIÓN ' + String(pn.presentacion).trim().toUpperCase() : '')
       + (pnDimensiones ? ' | ' + pnDimensiones : '')
-      + (pn.nro_bobina ? ' | N° bobina ' + String(pn.nro_bobina).trim() : '')
-      + (pn.codigo_bobina ? ' | Cód. ' + String(pn.codigo_bobina).trim() : '')
-      + (pn.peso_bobina ? ' | ' + String(pn.peso_bobina).trim() + 'kg' : '');
+      + (pn.nro_bobina ? ' | N° BOBINA ' + String(pn.nro_bobina).trim().toUpperCase() : '')
+      + (pn.codigo_bobina ? ' | CÓD. ' + String(pn.codigo_bobina).trim().toUpperCase() : '')
+      + (pn.peso_bobina ? ' | ' + String(pn.peso_bobina).trim().toUpperCase() + 'KG' : '');
 
-    hojaMov.appendRow([
+    hojaMov.appendRow(limpiarFilaMayusculas_([
       idPedido, fecha, tipo, responsable, obra, zona,
       'PRODUCTO NUEVO', pnMarca, pnDescripcionFinal,
-      cantidad, unidad, pn.observacion || '', obsGenerales, nroEnvio,
-      pn.deposito || '', pn.estante || '', pn.columna || '', pn.fila || '',
+      cantidad, unidad, String(pn.observacion || '').toUpperCase(), obsGenerales, nroEnvio,
+      String(pn.deposito || '').toUpperCase(), String(pn.estante || '').toUpperCase(), String(pn.columna || '').toUpperCase(), String(pn.fila || '').toUpperCase(),
       ''   // N° Factura — no aplica a este tipo de movimiento
-    ]);
+    ], false));
     const ubicacionNuevo = {
-      deposito: pn.deposito || '',
-      estante:  pn.estante  || '',
-      columna:  pn.columna  || '',
-      fila:     pn.fila     || ''
+      deposito: String(pn.deposito || '').toUpperCase(),
+      estante:  String(pn.estante  || '').toUpperCase(),
+      columna:  String(pn.columna  || '').toUpperCase(),
+      fila:     String(pn.fila     || '').toUpperCase()
     };
 
     let imagenNuevoUrl = '';
@@ -1284,7 +1307,7 @@ function procesarDeposito(data, ss) {
       imagenNuevoUrl = urls.join('||');
     }
 
-    dep_actualizarStock(hojaStock, zona, 'Producto nuevo', pnMarca, pnDescripcionFinal, tipo, cantidad, fechaHoy, horaAhora, ubicacionNuevo, pn.unidad, pn.observacion, obsGenerales, imagenNuevoUrl);
+    dep_actualizarStock(hojaStock, zona, 'PRODUCTO NUEVO', pnMarca, pnDescripcionFinal, tipo, cantidad, fechaHoy, horaAhora, ubicacionNuevo, unidad, pn.observacion, obsGenerales, imagenNuevoUrl);
   }
 
   return ContentService
@@ -1295,15 +1318,15 @@ function procesarDeposito(data, ss) {
 // Familia del stock según el tipo de filtro elegido en el formulario de Filtros
 function familiaFiltro(tipo) {
   const t = String(tipo || '').trim().toLowerCase();
-  if (/aceite/.test(t))                        return 'Filtro de aceite';
-  if (/^filtro de aire/.test(t))               return 'Filtro de aire';
-  if (/gasoil/.test(t))                        return 'Filtro de gasoil';
-  if (/^filtro refrigerante/.test(t))          return 'Filtro refrigerante';
-  if (/^acoples/.test(t))                      return 'Acoples';
-  if (/^filtro urea/.test(t))                  return 'Filtro de urea';
-  if (/^filtro tipo vasito/.test(t))           return 'Filtro tipo vasito';
-  if (/^c[aá]mara para gomas/.test(t))         return 'Cámara para gomas';
-  return 'Filtro';
+  if (/aceite/.test(t))                        return 'FILTRO DE ACEITE';
+  if (/^filtro de aire/.test(t))               return 'FILTRO DE AIRE';
+  if (/gasoil/.test(t))                        return 'FILTRO DE GASOIL';
+  if (/^filtro refrigerante/.test(t))          return 'FILTRO REFRIGERANTE';
+  if (/^acoples/.test(t))                      return 'ACOPLES';
+  if (/^filtro urea/.test(t))                  return 'FILTRO DE UREA';
+  if (/^filtro tipo vasito/.test(t))           return 'FILTRO TIPO VASITO';
+  if (/^c[aá]mara para gomas/.test(t))         return 'CÁMARA PARA GOMAS';
+  return 'FILTRO';
 }
 
 // Familia del stock según la tecnología de la lámpara (teoría de 4 familias)
@@ -1312,17 +1335,17 @@ function familiaLampara(item) {
   const clasificar = t => {
     if (!t) return '';
     // 1° Descarga: va primero para que "halogenuro / mercurio halogenado" no caigan en Halógena
-    if (/sodio|vapor|mercurio|halogenuro|halogenad|metalic|metal halide|\bmh\b|descarga|mezcladora|mixta|lucalox|vialox/.test(t)) return 'Lámpara de Descarga (Sodio/Mercurio/MH)';
+    if (/sodio|vapor|mercurio|halogenuro|halogenad|metalic|metal halide|\bmh\b|descarga|mezcladora|mixta|lucalox|vialox/.test(t)) return 'LÁMPARA DE DESCARGA (SODIO/MERCURIO/MH)';
     // 2° LED
-    if (/\bled\b|smd/.test(t)) return 'Lámpara LED';
+    if (/\bled\b|smd/.test(t)) return 'LÁMPARA LED';
     // 3° Halógena / Incandescente: va antes que Fluorescente para ignorar el "Bajo Consumo" de marketing
-    if (/incandescente|halogen|reflectora/.test(t)) return 'Lámpara Halógena / Incandescente';
+    if (/incandescente|halogen|reflectora/.test(t)) return 'LÁMPARA HALÓGENA / INCANDESCENTE';
     // 4° Fluorescente / Bajo Consumo
-    if (/fluorescente|\bcfl\b|bajo consumo|dulux|longlast|\besl\b/.test(t)) return 'Lámpara Fluorescente / Bajo Consumo';
+    if (/fluorescente|\bcfl\b|bajo consumo|dulux|longlast|\besl\b/.test(t)) return 'LÁMPARA FLUORESCENTE / BAJO CONSUMO';
     return '';
   };
   // Primero el tipo; si no alcanza, el modelo (ej. VIALOX, LUCALOX). Si nada coincide, queda la familia genérica de siempre.
-  return clasificar(norm(item.tipo)) || clasificar(norm(item.modelo)) || 'Lámpara / Foco';
+  return clasificar(norm(item.tipo)) || clasificar(norm(item.modelo)) || 'LÁMPARA / FOCO';
 }
 
 function armarDescripcion(familiaKey, item) {
@@ -1331,35 +1354,50 @@ function armarDescripcion(familiaKey, item) {
   if (FAM_LUBRICANTES.includes(familiaKey)) {
     return [item.codigo, familiaKey === 'liquido_freno' ? item.tipo : '', item.producto,
             item.presentacion, item.lote ? 'LOTE ' + item.lote : '']
-      .map(v => String(v || '').trim()).filter(Boolean).join(' | ');
+      .map(v => String(v || '').trim().toUpperCase()).filter(Boolean).join(' | ');
   }
 
   if (camposOrden.length === 0) {
     return Object.keys(item).sort()
       .filter(k => !['marca', 'cantidad', 'unidad', 'observaciones', 'deposito', 'estante', 'columna', 'fila', 'fotos_base64', 'foto_base64', 'presentacion', 'presentacion_otro', 'peso_bobina'].includes(k) && item[k] && item[k] !== '')
-      .map(k => item[k])
+      .map(k => String(item[k]).trim().toUpperCase())
       .join(' | ');
   }
 
   let descripcion = camposOrden
     .filter(k => item[k] && item[k] !== '')
-    .map(k => item[k])
+    .map(k => String(item[k]).trim().toUpperCase())
     .join(' | ');
 
   if (familiaKey === 'filtros') {
     const compat = item.compatibilidad;
-    if (compat && compat.trim() !== '' && compat.trim().toLowerCase() !== 'no especificado') {
-      descripcion += ' | ' + compat.trim();
+    if (compat && compat.trim() !== '' && compat.trim().toUpperCase() !== 'NO ESPECIFICADO') {
+      descripcion += ' | ' + compat.trim().toUpperCase();
     }
   }
 
-  return descripcion;
+  return String(descripcion || '').toUpperCase();
 }
 
 // ============================================================
 // 5.2 Actualización de stock
 // ============================================================
 function dep_actualizarStock(hojaStock, zona, familia, marca, descripcion, tipo, cantidad, fechaHoy, horaAhora, ubicacion, unidad, obsItem, obsGeneral, imagenUrl) {
+  zona = String(zona || '').trim().toUpperCase();
+  familia = String(familia || '').trim().toUpperCase();
+  marca = String(marca || '').trim().toUpperCase();
+  descripcion = String(descripcion || '').trim().toUpperCase();
+  tipo = String(tipo || '').trim().toUpperCase();
+  unidad = String(unidad || '').trim().toUpperCase();
+  obsItem = String(obsItem || '').trim().toUpperCase();
+  obsGeneral = String(obsGeneral || '').trim().toUpperCase();
+  if (ubicacion) {
+    ubicacion.deposito = String(ubicacion.deposito || '').trim().toUpperCase();
+    ubicacion.estante = String(ubicacion.estante || '').trim().toUpperCase();
+    ubicacion.columna = String(ubicacion.columna || '').trim().toUpperCase();
+    ubicacion.fila = String(ubicacion.fila || '').trim().toUpperCase();
+  }
+
   const ultimaFila = hojaStock.getLastRow();
   let filaNum = -1;
 
@@ -1367,10 +1405,10 @@ function dep_actualizarStock(hojaStock, zona, familia, marca, descripcion, tipo,
     const datos = hojaStock.getRange(2, 1, ultimaFila - 1, DEP_COL_STOCK.TOTAL).getValues();
     for (let i = 0; i < datos.length; i++) {
       if (
-        datos[i][DEP_COL_STOCK.ZONA        - 1] === zona        &&
-        datos[i][DEP_COL_STOCK.FAMILIA     - 1] === familia     &&
-        datos[i][DEP_COL_STOCK.MARCA       - 1] === marca       &&
-        datos[i][DEP_COL_STOCK.DESCRIPCION - 1] === descripcion
+        String(datos[i][DEP_COL_STOCK.ZONA        - 1] || '').trim().toUpperCase() === zona        &&
+        String(datos[i][DEP_COL_STOCK.FAMILIA     - 1] || '').trim().toUpperCase() === familia     &&
+        String(datos[i][DEP_COL_STOCK.MARCA       - 1] || '').trim().toUpperCase() === marca       &&
+        String(datos[i][DEP_COL_STOCK.DESCRIPCION - 1] || '').trim().toUpperCase() === descripcion
       ) {
         filaNum = i + 2;
         break;
@@ -1380,7 +1418,7 @@ function dep_actualizarStock(hojaStock, zona, familia, marca, descripcion, tipo,
 
   if (filaNum === -1) {
     const nuevoId = dep_generarIdProducto(hojaStock);
-    hojaStock.appendRow([
+    hojaStock.appendRow(limpiarFilaMayusculas_([
       nuevoId, zona, familia, marca, descripcion,
       imagenUrl || '', unidad || '',
       0, 0, 0, 0,
@@ -1388,7 +1426,7 @@ function dep_actualizarStock(hojaStock, zona, familia, marca, descripcion, tipo,
       '', '', '', '',
       '', '', '', '',
       ''
-    ]);
+    ], true));
     filaNum = hojaStock.getLastRow();
   }
 
@@ -1432,15 +1470,15 @@ function dep_actualizarStock(hojaStock, zona, familia, marca, descripcion, tipo,
   hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_HORA).setValue(horaAhora);
 
   if (obsItem && String(obsItem).trim() !== '') {
-    hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_OBS).setValue(String(obsItem).trim());
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_OBS).setValue(String(obsItem).trim().toUpperCase());
   }
 
   if (obsGeneral && String(obsGeneral).trim() !== '') {
-    hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_MOV_OBS).setValue(String(obsGeneral).trim());
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_MOV_OBS).setValue(String(obsGeneral).trim().toUpperCase());
   }
 
   if (unidad) {
-    hojaStock.getRange(filaNum, DEP_COL_STOCK.UNIDAD).setValue(unidad);
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.UNIDAD).setValue(String(unidad).trim().toUpperCase());
   }
 
   if (imagenUrl) {
@@ -1449,7 +1487,7 @@ function dep_actualizarStock(hojaStock, zona, familia, marca, descripcion, tipo,
 
   if (ubicacion && (ubicacion.deposito || ubicacion.estante || ubicacion.columna || ubicacion.fila)) {
     hojaStock.getRange(filaNum, DEP_COL_STOCK.UBIC_DEPOSITO, 1, 4)
-      .setValues([[ubicacion.deposito || '', ubicacion.estante || '', ubicacion.columna || '', ubicacion.fila || '']]);
+      .setValues(limpiarMatrizMayusculas_([[ubicacion.deposito || '', ubicacion.estante || '', ubicacion.columna || '', ubicacion.fila || '']], true));
   }
 }
 
@@ -1610,13 +1648,13 @@ function ajusteRapidoStockOpcionB(data, ss) {
   const idPedido = dep_generarIdPedido(hojaMov, tipo);
 
   const partesObsMov = [];
-  if (data.solicitante)   partesObsMov.push('Solicitante: ' + String(data.solicitante).trim());
-  if (data.equipo)        partesObsMov.push('Equipo: ' + String(data.equipo).trim());
-  if (data.tipo_servicio) partesObsMov.push('Servicio: ' + String(data.tipo_servicio).trim());
-  if (data.km_hs)         partesObsMov.push('Km/Hs: ' + String(data.km_hs).trim());
-  const obsMov     = partesObsMov.join(' | ');
-  const factura    = String(data.factura || '').trim();
-  const obsGeneral = String(data.obs_general || '').trim();
+  if (data.solicitante)   partesObsMov.push('SOLICITANTE: ' + String(data.solicitante).trim().toUpperCase());
+  if (data.equipo)        partesObsMov.push('EQUIPO: ' + String(data.equipo).trim().toUpperCase());
+  if (data.tipo_servicio) partesObsMov.push('SERVICIO: ' + String(data.tipo_servicio).trim().toUpperCase());
+  if (data.km_hs)         partesObsMov.push('KM/HS: ' + String(data.km_hs).trim().toUpperCase());
+  const obsMov     = partesObsMov.join(' | ').toUpperCase();
+  const factura    = String(data.factura || '').trim().toUpperCase();
+  const obsGeneral = String(data.obs_general || '').trim().toUpperCase();
   const fechaMov   = dep_normalizarFecha(data.fecha, timezone);
 
   const filasMov = [];
@@ -1628,25 +1666,25 @@ function ajusteRapidoStockOpcionB(data, ss) {
     const filaNum = i + 2;
     const cantidad = Number(item.cantidad) || 0;
 
-    const zonaItem    = String(fila[DEP_COL_STOCK.ZONA        - 1] || data.zona || '');
-    const familia     = String(fila[DEP_COL_STOCK.FAMILIA     - 1] || '');
-    const marca       = String(fila[DEP_COL_STOCK.MARCA       - 1] || '');
-    const descripcion = String(fila[DEP_COL_STOCK.DESCRIPCION - 1] || '');
-    const unidad      = String(fila[DEP_COL_STOCK.UNIDAD      - 1] || item.unidad || '');
+    const zonaItem    = String(fila[DEP_COL_STOCK.ZONA        - 1] || data.zona || '').trim().toUpperCase();
+    const familia     = String(fila[DEP_COL_STOCK.FAMILIA     - 1] || '').trim().toUpperCase();
+    const marca       = String(fila[DEP_COL_STOCK.MARCA       - 1] || '').trim().toUpperCase();
+    const descripcion = String(fila[DEP_COL_STOCK.DESCRIPCION - 1] || '').trim().toUpperCase();
+    const unidad      = String(fila[DEP_COL_STOCK.UNIDAD      - 1] || item.unidad || '').trim().toUpperCase();
     const ub = {
-      deposito: String(fila[DEP_COL_STOCK.UBIC_DEPOSITO - 1] || ''),
-      estante:  String(fila[DEP_COL_STOCK.UBIC_ESTANTE  - 1] || ''),
-      columna:  String(fila[DEP_COL_STOCK.UBIC_COLUMNA  - 1] || ''),
-      fila:     String(fila[DEP_COL_STOCK.UBIC_FILA     - 1] || '')
+      deposito: String(fila[DEP_COL_STOCK.UBIC_DEPOSITO - 1] || '').trim().toUpperCase(),
+      estante:  String(fila[DEP_COL_STOCK.UBIC_ESTANTE  - 1] || '').trim().toUpperCase(),
+      columna:  String(fila[DEP_COL_STOCK.UBIC_COLUMNA  - 1] || '').trim().toUpperCase(),
+      fila:     String(fila[DEP_COL_STOCK.UBIC_FILA     - 1] || '').trim().toUpperCase()
     };
 
-    filasMov.push([
-      idPedido, fechaMov, tipo, data.responsable || '', data.obra || '', zonaItem,
+    filasMov.push(limpiarFilaMayusculas_([
+      idPedido, fechaMov, tipo, String(data.responsable || '').trim().toUpperCase(), String(data.obra || '').trim().toUpperCase(), zonaItem,
       familia, marca, descripcion,
       cantidad, unidad, obsMov, obsGeneral, nroEnvio,
       ub.deposito, ub.estante, ub.columna, ub.fila,
       factura
-    ]);
+    ], false));
 
     let entradas     = Number(fila[DEP_COL_STOCK.ENTRADAS     - 1]) || 0;
     let salidas      = Number(fila[DEP_COL_STOCK.SALIDAS      - 1]) || 0;
@@ -1665,10 +1703,10 @@ function ajusteRapidoStockOpcionB(data, ss) {
       .setValues([[entradas, salidas, devoluciones, stockActual]]);
     hojaStock.getRange(filaNum, DEP_COL_STOCK.ESTADO)
       .setFormula(`=IF(K${filaNum}<=L${filaNum},"REPONER","OK")`);
-    hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_MOVIMIENTO).setValue(tipo);
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_MOVIMIENTO).setValue(tipo.toUpperCase());
     hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_FECHA, 1, 2).setValues([[fechaHoy, horaAhora]]);
     if (obsGeneral) {
-      hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_MOV_OBS).setValue(obsGeneral);
+      hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_MOV_OBS).setValue(obsGeneral.toUpperCase());
     }
 
     const sinStock = stockActual <= 0;
@@ -1686,7 +1724,7 @@ function ajusteRapidoStockOpcionB(data, ss) {
     if (factura) {
       hojaMov.getRange(primera, DEP_COL_MOV.NRO_FACTURA, filasMov.length, 1).setNumberFormat('@');
     }
-    hojaMov.getRange(primera, 1, filasMov.length, DEP_COL_MOV.TOTAL).setValues(filasMov);
+    hojaMov.getRange(primera, 1, filasMov.length, DEP_COL_MOV.TOTAL).setValues(limpiarMatrizMayusculas_(filasMov, false));
   }
 
   // 4) FIRMA: solo si es SALIDA y vino con firma (las demás pantallas no se ven afectadas)
@@ -1719,31 +1757,31 @@ function crearProductoNuevo(data, ss) {
     ? 'INGRESO INICIAL / ALTA - RETIRO'
     : 'INGRESO INICIAL / ALTA - DEPÓSITO';
 
-  const zona        = esRetiro ? '' : (data.zona || '').trim();
-  const familia      = (data.familia || 'Varios').trim();
-  const marca        = (data.marca || '—').trim();
-  const descripcion  = (data.descripcion || '').trim();
-  const unidad       = (data.unidad || 'un').trim();
+  const zona        = esRetiro ? '' : String(data.zona || '').trim().toUpperCase();
+  const familia      = String(data.familia || 'VARIOS').trim().toUpperCase();
+  const marca        = String(data.marca || '—').trim().toUpperCase();
+  const descripcion  = String(data.descripcion || '').trim().toUpperCase();
+  const unidad       = String(data.unidad || 'UN').trim().toUpperCase();
   const stockInicial = Number(data.stock_inicial !== undefined ? data.stock_inicial : data.stock_actual) || 0;
   const stockMinimo  = Number(data.stock_minimo) || 0;
-  const responsable  = (data.responsable || 'Alta de producto').trim();
+  const responsable  = String(data.responsable || 'ALTA DE PRODUCTO').trim().toUpperCase();
 
-  const ubicDeposito = esRetiro ? '' : (data.deposito || '').trim();
-  const ubicEstante  = esRetiro ? '' : (data.estante  || '').trim();
-  const ubicColumna  = esRetiro ? '' : (data.columna  || '').trim();
-  const ubicFila     = esRetiro ? '' : (data.fila     || '').trim();
+  const ubicDeposito = esRetiro ? '' : String(data.deposito || '').trim().toUpperCase();
+  const ubicEstante  = esRetiro ? '' : String(data.estante  || '').trim().toUpperCase();
+  const ubicColumna  = esRetiro ? '' : String(data.columna  || '').trim().toUpperCase();
+  const ubicFila     = esRetiro ? '' : String(data.fila     || '').trim().toUpperCase();
 
-  const factura = (data.factura || '').trim();
+  const factura = String(data.factura || '').trim().toUpperCase();
 
-  const lugarRetiro   = (data.lugar_retiro || '').trim();
-  const aclaracionUbi = (data.ubicacion_aclaracion || '').trim();
-  const obsUsuario    = (data.observaciones || '').trim();
+  const lugarRetiro   = String(data.lugar_retiro || '').trim().toUpperCase();
+  const aclaracionUbi = String(data.ubicacion_aclaracion || '').trim().toUpperCase();
+  const obsUsuario    = String(data.observaciones || '').trim().toUpperCase();
 
   let obsItemParts = [];
-  if (esRetiro && lugarRetiro) obsItemParts.push('Retiro: ' + lugarRetiro);
+  if (esRetiro && lugarRetiro) obsItemParts.push('RETIRO: ' + lugarRetiro);
   if (!esRetiro && aclaracionUbi) obsItemParts.push(aclaracionUbi);
   if (obsUsuario) obsItemParts.push(obsUsuario);
-  const obsItem = obsItemParts.join(' | ');
+  const obsItem = obsItemParts.join(' | ').toUpperCase();
 
   // ── EVITAR DUPLICADOS: si el producto ya existe en Stock, NO se crea otra fila.
   // Solo se registra la ENTRADA (con su factura) sobre el producto existente. ──
@@ -1775,16 +1813,16 @@ function crearProductoNuevo(data, ss) {
       if (stockInicial > 0) {
         const idPedidoE = dep_generarIdPedido(hojaMov, 'ENTRADA');
         const nroEnvioE = dep_generarNroEnvio();
-        hojaMov.appendRow([
+        hojaMov.appendRow(limpiarFilaMayusculas_([
           idPedidoE, dep_normalizarFecha(null, tzE), 'ENTRADA', responsable, obraLabel,
           filaExistente[DEP_COL_STOCK.ZONA        - 1],
           filaExistente[DEP_COL_STOCK.FAMILIA     - 1],
           filaExistente[DEP_COL_STOCK.MARCA       - 1],
           filaExistente[DEP_COL_STOCK.DESCRIPCION - 1],
-          stockInicial, unidadE, obsItem, (data.obs_general || '').trim(), nroEnvioE,
+          stockInicial, unidadE, obsItem, String(data.obs_general || '').trim().toUpperCase(), nroEnvioE,
           ubicE.deposito, ubicE.estante, ubicE.columna, ubicE.fila,
           factura
-        ]);
+        ], false));
 
         if (factura) {
           const celdaFacturaE = hojaMov.getRange(hojaMov.getLastRow(), DEP_COL_MOV.NRO_FACTURA);
@@ -1799,7 +1837,7 @@ function crearProductoNuevo(data, ss) {
           filaExistente[DEP_COL_STOCK.MARCA       - 1],
           filaExistente[DEP_COL_STOCK.DESCRIPCION - 1],
           'ENTRADA', stockInicial, fechaE, horaE,
-          ubicE, unidadE, '', (data.obs_general || '').trim(), ''
+          ubicE, unidadE, '', String(data.obs_general || '').trim().toUpperCase(), ''
         );
       }
 
@@ -1838,7 +1876,7 @@ function crearProductoNuevo(data, ss) {
   const devoluciones = 0;
   const stockActual = stockInicial;
 
-  hojaStock.appendRow([
+  hojaStock.appendRow(limpiarFilaMayusculas_([
     nuevoId, zona, familia, marca, descripcion,
     imagenUrl, unidad,
     entradas, salidas, devoluciones, stockActual,
@@ -1847,7 +1885,7 @@ function crearProductoNuevo(data, ss) {
     stockInicial > 0 ? 'ENTRADA' : 'ALTA', obsItem, fechaHoy, horaAhora,
     ubicDeposito, ubicEstante, ubicColumna, ubicFila,
     'ALTA DE PRODUCTO NUEVO'
-  ]);
+  ], true));
 
   const filaNum = hojaStock.getLastRow();
   hojaStock.getRange(filaNum, DEP_COL_STOCK.ESTADO).setFormula(`=IF(K${filaNum}<=L${filaNum},"REPONER","OK")`);
@@ -1868,18 +1906,18 @@ function crearProductoNuevo(data, ss) {
     celdaStock.setBackground('#dcfce7').setFontColor('#15803d').setFontWeight('bold');
   }
 
-  const obsGeneralEnvio = (data.obs_general || '').trim();
+  const obsGeneralEnvio = String(data.obs_general || '').trim().toUpperCase();
 
   if (stockInicial > 0) {
     const idPedido = dep_generarIdPedido(hojaMov, 'ENTRADA');
     const nroEnvio = dep_generarNroEnvio();
-    hojaMov.appendRow([
+    hojaMov.appendRow(limpiarFilaMayusculas_([
       idPedido, dep_normalizarFecha(null, timezone), 'ENTRADA', responsable, obraLabel, zona,
       familia, marca, descripcion,
       stockInicial, unidad, obsItem, obsGeneralEnvio, nroEnvio,
       ubicDeposito, ubicEstante, ubicColumna, ubicFila,
       factura
-    ]);
+    ], false));
 
     if (factura) {
       const filaMovNueva = hojaMov.getLastRow();
@@ -1912,7 +1950,7 @@ function actualizarObservacionProducto(data, ss) {
   }
   if (filaNum === -1) return jsonResp({ ok: false, error: 'Producto no encontrado.' });
 
-  hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_OBS).setValue(String(data.observacion || '').trim());
+  hojaStock.getRange(filaNum, DEP_COL_STOCK.ULT_OBS).setValue(String(data.observacion || '').trim().toUpperCase());
 
   return jsonResp({ ok: true });
 }
@@ -1937,9 +1975,9 @@ function actualizarUbicacionProducto(data, ss) {
   }
   if (filaNum === -1) return jsonResp({ ok: false, error: 'Producto no encontrado.' });
 
-  hojaStock.getRange(filaNum, DEP_COL_STOCK.UBIC_DEPOSITO, 1, 4).setValues([[
+  hojaStock.getRange(filaNum, DEP_COL_STOCK.UBIC_DEPOSITO, 1, 4).setValues(limpiarMatrizMayusculas_([[
     data.deposito || '', data.estante || '', data.columna || '', data.fila || ''
-  ]]);
+  ]], true));
 
   return jsonResp({ ok: true });
 }
@@ -1964,7 +2002,7 @@ function actualizarDatosProducto(data, ss) {
   }
   if (filaNum === -1) return jsonResp({ ok: false, error: 'Producto no encontrado.' });
 
-  const norm = v => String(v || '').trim();
+  const norm = v => String(v || '').trim().toUpperCase();
   const viejo = {
     zona:    norm(datos[filaNum - 2][DEP_COL_STOCK.ZONA        - 1]),
     familia: norm(datos[filaNum - 2][DEP_COL_STOCK.FAMILIA     - 1]),
@@ -1973,13 +2011,13 @@ function actualizarDatosProducto(data, ss) {
   };
 
   if (data.descripcion !== undefined) {
-    hojaStock.getRange(filaNum, DEP_COL_STOCK.DESCRIPCION).setValue(String(data.descripcion || '').trim());
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.DESCRIPCION).setValue(String(data.descripcion || '').trim().toUpperCase());
   }
   if (data.marca !== undefined) {
-    hojaStock.getRange(filaNum, DEP_COL_STOCK.MARCA).setValue(String(data.marca || '').trim());
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.MARCA).setValue(String(data.marca || '').trim().toUpperCase());
   }
   if (data.familia !== undefined) {
-    hojaStock.getRange(filaNum, DEP_COL_STOCK.FAMILIA).setValue(String(data.familia || '').trim());
+    hojaStock.getRange(filaNum, DEP_COL_STOCK.FAMILIA).setValue(String(data.familia || '').trim().toUpperCase());
   }
   if (data.stock_minimo !== undefined) {
     const nuevoMinimo = Number(data.stock_minimo);
@@ -2010,7 +2048,7 @@ function actualizarDatosProducto(data, ss) {
           cambios++;
         }
       });
-      if (cambios > 0) rango.setValues(vals);
+      if (cambios > 0) rango.setValues(limpiarMatrizMayusculas_(vals, false));
     }
   }
 
@@ -2139,33 +2177,33 @@ function procesarTraslado(data, ss) {
   const base = { idBase, fecha, responsable, origen, destino, obsGeneral, nroTraslado };
 
   (data.escaleras_dielectricas || []).forEach(item => {
-    const descripcion = `Escalera Dieléctrica ${item.tipo} ${item.peldanos}`;
+    const descripcion = `ESCALERA DIELÉCTRICA ${String(item.tipo || '').toUpperCase()} ${String(item.peldanos || '').toUpperCase()}`.trim();
     tra_procesarItem(hojaMov, hojaStock, base,
-      'Escalera Dieléctrica', descripcion, item.tipo, item.serie || '',
-      Number(item.cant) || 0, item.estado || '', '', item.obs || '',
+      'ESCALERA DIELÉCTRICA', descripcion, String(item.tipo || '').toUpperCase(), item.serie || '',
+      Number(item.cant) || 0, String(item.estado || '').toUpperCase(), '', item.obs || '',
       fechaHoy, horaAhora);
   });
 
   (data.escaleras_madera || []).forEach(item => {
-    const descripcion = `Escalera de Madera ${item.tipo} ${item.peldanos}`;
+    const descripcion = `ESCALERA DE MADERA ${String(item.tipo || '').toUpperCase()} ${String(item.peldanos || '').toUpperCase()}`.trim();
     tra_procesarItem(hojaMov, hojaStock, base,
-      'Escalera de Madera', descripcion, item.tipo, item.serie || '',
-      Number(item.cant) || 0, item.estado || '', '', item.obs || '',
+      'ESCALERA DE MADERA', descripcion, String(item.tipo || '').toUpperCase(), item.serie || '',
+      Number(item.cant) || 0, String(item.estado || '').toUpperCase(), '', item.obs || '',
       fechaHoy, horaAhora);
   });
 
   (data.ruedas || []).forEach(item => {
-    const descripcion = `Rueda ${item.medida}`;
+    const descripcion = `RUEDA ${String(item.medida || '').toUpperCase()}`.trim();
     tra_procesarItem(hojaMov, hojaStock, base,
-      'Rueda de Camión', descripcion, item.tipo || 'Sin tipo', '',
-      Number(item.cant) || 0, item.estado || '', item.equipo || '', item.obs || '',
+      'RUEDA DE CAMIÓN', descripcion, String(item.tipo || 'SIN TIPO').toUpperCase(), '',
+      Number(item.cant) || 0, String(item.estado || '').toUpperCase(), String(item.equipo || '').toUpperCase(), item.obs || '',
       fechaHoy, horaAhora);
   });
 
   (data.nuevos || []).forEach(item => {
     tra_procesarItem(hojaMov, hojaStock, base,
-      'Material Nuevo', item.nombre.trim(), item.unidad || '', item.desc || '',
-      Number(item.cant) || 0, item.estado || '', '', item.obs || '',
+      'MATERIAL NUEVO', String(item.nombre || '').trim().toUpperCase(), String(item.unidad || '').toUpperCase(), String(item.desc || '').toUpperCase(),
+      Number(item.cant) || 0, String(item.estado || '').toUpperCase(), '', item.obs || '',
       fechaHoy, horaAhora);
   });
 
@@ -2281,11 +2319,11 @@ function tra_actualizarStock(hojaStock, deposito, categoria, descripcion, detall
 
   if (filaNum === -1) {
     const nuevoId = tra_generarIdStock(hojaStock);
-    hojaStock.appendRow([
+    hojaStock.appendRow(limpiarFilaMayusculas_([
       nuevoId, deposito, categoria, descripcion, detalle,
       0, 0, 0,
       estadoItem, tipoMov, fechaHoy, horaAhora
-    ]);
+    ], false));
     filaNum = hojaStock.getLastRow();
   }
 
@@ -2309,7 +2347,7 @@ function tra_actualizarStock(hojaStock, deposito, categoria, descripcion, detall
   }
 
   hojaStock.getRange(filaNum, TRA_COL_STOCK.ESTADO_ITEM, 1, 4)
-    .setValues([[estadoItem, tipoMov, fechaHoy, horaAhora]]);
+    .setValues([[String(estadoItem || '').trim().toUpperCase(), String(tipoMov || '').trim().toUpperCase(), fechaHoy, horaAhora]]);
 }
 
 function tra_colorearEstadoMov(hoja, fila) {
@@ -2324,12 +2362,12 @@ function tra_procesarItem(hojaMov, hojaStock, base, categoria, descripcion, deta
   const { idBase, fecha, responsable, origen, destino, obsGeneral, nroTraslado } = base;
   const ruta = origen + ' → ' + destino;
 
-  hojaMov.appendRow([
+  hojaMov.appendRow(limpiarFilaMayusculas_([
     idBase, fecha, responsable, ruta,
     categoria, descripcion, detalle, serie,
     cantidad, estado, equipo,
     obsItem, obsGeneral, nroTraslado
-  ]);
+  ], false));
 
   tra_colorearEstadoMov(hojaMov, hojaMov.getLastRow());
 
@@ -3448,18 +3486,18 @@ function herr_procesarMovimiento(data, ss) {
   if (errs.length) return jsonResp({ ok: false, error: errs.join(' • '), errores: errs });
 
   // ---- Escritura (solo si todo validó) ----
-  if (modificoExistentes) hojaU.getRange(2, 1, filas.length, HERR_U.TOTAL).setValues(filas);
+  if (modificoExistentes) hojaU.getRange(2, 1, filas.length, HERR_U.TOTAL).setValues(limpiarMatrizMayusculas_(filas, false));
   if (nuevas.length) {
     const primera = hojaU.getLastRow() + 1;
     const faltan = primera + nuevas.length - 1 - hojaU.getMaxRows();
     if (faltan > 0) hojaU.insertRowsAfter(hojaU.getMaxRows(), faltan + 200);
     hojaU.getRange(primera, HERR_U.NUM + 1, nuevas.length, 1).setNumberFormat('@');
     hojaU.getRange(primera, HERR_U.CODIGO + 1, nuevas.length, 1).setNumberFormat('@');
-    hojaU.getRange(primera, 1, nuevas.length, HERR_U.TOTAL).setValues(nuevas);
+    hojaU.getRange(primera, 1, nuevas.length, HERR_U.TOTAL).setValues(limpiarMatrizMayusculas_(nuevas, false));
   }
     if (refNuevas.length) {
     const filaRef = hojaR.getLastRow() + 1;
-    hojaR.getRange(filaRef, 1, refNuevas.length, 3).setValues(refNuevas);
+    hojaR.getRange(filaRef, 1, refNuevas.length, 3).setValues(limpiarMatrizMayusculas_(refNuevas, false));
   }
 
   const prefijo = tipo === 'ENTRADA' ? 'HING' : (tipo === 'SALIDA' ? 'HSAL' : 'HDEV');
@@ -3468,12 +3506,12 @@ function herr_procesarMovimiento(data, ss) {
   const fechaTxt = Utilities.formatDate(ahora, tz, 'dd/MM/yyyy HH:mm:ss');
   Object.keys(regs).forEach(k => {
     const r = regs[k];
-    hojaM.appendRow([
+    hojaM.appendRow(limpiarFilaMayusculas_([
       idMov, fechaTxt, tipo, responsable, obra, herr_nombreFamilia(r.sigla), r.tipo, r.medida,
       r.codigos.length, r.codigos.join(', '), r.estados.join(', '),
       r.ub.deposito || '', r.ub.estante || '', r.ub.columna || '', r.ub.fila || '',
       String(data.observaciones || '').trim().toUpperCase()
-    ]);
+    ], false));
   });
 
   herr_escribirStock(ss, filas.concat(nuevas).map(herr_filaAObjeto));
@@ -3548,7 +3586,7 @@ function guardarFirmaSalida_(data, ss, idPedido, nroEnvio, fechaMov, filasMov) {
   const productos = filasMov.map(f => String(f[8] || '') + ' — ' + String(f[9] || '') + ' ' + String(f[10] || '')).join(' | ').toUpperCase();
   const zona = (filasMov.length ? String(filasMov[0][5] || '') : String(data.zona || '')).toUpperCase();
 
-  hoja.appendRow([
+  hoja.appendRow(limpiarFilaMayusculas_([
     fechaMov, nroEnvio, idPedido, zona,
     String(data.responsable || '').trim().toUpperCase(),
     String(data.obra || '').trim().toUpperCase(),
@@ -3559,10 +3597,10 @@ function guardarFirmaSalida_(data, ss, idPedido, nroEnvio, fechaMov, filasMov) {
     productos,
     String(data.obs_general || '').trim().toUpperCase(),
     ''
-  ]);
+  ], false));
 
   const fila = hoja.getLastRow();
-  hoja.getRange(fila, 10).setNumberFormat('@').setValue(String(data.firmante_dni || '').trim());
+  hoja.getRange(fila, 10).setNumberFormat('@').setValue(String(data.firmante_dni || '').trim().toUpperCase());
   hoja.getRange(fila, 13).setFormula('=HYPERLINK("' + url + '","Ver firma")');
   return url;
 }
@@ -3725,9 +3763,12 @@ function firmas_doGet(params) {
 // Se ejecuta a mano desde el editor, una sola vez.
 // ============================================================
 function pasarTodoAMayusculas() {
-  const ss = herr_abrirSS();
-  const hojas = ['Movimientos', 'Stock', 'Firmas Salidas'];
-  const columnasExcluidas = { 'Stock': [DEP_COL_STOCK.IMAGEN] };  // links de fotos: no tocar
+  const ss = SpreadsheetApp.openById('1PWCKGAQgZfBEWPwqWppsbylLdJLxJe3I6XWrEAhBwQk');
+  const hojas = ['Movimientos', 'Stock', 'Firmas Salidas', 'Movimientos Traslados', 'Stock Traslados'];
+  const columnasExcluidas = { 
+    'Stock': [DEP_COL_STOCK.IMAGEN],
+    'Stock Traslados': [DEP_COL_STOCK.IMAGEN]
+  };
 
   hojas.forEach(nombre => {
     const hoja = ss.getSheetByName(nombre);
@@ -3759,7 +3800,9 @@ function pasarTodoAMayusculas() {
       }
     }
 
-    rango.setValues(valores);
+    if (cambios > 0) {
+      rango.setValues(valores);
+    }
     Logger.log(nombre + ': ' + cambios + ' celdas pasadas a mayúsculas.');
   });
 
