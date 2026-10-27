@@ -113,7 +113,7 @@ const ORDEN_DESCRIPCION = {
   arneses:     ['tipo', 'color', 'estado', 'accesorios'],
   eslingas:    ['longitud', 'color_faja', 'ancho', 'norma', 'estado'],
   criquets:    ['tipo', 'capacidad', 'longitud', 'estado'],
-  ccamisas:     ['tejido', 'talle', 'color', 'tipo', 'estado'],
+  camisas:     ['tejido', 'talle', 'color', 'tipo', 'estado'],
   pantalones:  ['tejido', 'talle', 'color', 'tipo', 'estado'],
   camperas:    ['talle', 'color', 'tipo', 'estado'],
   mamelucos:   ['tipo', 'talle', 'estado'],
@@ -594,6 +594,8 @@ function doGet(e) {
   // ⬆️ FIN NUEVO
 
   if (params.action === 'herr-datos') return herr_doGet(params);
+  if (params.action === 'firmas') return firmas_doGet(params);
+  if (params.action === 'ficha-salida') return fichaSalida_doGet(params);   // ⬅️ NUEVO
 
   if (params.action === 'json') {
     try {
@@ -761,6 +763,12 @@ if (params.action === 'movimientos') {
       familia:      String(r[DEP_COL_MOV.FAMILIA - 1] || ''),
       marca:        String(r[DEP_COL_MOV.MARCA - 1] || ''),
       obs_item:     String(r[DEP_COL_MOV.OBS_ITEM - 1] || ''),
+      // ⬇️ NUEVO
+      id_pedido:    String(r[DEP_COL_MOV.ID_PEDIDO - 1] || ''),
+      envio:        String(r[DEP_COL_MOV.NRO_ENVIO - 1] || ''),
+      unidad:       String(r[DEP_COL_MOV.UNIDAD - 1] || ''),
+      obs_general:  String(r[DEP_COL_MOV.OBS_GENERAL - 1] || ''),
+      // ⬆️ FIN NUEVO
     }));
 
     return jsonResp({ ok: true, movimientos });
@@ -770,7 +778,134 @@ if (params.action === 'movimientos') {
     return jsonResp({ ok: false, error: err.message });
   }
 }
+// FIX búsqueda servidor: búsqueda completa de movimientos, independiente del límite del listado normal.
+if (params.action === 'movimientos-buscar') {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const hojaMov = ss.getSheetByName('Movimientos');
 
+    if (!hojaMov || hojaMov.getLastRow() <= 1) {
+      return jsonResp({
+        ok: true,
+        movimientos: [],
+        total: 0,
+        truncado: false
+      });
+    }
+
+    const normalizar = valor => String(valor || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+
+    const distancia = (a, b) => {
+      const fila = Array.from({ length: b.length + 1 }, (_, i) => i);
+
+      for (let i = 1; i <= a.length; i++) {
+        let diagonal = fila[0];
+        fila[0] = i;
+
+        for (let j = 1; j <= b.length; j++) {
+          const anterior = fila[j];
+          fila[j] = Math.min(
+            fila[j] + 1,
+            fila[j - 1] + 1,
+            diagonal + (a[i - 1] === b[j - 1] ? 0 : 1)
+          );
+          diagonal = anterior;
+        }
+      }
+
+      return fila[b.length];
+    };
+
+    const coincidePalabra = (buscada, palabra) => {
+      if (palabra.includes(buscada)) return true;
+      if (buscada.length < 4 || palabra.length < 4) return false;
+
+      const maxErrores = buscada.length >= 8 ? 2 : 1;
+      return distancia(buscada, palabra) <= maxErrores;
+    };
+
+    const consulta = normalizar(params.q || '');
+    const tokens = consulta.split(/\s+/).filter(Boolean);
+    const tipoBuscado = normalizar(params.tipo || '');
+
+    const ultimaFila = hojaMov.getLastRow();
+    const datos = hojaMov
+      .getRange(2, 1, ultimaFila - 1, DEP_COL_MOV.TOTAL)
+      .getValues();
+
+    const tz = Session.getScriptTimeZone();
+
+    const encontrados = datos.filter(r => {
+      const texto = normalizar([
+        r[DEP_COL_MOV.TIPO - 1],
+        r[DEP_COL_MOV.ZONA - 1],
+        r[DEP_COL_MOV.DESCRIPCION - 1],
+        r[DEP_COL_MOV.RESPONSABLE - 1],
+        r[DEP_COL_MOV.OBRA - 1],
+        r[DEP_COL_MOV.NRO_FACTURA - 1],
+        r[DEP_COL_MOV.FAMILIA - 1],
+        r[DEP_COL_MOV.MARCA - 1],
+        r[DEP_COL_MOV.OBS_ITEM - 1],
+        r[DEP_COL_MOV.ID_PEDIDO - 1],
+        r[DEP_COL_MOV.NRO_ENVIO - 1],
+        r[DEP_COL_MOV.UNIDAD - 1],
+        r[DEP_COL_MOV.OBS_GENERAL - 1]
+      ].join(' '));
+
+      const palabras = texto.split(/\s+/).filter(Boolean);
+
+      const coincideTexto = tokens.every(token =>
+        palabras.some(palabra => coincidePalabra(token, palabra))
+      );
+
+      const tipoFila = normalizar(r[DEP_COL_MOV.TIPO - 1]);
+      const coincideTipo = !tipoBuscado || tipoFila.startsWith(tipoBuscado);
+
+      return coincideTexto && coincideTipo;
+    });
+
+    const total = encontrados.length;
+    const limite = 5000;
+    const movimientos = encontrados.slice(-limite).map(r => {
+      const fechaCelda = r[DEP_COL_MOV.FECHA - 1];
+
+      return {
+        fecha: formatearFechaCelda(fechaCelda) + ' ' + formatearHoraCelda(fechaCelda),
+        tipo: String(r[DEP_COL_MOV.TIPO - 1] || ''),
+        zona: String(r[DEP_COL_MOV.ZONA - 1] || ''),
+        descripcion: String(r[DEP_COL_MOV.DESCRIPCION - 1] || ''),
+        cantidad: Number(r[DEP_COL_MOV.CANTIDAD - 1]) || 0,
+        responsable: String(r[DEP_COL_MOV.RESPONSABLE - 1] || ''),
+        obra: String(r[DEP_COL_MOV.OBRA - 1] || ''),
+        factura: String(r[DEP_COL_MOV.NRO_FACTURA - 1] || ''),
+        familia: String(r[DEP_COL_MOV.FAMILIA - 1] || ''),
+        marca: String(r[DEP_COL_MOV.MARCA - 1] || ''),
+        obs_item: String(r[DEP_COL_MOV.OBS_ITEM - 1] || ''),
+        id_pedido: String(r[DEP_COL_MOV.ID_PEDIDO - 1] || ''),
+        envio: String(r[DEP_COL_MOV.NRO_ENVIO - 1] || ''),
+        unidad: String(r[DEP_COL_MOV.UNIDAD - 1] || ''),
+        obs_general: String(r[DEP_COL_MOV.OBS_GENERAL - 1] || '')
+      };
+    });
+
+    return jsonResp({
+      ok: true,
+      movimientos,
+      total,
+      truncado: total > limite
+    });
+
+  } catch (err) {
+    Logger.log('ERROR doGet movimientos-buscar: ' + err.message);
+    return jsonResp({ ok: false, error: err.message });
+  }
+}
+// FIN FIX búsqueda servidor
   try {
     const ss        = SpreadsheetApp.getActiveSpreadsheet();
     const hojaStock = ss.getSheetByName('Stock');
@@ -822,6 +957,63 @@ if (params.action === 'movimientos') {
   }
 }
 
+// ============================================================
+// NORMALIZACIÓN A MAYÚSCULAS DE DATOS ENTRANTES
+// ============================================================
+function sanitizarPayloadMayusculas(obj, clavePadre) {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj === 'string') return obj;
+
+  const CLAVES_IGNORAR = {
+    'token': true,
+    'idtoken': true,
+    'accion': true,
+    'action': true,
+    'tipo': true,
+    '_txid': true,
+    'firma_base64': true,
+    'foto_base64': true,
+    'fotos_base64': true,
+    'imagen_base64': true,
+    'imagen': true,
+    'foto': true,
+    'base64': true,
+    'email': true,
+    'url': true
+  };
+
+  if (Array.isArray(obj)) {
+    if (clavePadre && CLAVES_IGNORAR[String(clavePadre).toLowerCase()]) {
+      return obj;
+    }
+    return obj.map(function(item) {
+      if (typeof item === 'string') return item.trim().toUpperCase();
+      if (typeof item === 'object' && item !== null) return sanitizarPayloadMayusculas(item, clavePadre);
+      return item;
+    });
+  }
+
+  if (typeof obj === 'object') {
+    const res = {};
+    for (const k in obj) {
+      if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+      const kLower = String(k).toLowerCase();
+      if (CLAVES_IGNORAR[kLower]) {
+        res[k] = obj[k];
+      } else if (typeof obj[k] === 'string') {
+        res[k] = obj[k].trim().toUpperCase();
+      } else if (typeof obj[k] === 'object' && obj[k] !== null) {
+        res[k] = sanitizarPayloadMayusculas(obj[k], k);
+      } else {
+        res[k] = obj[k];
+      }
+    }
+    return res;
+  }
+
+  return obj;
+}
+
 function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
@@ -833,7 +1025,7 @@ function doPost(e) {
   }
 
   try {
-    const data = JSON.parse(e.postData.contents);
+    let data = JSON.parse(e.postData.contents);
 
     // ⬇️ NUEVO
     if (AUTH_OBLIGATORIA) {
@@ -844,7 +1036,11 @@ function doPost(e) {
     delete data.token;
     // ⬆️ FIN NUEVO
 
-    Logger.log('Payload recibido: ' + JSON.stringify(data));
+    // ⬇️ NORMALIZACIÓN A MAYÚSCULAS PARA ALMACENAMIENTO (MOVIMIENTOS, STOCK, FIRMAS SALIDAS)
+    data = sanitizarPayloadMayusculas(data);
+    // ⬆️ FIN NORMALIZACIÓN A MAYÚSCULAS
+
+     Logger.log('Payload recibido: ' + JSON.stringify(Object.assign({}, data, { firma_base64: data.firma_base64 ? '[firma]' : undefined })));
 
     const ss = SpreadsheetApp.openById('1PWCKGAQgZfBEWPwqWppsbylLdJLxJe3I6XWrEAhBwQk');
 
@@ -1068,7 +1264,7 @@ function procesarDeposito(data, ss) {
 
     hojaMov.appendRow([
       idPedido, fecha, tipo, responsable, obra, zona,
-      'Producto nuevo', pnMarca, pnDescripcionFinal,
+      'PRODUCTO NUEVO', pnMarca, pnDescripcionFinal,
       cantidad, unidad, pn.observacion || '', obsGenerales, nroEnvio,
       pn.deposito || '', pn.estante || '', pn.columna || '', pn.fila || '',
       ''   // N° Factura — no aplica a este tipo de movimiento
@@ -1493,7 +1689,18 @@ function ajusteRapidoStockOpcionB(data, ss) {
     hojaMov.getRange(primera, 1, filasMov.length, DEP_COL_MOV.TOTAL).setValues(filasMov);
   }
 
-  return jsonResp({ ok: true, id: idPedido, envio: nroEnvio });
+  // 4) FIRMA: solo si es SALIDA y vino con firma (las demás pantallas no se ven afectadas)
+  let errorFirma = null;
+  if (tipo === 'SALIDA' && data.firma_base64) {
+    try {
+      guardarFirmaSalida_(data, ss, idPedido, nroEnvio, fechaMov, filasMov);
+    } catch (errF) {
+      Logger.log('ERROR guardando firma: ' + errF.message);
+      errorFirma = errF.message;
+    }
+  }
+
+  return jsonResp({ ok: true, id: idPedido, envio: nroEnvio, error_firma: errorFirma });
 }
 
 function crearProductoNuevo(data, ss) {
@@ -1509,8 +1716,8 @@ function crearProductoNuevo(data, ss) {
   const tipoAltaRaw = String(data.tipo_alta || '').trim().toUpperCase();
   const esRetiro     = tipoAltaRaw === 'RETIRO';
   const obraLabel     = esRetiro
-    ? 'Ingreso inicial / Alta - Retiro'
-    : 'Ingreso inicial / Alta - Depósito';
+    ? 'INGRESO INICIAL / ALTA - RETIRO'
+    : 'INGRESO INICIAL / ALTA - DEPÓSITO';
 
   const zona        = esRetiro ? '' : (data.zona || '').trim();
   const familia      = (data.familia || 'Varios').trim();
@@ -1639,7 +1846,7 @@ function crearProductoNuevo(data, ss) {
     '',
     stockInicial > 0 ? 'ENTRADA' : 'ALTA', obsItem, fechaHoy, horaAhora,
     ubicDeposito, ubicEstante, ubicColumna, ubicFila,
-    'Alta de producto nuevo'
+    'ALTA DE PRODUCTO NUEVO'
   ]);
 
   const filaNum = hojaStock.getLastRow();
@@ -3307,3 +3514,254 @@ function herr_prepararHojas() {
   Logger.log('Hojas de herramientas listas (vacías). Movimientos y Stock actuales: sin tocar.');
 }
 // ===== FIN HERRAMIENTAS =====
+// ============================================================
+// 9. FIRMAS DE SALIDA (NUEVO)
+// ============================================================
+const CARPETA_FIRMAS_ID = '1JPHCIB-uh2LU_LfVkAw0F0bsLwN5CWfk';
+const HOJA_FIRMAS = 'Firmas Salidas';
+const COLS_FIRMAS = [
+  'Fecha', 'N° Envío', 'ID Pedido', 'Zona', 'Responsable', 'Obra / destino',
+  'Solicitante', 'Equipo', 'Quién retira', 'DNI', 'Productos', 'Obs. generales', 'Firma'
+];
+
+function guardarFirmaSalida_(data, ss, idPedido, nroEnvio, fechaMov, filasMov) {
+  // 1) Guardar la imagen en Drive (carpeta privada)
+  const nombre = 'firma_' + String(idPedido) + '_' + String(nroEnvio) + '_' + Date.now() + '.png';
+  const blob = Utilities.newBlob(Utilities.base64Decode(String(data.firma_base64)), 'image/png', nombre);
+  const archivo = DriveApp.getFolderById(CARPETA_FIRMAS_ID).createFile(blob);
+  const url = archivo.getUrl();
+
+  // 2) Crear la hoja si todavía no existe
+  let hoja = ss.getSheetByName(HOJA_FIRMAS);
+  if (!hoja) {
+    hoja = ss.insertSheet(HOJA_FIRMAS);
+    hoja.appendRow(COLS_FIRMAS);
+    hoja.getRange(1, 1, 1, COLS_FIRMAS.length)
+      .setFontWeight('bold').setBackground('#1a1a2e').setFontColor('#ffffff');
+    hoja.setFrozenRows(1);
+    [150, 90, 90, 170, 130, 150, 150, 130, 170, 100, 380, 220, 120]
+      .forEach((w, i) => hoja.setColumnWidth(i + 1, w));
+    hoja.getRange(1, 10, hoja.getMaxRows(), 1).setNumberFormat('@'); // DNI como texto
+  }
+
+  // 3) Armar la fila con los datos que ya calculó el servidor (no los del celular)
+  const productos = filasMov.map(f => String(f[8] || '') + ' — ' + String(f[9] || '') + ' ' + String(f[10] || '')).join(' | ').toUpperCase();
+  const zona = (filasMov.length ? String(filasMov[0][5] || '') : String(data.zona || '')).toUpperCase();
+
+  hoja.appendRow([
+    fechaMov, nroEnvio, idPedido, zona,
+    String(data.responsable || '').trim().toUpperCase(),
+    String(data.obra || '').trim().toUpperCase(),
+    String(data.solicitante || '').trim().toUpperCase(),
+    String(data.equipo || '').trim().toUpperCase(),
+    String(data.firmante || '').trim().toUpperCase(),
+    '',
+    productos,
+    String(data.obs_general || '').trim().toUpperCase(),
+    ''
+  ]);
+
+  const fila = hoja.getLastRow();
+  hoja.getRange(fila, 10).setNumberFormat('@').setValue(String(data.firmante_dni || '').trim());
+  hoja.getRange(fila, 13).setFormula('=HYPERLINK("' + url + '","Ver firma")');
+  return url;
+}
+
+// Lista las últimas salidas firmadas (para la pantalla "Salidas firmadas")
+// ============================================================
+// 10. FICHA DE SALIDA PARA EL PANEL (NUEVO)
+// ============================================================
+// action=ficha-salida&id=SAL-001
+// Devuelve TODO lo de una salida: datos, productos, quién retiró y la imagen de la firma.
+// La firma se busca en "Firmas Salidas" por ID Pedido (el navegador nunca manda un ID de Drive).
+function fichaSalida_doGet(params) {
+  try {
+    const idPedido = String(params.id || '').trim().toUpperCase();
+    if (!/^SAL-\d+$/.test(idPedido)) return jsonResp({ ok: false, error: 'ID de salida inválido.' });
+
+    const ss = herr_abrirSS();
+    const tz = Session.getScriptTimeZone();
+    const fmtFecha = v => (v instanceof Date) ? Utilities.formatDate(v, tz, 'dd/MM/yyyy HH:mm') : String(v || '');
+
+    // 1) Filas de esa salida en Movimientos
+    const hojaMov = ss.getSheetByName('Movimientos');
+    if (!hojaMov || hojaMov.getLastRow() <= 1) return jsonResp({ ok: false, error: 'No hay movimientos.' });
+    const filas = hojaMov.getRange(2, 1, hojaMov.getLastRow() - 1, DEP_COL_MOV.TOTAL).getValues()
+      .filter(r => String(r[DEP_COL_MOV.ID_PEDIDO - 1] || '').trim().toUpperCase() === idPedido);
+    if (!filas.length) return jsonResp({ ok: false, error: 'No se encontró la salida ' + idPedido + '.' });
+    const f0 = filas[0];
+
+    // Solicitante / equipo / servicio / km viajan juntos en "Obs. ítem": "Solicitante: X | Equipo: Y | ..."
+    const obsItem = String(f0[DEP_COL_MOV.OBS_ITEM - 1] || '');
+    const campo = k => {
+      const m = obsItem.match(new RegExp('(?:^|\\|)\\s*' + k + ':\\s*([^|]*)'));
+      return m ? m[1].trim() : '';
+    };
+
+    // 2) Firma (si existe) en "Firmas Salidas"
+    let firmado = false, firmante = '', dni = '', firma_img = '', solicF = '', equipoF = '';
+    const hojaF = ss.getSheetByName(HOJA_FIRMAS);
+    if (hojaF && hojaF.getLastRow() > 1) {
+      const n = hojaF.getLastRow() - 1;
+      const vals  = hojaF.getRange(2, 1, n, COLS_FIRMAS.length).getValues();
+      const forms = hojaF.getRange(2, 13, n, 1).getFormulas();
+      for (let i = vals.length - 1; i >= 0; i--) {
+        if (String(vals[i][2] || '').trim().toUpperCase() !== idPedido) continue;
+        firmado  = true;
+        solicF   = String(vals[i][6] || '');
+        equipoF  = String(vals[i][7] || '');
+        firmante = String(vals[i][8] || '');
+        dni      = String(vals[i][9] || '');
+        const m = String(forms[i][0] || '').match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (m) {
+          try {
+            const bytes = DriveApp.getFileById(m[1]).getBlob().getBytes();
+            firma_img = 'data:image/png;base64,' + Utilities.base64Encode(bytes);
+          } catch (e) { Logger.log('No se pudo leer la firma ' + m[1] + ': ' + e.message); }
+        }
+        break;
+      }
+    }
+
+    const items = filas.map(r => ({
+      familia:     String(r[DEP_COL_MOV.FAMILIA     - 1] || ''),
+      marca:       String(r[DEP_COL_MOV.MARCA       - 1] || ''),
+      descripcion: String(r[DEP_COL_MOV.DESCRIPCION - 1] || ''),
+      cantidad:    Number(r[DEP_COL_MOV.CANTIDAD    - 1]) || 0,
+      unidad:      String(r[DEP_COL_MOV.UNIDAD      - 1] || '')
+    }));
+
+    return jsonResp({ ok: true, ficha: {
+      id_pedido:     idPedido,
+      envio:         String(f0[DEP_COL_MOV.NRO_ENVIO   - 1] || ''),
+      fecha:         fmtFecha(f0[DEP_COL_MOV.FECHA - 1]),
+      zona:          String(f0[DEP_COL_MOV.ZONA        - 1] || ''),
+      responsable:   String(f0[DEP_COL_MOV.RESPONSABLE - 1] || ''),
+      obra:          String(f0[DEP_COL_MOV.OBRA        - 1] || ''),
+      solicitante:   campo('Solicitante') || solicF,
+      equipo:        campo('Equipo')      || equipoF,
+      tipo_servicio: campo('Servicio'),
+      km_hs:         campo('Km/Hs'),
+      factura:       String(f0[DEP_COL_MOV.NRO_FACTURA - 1] || ''),
+      obs_general:   String(f0[DEP_COL_MOV.OBS_GENERAL - 1] || ''),
+      items:         items,
+      firmado:       firmado,
+      firmante:      firmante,
+      dni:           dni,
+      firma_img:     firma_img
+    }});
+  } catch (err) {
+    Logger.log('ERROR fichaSalida_doGet: ' + err.message);
+    return jsonResp({ ok: false, error: err.message });
+  }
+}
+function firmas_doGet(params) {
+  try {
+    const ss = herr_abrirSS();
+    const hoja = ss.getSheetByName(HOJA_FIRMAS);
+    if (!hoja || hoja.getLastRow() <= 1) return jsonResp({ ok: true, firmas: [] });
+
+    const limite = Math.min(Number(params.limit) || 15, 40);
+    const zona = String(params.zona || '').trim().toLowerCase();
+    const n = hoja.getLastRow() - 1;
+    const vals  = hoja.getRange(2, 1, n, COLS_FIRMAS.length).getValues();
+    const forms = hoja.getRange(2, 13, n, 1).getFormulas();
+    const tz = Session.getScriptTimeZone();
+
+    // Productos: se leen de Movimientos por ID de pedido (más seguro que partir el texto)
+    const porId = {};
+    const hojaMov = ss.getSheetByName('Movimientos');
+    if (hojaMov && hojaMov.getLastRow() > 1) {
+      const buscados = {};
+      vals.forEach(r => { buscados[String(r[2])] = true; });
+      hojaMov.getRange(2, 1, hojaMov.getLastRow() - 1, DEP_COL_MOV.TOTAL).getValues().forEach(r => {
+        const id = String(r[DEP_COL_MOV.ID_PEDIDO - 1]);
+        if (!buscados[id]) return;
+        (porId[id] = porId[id] || []).push({
+          descripcion: String(r[DEP_COL_MOV.DESCRIPCION - 1] || ''),
+          cantidad:    Number(r[DEP_COL_MOV.CANTIDAD - 1]) || 0,
+          unidad:      String(r[DEP_COL_MOV.UNIDAD - 1] || '')
+        });
+      });
+    }
+
+    const firmas = [];
+    for (let i = vals.length - 1; i >= 0 && firmas.length < limite; i--) {
+      const r = vals[i];
+      if (zona && String(r[3]).trim().toLowerCase() !== zona) continue;
+
+      // La carpeta es privada: se manda la imagen embebida (data URL) para que se vea sin loguearse en Drive
+      let firma_img = '';
+      const m = String(forms[i][0] || '').match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (m) {
+        try {
+          const bytes = DriveApp.getFileById(m[1]).getBlob().getBytes();
+          firma_img = 'data:image/png;base64,' + Utilities.base64Encode(bytes);
+        } catch (e) { Logger.log('No se pudo leer la firma ' + m[1] + ': ' + e.message); }
+      }
+
+      firmas.push({
+        fecha: (r[0] instanceof Date) ? Utilities.formatDate(r[0], tz, 'dd/MM/yyyy HH:mm') : String(r[0] || ''),
+        envio: String(r[1] || ''),
+        responsable: String(r[4] || ''),
+        obra: String(r[5] || ''),
+        solicitante: String(r[6] || ''),
+        equipo: String(r[7] || ''),
+        firmante: String(r[8] || ''),
+        dni: String(r[9] || ''),
+        items: porId[String(r[2])] || [],
+        firma_img: firma_img
+      });
+    }
+    return jsonResp({ ok: true, firmas: firmas });
+  } catch (err) {
+    Logger.log('ERROR firmas_doGet: ' + err.message);
+    return jsonResp({ ok: false, error: err.message });
+  }
+}
+
+// ============================================================
+// UTILIDAD ÚNICA: pasar a MAYÚSCULAS Movimientos, Stock y Firmas Salidas
+// Se ejecuta a mano desde el editor, una sola vez.
+// ============================================================
+function pasarTodoAMayusculas() {
+  const ss = herr_abrirSS();
+  const hojas = ['Movimientos', 'Stock', 'Firmas Salidas'];
+  const columnasExcluidas = { 'Stock': [DEP_COL_STOCK.IMAGEN] };  // links de fotos: no tocar
+
+  hojas.forEach(nombre => {
+    const hoja = ss.getSheetByName(nombre);
+    if (!hoja || hoja.getLastRow() <= 1) {
+      Logger.log('Hoja omitida (no existe o está vacía): ' + nombre);
+      return;
+    }
+
+    const filas = hoja.getLastRow() - 1;
+    const cols  = hoja.getLastColumn();
+    const rango = hoja.getRange(2, 1, filas, cols);   // sin encabezado
+    const valores  = rango.getValues();
+    const formulas = rango.getFormulas();
+    const excluidas = columnasExcluidas[nombre] || [];
+    let cambios = 0;
+
+    for (let i = 0; i < filas; i++) {
+      for (let j = 0; j < cols; j++) {
+        if (formulas[i][j]) {               // es fórmula: se conserva tal cual
+          valores[i][j] = formulas[i][j];
+          continue;
+        }
+        if (excluidas.indexOf(j + 1) !== -1) continue;
+        const v = valores[i][j];
+        if (typeof v !== 'string' || v === '') continue;       // números y fechas no se tocan
+        if (/^https?:\/\//i.test(v.trim())) continue;          // links no se tocan
+        const mayus = v.toUpperCase();
+        if (mayus !== v) { valores[i][j] = mayus; cambios++; }
+      }
+    }
+
+    rango.setValues(valores);
+    Logger.log(nombre + ': ' + cambios + ' celdas pasadas a mayúsculas.');
+  });
+
+  Logger.log('Listo.');
+}

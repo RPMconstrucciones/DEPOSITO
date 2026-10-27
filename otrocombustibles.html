@@ -387,5 +387,30 @@ $("buscar").addEventListener("input",renderStock);
 
 addE();applyTipo();loadStock(true);
 </script>
+  <!-- AUTO MAYUSCULAS - RPM CONSTRUCCIONES -->
+  <style>
+    input[type="text"]:not([type="password"]):not([type="email"]):not(.no-mayus), textarea:not(.no-mayus) {
+      text-transform: uppercase !important;
+    }
+  </style>
+  <script>
+    (function () {
+      document.addEventListener("input", function (e) {
+        var el = e.target;
+        if (!el || !el.matches) return;
+        if (el.matches("input[type='text'], textarea") && !el.matches("[type='password'], [type='email'], .no-mayus")) {
+          var start = el.selectionStart;
+          var end = el.selectionEnd;
+          var upper = el.value.toUpperCase();
+          if (el.value !== upper) {
+            el.value = upper;
+            if (el.setSelectionRange && start !== null && end !== null) {
+              try { el.setSelectionRange(start, end); } catch (_) {}
+            }
+          }
+        }
+      }, true);
+    })();
+  </script>
 </body>
 </html>

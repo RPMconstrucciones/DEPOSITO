@@ -79,4 +79,29 @@ document.getElementById('q').addEventListener('input',function(e){var v=e.target
  if(f){sel(f);tg.set(f.x,0,f.z);dist=12}else{sel(null);info.innerHTML='Sin resultados.'}});
 var top=false;document.getElementById('v').onclick=function(){top=!top;el=top?1.55:.8;dist=top?36:32;tg.set(0,0,0);this.textContent=top?'3D':'Planta'};
 (function loop(){requestAnimationFrame(loop);var t=Date.now()/250;if(arrow.visible){arrow.position.y=arrow.userData.y+Math.abs(Math.sin(t))*.6;ring.scale.setScalar(1+.2*Math.sin(t))}upd();R.render(S,cam)})();
-</script></body></html>
+</script>  <!-- AUTO MAYUSCULAS - RPM CONSTRUCCIONES -->
+  <style>
+    input[type="text"]:not([type="password"]):not([type="email"]):not(.no-mayus), textarea:not(.no-mayus) {
+      text-transform: uppercase !important;
+    }
+  </style>
+  <script>
+    (function () {
+      document.addEventListener("input", function (e) {
+        var el = e.target;
+        if (!el || !el.matches) return;
+        if (el.matches("input[type='text'], textarea") && !el.matches("[type='password'], [type='email'], .no-mayus")) {
+          var start = el.selectionStart;
+          var end = el.selectionEnd;
+          var upper = el.value.toUpperCase();
+          if (el.value !== upper) {
+            el.value = upper;
+            if (el.setSelectionRange && start !== null && end !== null) {
+              try { el.setSelectionRange(start, end); } catch (_) {}
+            }
+          }
+        }
+      }, true);
+    })();
+  </script>
+</body></html>
