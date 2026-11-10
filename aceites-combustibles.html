@@ -1971,6 +1971,16 @@ function guardarFirma() {
   enviarCarritoRapido(firmaOverlay);
 }
 
+function mostrarEstadoFirma(titulo, detalle) {
+  const ov = document.createElement('div'); ov.className = 'modal-overlay';
+  const box = document.createElement('div'); box.className = 'modal-box';
+  const h = document.createElement('h3'); h.textContent = titulo;
+  const p = document.createElement('p'); p.textContent = detalle;
+  const b = document.createElement('button'); b.className = 'modal-btn primary'; b.textContent = 'Cerrar';
+  b.onclick = () => { ov.remove(); };
+  box.append(h, p, b); ov.appendChild(box); document.body.appendChild(ov);
+}
+
 async function enviarCarritoRapido(overlay){
   let responsable=document.getElementById("carrito_responsable").value;
   if(responsable==="OTRO")responsable=document.getElementById("carrito_responsable_otro").value.trim();
@@ -2023,8 +2033,13 @@ async function enviarCarritoRapido(overlay){
     }
     overlay.remove();
     showScreen('screen-stock');
-    toastDep("✅ " + carritoRapido.tipo + " registrada correctamente","ok");
-    if (resultado.error_firma) toastDep("⚠ La salida se registró pero NO se pudo guardar la firma. Avisá al administrador.","error");
+    if (resultado.error_firma) {
+      mostrarEstadoFirma('Salida registrada; firma pendiente',
+        'Salida ' + (resultado.id || '') + ', envío ' + (resultado.envio || '') + '. ' + resultado.error_firma +
+        ' No vuelvas a cargar esta salida. Recuperá el enlace desde Drive.');
+    } else {
+      toastDep("✅ " + carritoRapido.tipo + " registrada correctamente","ok");
+    }
     vaciarCarritoRapido();
     loadStock();
   }catch(e){
